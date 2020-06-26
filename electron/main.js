@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const url = require('url');
+const initDatabase = require('./db/initDatabase');
 
 let mainWindow;
 
@@ -22,10 +23,16 @@ function createWindow() {
         mainWindow = null;
     });
 }
-app.on('ready', createWindow);
+
+app.on('ready', function () {
+    initDatabase();
+    createWindow();
+});
+
 app.on('window-all-closed', function () {
     app.quit();
 });
+
 app.on('activate', function () {
     if (mainWindow === null) {
         createWindow();

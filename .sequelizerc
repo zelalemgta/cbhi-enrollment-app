@@ -1,0 +1,8 @@
+const path = require('path');
+
+module.exports = {
+  'config': path.resolve('electron/config', 'database.json'),
+  'models-path': path.resolve('electron/db', 'models'),
+  'seeders-path': path.resolve('electron/db', 'seeders'),
+  'migrations-path': path.resolve('electron/db', 'migrations')
+}

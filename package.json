@@ -14,7 +14,10 @@
     "material-table": "^1.62.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "sequelize": "^6.2.0",
+    "sqlite3": "^4.2.0",
+    "umzug": "^2.3.0"
   },
   "scripts": {
     "start": "export BROWSER=none && react-scripts start",
@@ -43,7 +46,8 @@
   },
   "devDependencies": {
     "electron": "^9.0.5",
-    "electron-builder": "^22.7.0"
+    "electron-builder": "^22.7.0",
+    "sequelize-cli": "^6.0.0"
   },
   "build": {
     "files": [
