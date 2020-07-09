@@ -1,45 +1,59 @@
-import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
-import './App.css';
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
-  title: {
-    flexGrow: 1
-  }
-}));
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import Header from './components/Header';
+import Navigation from './components/Navigation';
+import Footer from './components/Footer';
+import Members from './containers/Members';
+import Settings from './containers/Settings';
+import Notification from './components/Notification';
 
 const { ipcRenderer } = window;
 
+const theme = createMuiTheme({
+  palette: {
+    primary: {
+      main: '#222d32', //'#0288d1',
+      footer: '#0288d1'
+    },
+    secondary: {
+      main: '#43a047',
+    },
+    text: {
+      primary: '#000',
+      secondary: '#333',
+      altColor: '#fff',
+      label: "#777"
+    }
+  },
+  typography: {
+    h6: {
+      fontSize: '1rem'
+    }
+  }
+});
+
 function App() {
-  const classes = useStyles();
+
+  const [notification, setNotification] = useState({
+    open: false,
+    type: "Success",
+    message: "This is a test Message"
+  });
+
   return (
-    <div className="App">
-      <div className={classes.root}>
-        <AppBar position="static">
-          <Toolbar variant="dense">
-            <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" className={classes.title}>
-              CBHI Enrollment App
-          </Typography>
-            <Button color="inherit">Login</Button>
-          </Toolbar>
-        </AppBar>
-      </div>
-    </div>
+    <Router>
+      <ThemeProvider theme={theme}>
+        <Notification open={notification.open} type={notification.type} message={notification.message} />
+        <Header />
+        <Navigation />
+        <Switch>
+          <Route exact path="/" component={Members} />
+          <Route exact path="/settings" component={Settings} />
+        </Switch>
+        <Footer />
+      </ThemeProvider>
+    </Router>
   );
 }
 

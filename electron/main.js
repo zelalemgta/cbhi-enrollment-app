@@ -1,6 +1,7 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
+const { channels } = require('../src/shared/constants');
 const initDatabase = require('./db/initDatabase');
 
 let mainWindow;
@@ -12,12 +13,15 @@ function createWindow() {
         slashes: true,
     });
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        minWidth: 1165,
+        minHeight: 770,
+        width: 1165,
+        height: 770,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         },
     });
+    mainWindow.removeMenu();
     mainWindow.loadURL(startUrl);
     mainWindow.on('closed', function () {
         mainWindow = null;
@@ -37,4 +41,8 @@ app.on('activate', function () {
     if (mainWindow === null) {
         createWindow();
     }
+});
+
+ipcMain.on(channels.DEV_TOOLS, function () {
+    mainWindow.webContents.openDevTools();
 });
