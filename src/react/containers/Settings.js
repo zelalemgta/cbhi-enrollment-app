@@ -11,7 +11,6 @@ import AdministrativeDivision from '../components/AdministrativeDivision';
 import EnrollmentPeriod from '../components/EnrollmentPeriod';
 import SystemSettings from '../components/SystemSettings';
 
-
 const useStyles = makeStyles((theme) => ({
     root: {
         backgroundColor: '#ecf0f5',
@@ -39,7 +38,7 @@ const Settings = () => {
 
     return (
         <Box className={classes.root} p={1}>
-            <ExpansionPanel expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
+            <ExpansionPanel expanded={expanded === 'panel1'} onChange={handleChange('panel1')} TransitionProps={{ unmountOnExit: true }}>
                 <ExpansionPanelSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel1bh-content"

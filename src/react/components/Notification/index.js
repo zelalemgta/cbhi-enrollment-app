@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Snackbar from '@material-ui/core/Snackbar';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
@@ -106,20 +106,18 @@ const Notification = (props) => {
             notificationClass = classes.info;
     }
 
-    const [state, setState] = useState({
-        open: props.open,
-        transition: SlideTransition
-    });
+    const [open, setOpen] = useState(props.open);
 
     const handleClose = (event, reason) => {
         if (reason === 'clickaway') {
             return;
         }
-        setState({
-            ...state,
-            open: false
-        });
+        setOpen(false);
     }
+
+    useEffect(() => {
+        setOpen(props.open);
+    }, [props])
 
     return (
         <Snackbar
@@ -128,9 +126,9 @@ const Notification = (props) => {
                 vertical: 'bottom',
                 horizontal: 'right',
             }}
-            open={state.open}
-            TransitionComponent={state.transition}
-            autoHideDuration={7000}
+            open={open}
+            TransitionComponent={SlideTransition}
+            autoHideDuration={6000}
             onClose={handleClose}
             message={
                 <Box className={classes.root} width={250}>

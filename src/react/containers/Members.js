@@ -11,6 +11,9 @@ import Delete from '@material-ui/icons/Delete';
 import Modal from '@material-ui/core/Modal';
 import MemberForm from '../components/ModalForms/MemberForm';
 import RenewalForm from '../components/ModalForms/RenewalForm';
+import { channels } from '../../shared/constants';
+
+const { ipcRenderer } = window;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -22,131 +25,29 @@ const useStyles = makeStyles((theme) => ({
 const Members = () => {
 
     const [open, setOpen] = useState(false);
-    const [modalForm, setModalForm] = useState("");
-    const classes = useStyles();
-    const columns = [
-        { title: 'Full Name', field: 'fullName', cellStyle: { width: '30%' } },
-        { title: 'Age', field: 'age', type: 'numeric' },
-        {
-            title: 'Gender',
-            field: 'gender',
-            lookup: { 1: 'Male', 2: 'Female' },
 
-        },
-        { title: 'CBHI ID', field: 'cbhiId', cellStyle: { width: '30%' } },
+    const tableRef = React.createRef();
+
+    const [modalForm, setModalForm] = useState({
+        type: "",
+        memberId: null,
+        parentId: null,
+        parentCBHI: null
+    });
+    const classes = useStyles();
+
+    const columns = [
+        { title: 'Full Name', field: 'fullName', cellStyle: { width: '35%' } },
+        { title: 'Age', field: 'age', type: 'numeric' },
+        { title: 'Gender', field: 'gender' },
+        { title: 'CBHI ID', field: 'cbhiId', cellStyle: { width: '25%' } },
         { title: 'Kebele', field: 'kebele', hidden: true },
         { title: 'Gote', field: 'gote', hidden: true },
-        {
-            title: 'Relationship',
-            field: 'relationship',
-            hidden: true,
-            lookup: { 1: 'Household Head', 2: 'Wife/Husband', 3: 'Son', 4: 'Daughter', 5: 'Parent', 6: 'Other' },
-        },
-        { title: 'Enollment Date', field: 'enrollmentDate', hidden: true },
+        { title: 'Relationship', field: 'relationship', hidden: true },
+        { title: 'Profession', field: 'profession', hidden: true },
+        { title: 'Enrollment Date', field: 'enrolledDate', hidden: true },
         { title: 'Membership Status', field: 'status' }
     ];
-
-    const [data, setData] = useState([
-        {
-            id: 1, fullName: 'Mulugeta G/Michael Amdemariam', age: 37, gender: 1,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Agulae', gote: 'Chikun', relationship: 1, enrollmentDate: '04/25/2007', status: 'active'
-        }, {
-            id: 2, fullName: 'Biniam Mulugeta G/Michael', age: 13, gender: 1,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 3, status: 'active', parentId: 1
-        },
-        {
-            id: 3, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 1
-        },
-        {
-            id: 4, fullName: 'Fitsum Hadgu W/Michael', age: 27, gender: 1,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Abrha Atsbeha', gote: 'Gemad', relationship: 1, status: 'expired'
-        }, {
-            id: 5, fullName: 'Semhal G/Kidan Kiros', age: 13, gender: 2,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 2, status: 'active', parentId: 4
-        },
-        {
-            id: 6, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 4
-        },
-        {
-            id: 7, fullName: 'Hellina Haileselassie Toma', age: 37, gender: 2,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Wukro', gote: 'Tsaeda', relationship: 1, status: 'active'
-        }, {
-            id: 8, fullName: 'Biniam Mulugeta G/Michael', age: 13, gender: 1,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 3, status: 'active', parentId: 7
-        },
-        {
-            id: 9, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 7
-        },
-        {
-            id: 10, fullName: 'Mulugeta G/Michael Amdemariam', age: 37, gender: 1,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Agulae', gote: 'Chikun', relationship: 1, status: 'active'
-        }, {
-            id: 11, fullName: 'Biniam Mulugeta G/Michael', age: 13, gender: 1,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 3, status: 'active', parentId: 10
-        },
-        {
-            id: 12, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 10
-        },
-        {
-            id: 13, fullName: 'Fitsum Hadgu W/Michael', age: 27, gender: 1,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Abrha Atsbeha', gote: 'Gemad', relationship: 1, status: 'expired'
-        }, {
-            id: 14, fullName: 'Semhal G/Kidan Kiros', age: 13, gender: 2,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 2, status: 'active', parentId: 13
-        },
-        {
-            id: 15, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 13
-        },
-        {
-            id: 16, fullName: 'Hellina Haileselassie Toma', age: 37, gender: 2,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Wukro', gote: 'Tsaeda', relationship: 1, status: 'active'
-        }, {
-            id: 17, fullName: 'Biniam Mulugeta G/Michael', age: 13, gender: 1,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 3, status: 'active', parentId: 16
-        },
-        {
-            id: 18, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 16
-        },
-        {
-            id: 19, fullName: 'Mulugeta G/Michael Amdemariam', age: 37, gender: 1,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Agulae', gote: 'Chikun', relationship: 1, status: 'active'
-        }, {
-            id: 20, fullName: 'Biniam Mulugeta G/Michael', age: 13, gender: 1,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 3, status: 'active', parentId: 19
-        },
-        {
-            id: 21, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 19
-        },
-        {
-            id: 22, fullName: 'Fitsum Hadgu W/Michael', age: 27, gender: 1,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Abrha Atsbeha', gote: 'Gemad', relationship: 1, status: 'expired'
-        }, {
-            id: 23, fullName: 'Semhal G/Kidan Kiros', age: 13, gender: 2,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 2, status: 'active', parentId: 22
-        },
-        {
-            id: 24, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 22
-        },
-        {
-            id: 25, fullName: 'Hellina Haileselassie Toma', age: 37, gender: 2,
-            cbhiId: '01/01/03/P-000798/00', kebele: 'Wukro', gote: 'Tsaeda', relationship: 1, status: 'active'
-        }, {
-            id: 26, fullName: 'Biniam Mulugeta G/Michael', age: 13, gender: 1,
-            cbhiId: '01/01/03/P-000798/01', kebele: 'Agulae', gote: 'Chikun', relationship: 3, status: 'active', parentId: 25
-        },
-        {
-            id: 27, fullName: 'Senait Mulugeta G/Michael', age: 8, gender: 2,
-            cbhiId: '01/01/03/P-000798/02', kebele: 'Agulae', gote: 'Chikun', relationship: 4, status: 'active', parentId: 25
-        },
-    ]);
 
     const handleOpen = () => {
         setOpen(true);
@@ -156,7 +57,9 @@ const Members = () => {
         setOpen(false);
     }
 
-
+    const reloadGrid = () => {
+        tableRef.current && tableRef.current.onQueryChange();
+    }
 
     return (
         <Box className={classes.root} p={1} mb={3}>
@@ -164,10 +67,13 @@ const Members = () => {
                 open={open}
                 onClose={handleClose}
                 disableBackdropClick={true}>
-                {modalForm === "addMember" ? <MemberForm closeModal={handleClose} /> : <RenewalForm closeModal={handleClose} />}
+                {modalForm.type === "memberForm" ?
+                    <MemberForm memberId={modalForm.memberId} parentCBHI={modalForm.parentCBHI} parentId={modalForm.parentId} reloadGrid={reloadGrid} closeModal={handleClose} />
+                    : <RenewalForm memberId={modalForm.memberId} closeModal={handleClose} />}
             </Modal>
             <MaterialTable
                 title="CBHI Members & Beneficiaries"
+                tableRef={tableRef}
                 icons={TableIcons}
                 parentChildData={(row, rows) => rows.find(a => a.id === row.parentId)}
                 options={{
@@ -186,28 +92,61 @@ const Members = () => {
                     })
                 }}
                 columns={columns}
-                data={data}
+                data={query =>
+                    new Promise((resolve, reject) => {
+                        ipcRenderer.send(channels.LOAD_MEMBERS, query);
+                        ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {
+                            ipcRenderer.removeAllListeners(channels.LOAD_MEMBERS);
+                            resolve({
+                                data: result.rows,
+                                page: result.page,
+                                totalCount: result.count
+                            })
+                        });
+                    })
+                }
                 actions={[
                     {
                         icon: () => <AddBox />,
                         tooltip: 'Add Member',
                         isFreeAction: true,
                         onClick: (event) => {
-                            setModalForm("addMember");
-                            handleOpen()
+                            setModalForm({
+                                type: "memberForm",
+                                memberId: null,
+                                parentId: null
+                            });
+                            handleOpen();
                         }
-                    }, {
+                    },
+                    rowData => ({
                         icon: () => <Edit />,
                         tooltip: 'Edit Member',
                         isFreeAction: false,
-                        onClick: (event) => alert("You want to add a new row")
-                    },
+                        onClick: (event) => {
+                            setModalForm({
+                                type: "memberForm",
+                                memberId: rowData.id,
+                                parentId: rowData.parentId,
+                                parentCBHI: null
+                            });
+                            handleOpen();
+                        }
+                    }),
                     rowData => ({
                         icon: () => <GroupAdd />,
                         tooltip: `Add Beneficiary`,
                         isFreeAction: false,
-                        hidden: rowData.parentId === undefined ? false : true,
-                        onClick: (event) => alert("You want to add a new row")
+                        hidden: rowData.parentId === null ? false : true,
+                        onClick: (event) => {
+                            setModalForm({
+                                type: "memberForm",
+                                memberId: null,
+                                parentId: rowData.id,
+                                parentCBHI: rowData.cbhiId
+                            });
+                            handleOpen();
+                        }
                     }),
                     rowData => ({
                         icon: () => <RotateLeft color="secondary" />,
@@ -215,7 +154,12 @@ const Members = () => {
                         isFreeAction: false,
                         hidden: rowData.status === "expired" ? false : true,
                         onClick: (event) => {
-                            setModalForm("RenewMember");
+                            setModalForm({
+                                type: "renewForm",
+                                memberId: rowData.id,
+                                parentId: rowData.parentId,
+                                parentCBHI: null
+                            });
                             handleOpen();
                         }
                     }),
@@ -223,7 +167,7 @@ const Members = () => {
                         icon: () => <Delete />,
                         tooltip: `Delete Beneficiary`,
                         isFreeAction: false,
-                        hidden: rowData.parentId === undefined ? true : false,
+                        hidden: rowData.parentId === null ? true : false,
                         onClick: (event) => alert("You want to add a new row")
                     })]
                 }

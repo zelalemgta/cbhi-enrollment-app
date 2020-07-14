@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import Members from './containers/Members';
+import Reports from './containers/Reports';
 import Settings from './containers/Settings';
 import Notification from './components/Notification';
+import { channels } from '../shared/constants';
 
 const { ipcRenderer } = window;
 
@@ -37,9 +39,21 @@ function App() {
 
   const [notification, setNotification] = useState({
     open: false,
-    type: "Success",
-    message: "This is a test Message"
+    type: "",
+    message: ""
   });
+
+  useEffect(() => {
+    ipcRenderer.on(channels.SEND_NOTIFICATION, (event, result) => {
+      setNotification({
+        open: true,
+        ...result
+      });
+    });
+    return () => {
+      ipcRenderer.removeAllListeners(channels.SEND_NOTIFICATION);
+    }
+  }, [notification]);
 
   return (
     <Router>
@@ -49,6 +63,7 @@ function App() {
         <Navigation />
         <Switch>
           <Route exact path="/" component={Members} />
+          <Route exact path="/reports" component={Reports} />
           <Route exact path="/settings" component={Settings} />
         </Switch>
         <Footer />

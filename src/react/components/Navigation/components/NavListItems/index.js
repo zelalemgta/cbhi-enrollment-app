@@ -33,7 +33,7 @@ const NavListItems = (props) => {
                 </ListItemIcon>
                 <ListItemText primary="Members" />
             </ListItem>
-            <ListItem className={classes.listItem} button onClick={() => history.push("/")}>
+            <ListItem className={classes.listItem} button onClick={() => history.push("/reports")}>
                 <ListItemIcon>
                     <TableChartIcon />
                 </ListItemIcon>

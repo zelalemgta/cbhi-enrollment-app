@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Grid from '@material-ui/core/Grid'
 import MaterialTable from 'material-table';
 import { makeStyles } from '@material-ui/core/styles';
 import TableIcons from '../TableIcons';
+import { channels } from '../../../shared/constants';
+
+const { ipcRenderer } = window;
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -10,24 +13,33 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 const EnrollmentPeriod = () => {
+
     const classes = useStyles();
 
-    const [columns, setColumns] = useState([
-        { title: 'Enrollment Year', field: 'year' },
-        { title: 'Registration Start Date', field: 'rst' },
-        { title: 'Registration End Date', field: 'ret' },
-        { title: 'Coverage Start Date', field: 'cst' },
-        { title: 'Coverage End Date', field: 'cet' },
+    const columns = [
+        { title: 'Enrollment Year', field: 'enrollmentYear' },
+        { title: 'Registration Start Date', field: 'enrollmentStartDate' },
+        { title: 'Registration End Date', field: 'enrollmentEndDate' },
+        { title: 'Coverage Start Date', field: 'coverageStartDate' },
+        { title: 'Coverage End Date', field: 'coverageEndDate' },
         { title: 'Active', field: 'active' },
-    ]);
+    ];
 
-    const [data, setData] = useState([
-        { year: 2008, rst: Date.parse("6/29/2019"), ret: Date.parse("6/29/2019"), cst: Date.parse("6/29/2019"), cet: Date.parse("6/29/2019"), active: false },
-        { year: 2009, rst: Date.parse("6/29/2019"), ret: Date.parse("6/29/2019"), cst: Date.parse("6/29/2019"), cet: Date.parse("6/29/2019"), active: false },
-        { year: 2010, rst: Date.parse("6/29/2019"), ret: Date.parse("6/29/2019"), cst: Date.parse("6/29/2019"), cet: Date.parse("6/29/2019"), active: false },
-        { year: 2011, rst: Date.parse("6/29/2019"), ret: Date.parse("6/29/2019"), cst: Date.parse("6/29/2019"), cet: Date.parse("6/29/2019"), active: true },
-        { year: 2012, rst: Date.parse("6/29/2019"), ret: Date.parse("6/29/2019"), cst: Date.parse("6/29/2019"), cet: Date.parse("6/29/2019"), active: false },
-    ]);
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        ipcRenderer.send(channels.LOAD_ENROLLMENT_PERIOD);
+    }, [])
+
+    useEffect(() => {
+        ipcRenderer.on(channels.LOAD_ENROLLMENT_PERIOD, (event, result) => {
+            setData(result);
+        });
+        return () => {
+            ipcRenderer.removeAllListeners(channels.LOAD_ENROLLMENT_PERIOD);
+        }
+    }, [data]);
+
 
     return (
         <Grid container spacing={2} className={classes.root}>
@@ -49,21 +61,13 @@ const EnrollmentPeriod = () => {
                     editable={{
                         onRowAdd: newData =>
                             new Promise((resolve, reject) => {
-                                setTimeout(() => {
-                                    setData([...data, newData]);
-                                    resolve();
-                                }, 1000)
+                                ipcRenderer.send(channels.CREATE_ENROLLMENT_PERIOD, newData);
+                                resolve();
                             }),
                         onRowUpdate: (newData, oldData) =>
                             new Promise((resolve, reject) => {
-                                setTimeout(() => {
-                                    const dataUpdate = [...data];
-                                    const index = oldData.tableData.id;
-                                    dataUpdate[index] = newData;
-                                    setData([...dataUpdate]);
-
-                                    resolve();
-                                }, 1000)
+                                ipcRenderer.send(channels.UPDATE_ENROLLMENT_PERIOD, newData);
+                                resolve();
                             })
                     }}
                 />
