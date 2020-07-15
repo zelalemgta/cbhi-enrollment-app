@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Header from './components/Header';
 import Navigation from './components/Navigation';
@@ -65,6 +65,7 @@ function App() {
           <Route exact path="/" component={Members} />
           <Route exact path="/reports" component={Reports} />
           <Route exact path="/settings" component={Settings} />
+          <Route render={() => <Redirect to="/" />} />
         </Switch>
         <Footer />
       </ThemeProvider>

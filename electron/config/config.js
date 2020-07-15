@@ -7,12 +7,12 @@ module.exports = {
         dialect: 'sqlite',
         storage: path.join(app.getPath("documents"), "db_dev.sqlite3"),
         // Use a different storage type. Default: sequelize
-        migrationStorage: "json",
+        migrationStorage: "sequelize",
     },
     production: {
         dialect: 'sqlite',
         storage: path.join(app.getPath("documents"), "db.sqlite3"),
         // Use a different storage type. Default: sequelize
-        migrationStorage: "json",
+        migrationStorage: "sequelize",
     }
 }

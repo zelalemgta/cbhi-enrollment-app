@@ -20,6 +20,7 @@
     "sqlite3": "^4.2.0",
     "umzug": "^2.3.0"
   },
+  "homepage": "./",
   "scripts": {
     "start": "export BROWSER=none && react-scripts start",
     "start-electron": "export ELECTRON_START_URL=http://localhost:3000 && electron .",

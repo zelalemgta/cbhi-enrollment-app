@@ -1,8 +1,6 @@
-const electron = require("electron");
 const db = require("./models/index");
 const path = require("path");
 const Umzug = require("umzug");
-const { app } = electron;
 
 module.exports = function initDatabase() {
   const umzug = new Umzug({
@@ -12,7 +10,11 @@ module.exports = function initDatabase() {
     migrations: {
       // The path to the migrations directory.
       params: [db.sequelize.getQueryInterface(), db.Sequelize],
-      path: path.join(app.getAppPath(), "electron/db/migrations")
+      path: path.join(__dirname, "migrations")
+    },
+    storage: 'sequelize',
+    storageOptions: {
+      sequelize: db.sequelize
     }
   });
   umzug.pending().then(migrations => {
