@@ -38,8 +38,8 @@ const useStyles = makeStyles((theme) => ({
 const Reports = () => {
 
     const [selectedDate, setSelectedDate] = useState({
-        month: 0,
-        year: 0
+        month: '',
+        year: ''
     });
 
     const EthiopianYears = [];

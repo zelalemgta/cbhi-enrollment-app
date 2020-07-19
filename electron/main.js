@@ -7,6 +7,7 @@ const Profile = require('./businessLogic/Profile');
 const AdministrativeDivision = require('./businessLogic/AdministrativeDivision');
 const EnrollmentPeriod = require('./businessLogic/EnrollmentPeriod');
 const Member = require('./businessLogic/Member');
+const EnrollmentRecord = require('./businessLogic/EnrollmentRecord');
 
 let mainWindow;
 
@@ -77,6 +78,12 @@ ipcMain.on(channels.UPDATE_PROFILE, (event, profileObj) => {
 
 
 //*********** - ADMINISTRATIVE DIVISION METHODS - ****************//
+
+ipcMain.on(channels.LOAD_ADMINISTRATIVE_DIVISIONS, (event) => {
+    AdministrativeDivision.getAdministrativeDivisions().then(result => {
+        mainWindow.webContents.send(channels.LOAD_ADMINISTRATIVE_DIVISIONS, result);
+    }).catch((err) => console.log(err));
+});
 
 ipcMain.on(channels.LOAD_KEBELE, (event) => {
     AdministrativeDivision.getKebeles().then(result => {
@@ -196,6 +203,29 @@ ipcMain.on(channels.UPDATE_MEMBER, (event, memberObj) => {
     }).catch((err) => console.log(err));
 });
 
+ipcMain.on(channels.REMOVE_MEMBER, (event, memberId) => {
+    Member.removeMember(memberId).then(response => {
+        mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+        if (response.type === 'Success')
+            mainWindow.webContents.send(channels.MEMBER_REMOVED);
+    }).catch((err) => console.log(err));
+});
+
+//*********** - MEMBER RENEWAL METHODS - ****************//
+
+ipcMain.on(channels.LOAD_MEMBER_RENEWAL, (event, householdId) => {
+    EnrollmentRecord.loadNewEnrollmentRecord(householdId).then((result) => {
+        mainWindow.webContents.send(channels.LOAD_MEMBER_RENEWAL, result);
+    });
+});
+
+ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
+    EnrollmentRecord.addEnrollmentRecord(enrollmentRecordObj).then(response => {
+        mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+        if (response.type === 'Success')
+            mainWindow.webContents.send(channels.MEMBER_RENEWAL_SUCCESS);
+    }).catch((err) => console.log(err));
+});
 
 //*********** - REPORT METHODS - ****************//
 

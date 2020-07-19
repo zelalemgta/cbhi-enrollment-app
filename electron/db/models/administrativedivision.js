@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      AdministrativeDivision.hasMany(models.Household);
     }
   };
   AdministrativeDivision.init({

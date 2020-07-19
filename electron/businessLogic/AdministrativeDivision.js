@@ -45,6 +45,15 @@ class AdministrativeDivision {
         return result;
     };
 
+    static getAdministrativeDivisions = () => {
+        const administrativeDivisions = models.AdministrativeDivision.findAll({
+            raw: true
+        }).then(result => {
+            return result;
+        });
+        return administrativeDivisions;
+    };
+
     static getKebeles = () => {
         const kebeles = models.AdministrativeDivision.findAll({
             where: {

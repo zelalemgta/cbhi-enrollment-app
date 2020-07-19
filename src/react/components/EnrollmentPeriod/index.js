@@ -17,12 +17,12 @@ const EnrollmentPeriod = () => {
     const classes = useStyles();
 
     const columns = [
-        { title: 'Enrollment Year', field: 'enrollmentYear' },
+        { title: 'Enrollment Year', field: 'enrollmentYear', defaultSort: 'desc' },
         { title: 'Registration Start Date', field: 'enrollmentStartDate' },
         { title: 'Registration End Date', field: 'enrollmentEndDate' },
         { title: 'Coverage Start Date', field: 'coverageStartDate' },
         { title: 'Coverage End Date', field: 'coverageEndDate' },
-        { title: 'Active', field: 'active' },
+        { title: 'Active', field: 'active', editable: 'never' },
     ];
 
     const [data, setData] = useState([]);

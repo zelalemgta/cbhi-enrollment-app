@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@material-ui/core/Box'
 import MaterialTable from 'material-table';
 import { makeStyles } from '@material-ui/core/styles';
@@ -11,7 +11,9 @@ import Delete from '@material-ui/icons/Delete';
 import Modal from '@material-ui/core/Modal';
 import MemberForm from '../components/ModalForms/MemberForm';
 import RenewalForm from '../components/ModalForms/RenewalForm';
+import DialogWindow from '../components/DialogWindow';
 import { channels } from '../../shared/constants';
+import { toEthiopian } from 'ethiopian-date';
 
 const { ipcRenderer } = window;
 
@@ -22,6 +24,20 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
+const convertDate = (date) => {
+    let convertedDate;
+    const dateObj = new Date(date);
+    const [year, month, day] = [dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate()];
+    convertedDate = toEthiopian(year, month, day);
+    //Returned Date Format DD/MM/YYYY
+    return `${convertedDate[2]}/${convertedDate[1]}/${convertedDate[0]}`
+}
+
+const calculateAge = (dateOfBirth) => {
+    var diff = new Date().getTime() - new Date(dateOfBirth).getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+}
+
 const Members = () => {
 
     const [open, setOpen] = useState(false);
@@ -30,23 +46,53 @@ const Members = () => {
 
     const [modalForm, setModalForm] = useState({
         type: "",
+        householdId: null,
         memberId: null,
         parentId: null,
-        parentCBHI: null
+        householdCBHI: null
     });
+
+    const [dialogState, setDialogState] = useState({
+        open: false,
+        title: "",
+        message: "",
+        memberId: 0,
+    });
+
+
     const classes = useStyles();
 
     const columns = [
-        { title: 'Full Name', field: 'fullName', cellStyle: { width: '35%' } },
-        { title: 'Age', field: 'age', type: 'numeric' },
-        { title: 'Gender', field: 'gender' },
-        { title: 'CBHI ID', field: 'cbhiId', cellStyle: { width: '25%' } },
-        { title: 'Kebele', field: 'kebele', hidden: true },
-        { title: 'Gote', field: 'gote', hidden: true },
-        { title: 'Relationship', field: 'relationship', hidden: true },
-        { title: 'Profession', field: 'profession', hidden: true },
-        { title: 'Enrollment Date', field: 'enrolledDate', hidden: true },
-        { title: 'Membership Status', field: 'status' }
+        { title: 'Full Name', field: 'Members.fullName', cellStyle: { width: '32%' } },
+        {
+            title: 'Age',
+            field: 'Members.age',
+            render: rowData => calculateAge(rowData['Members.dateOfBirth']),
+            sorting: false
+        },
+        { title: 'Gender', field: 'Members.gender' },
+        { title: 'CBHI ID', field: 'Members.cbhiId', cellStyle: { width: '25%' } },
+        {
+            title: 'Kebele/Gote',
+            field: 'AdministrativeDivision',
+            render: rowData => rowData.AdministrativeDivisionId && `${rowData['AdministrativeDivision.name']} (${rowData['AdministrativeDivision.level']})`,
+            hidden: true,
+            sorting: false
+        },
+        { title: 'Relationship', field: 'Members.relationship', hidden: true },
+        { title: 'Profession', field: 'Members.profession', hidden: true },
+        {
+            title: 'Enrollment Date',
+            field: 'Members.enrolledDate',
+            render: rowData => convertDate(rowData.enrolledDate),
+            hidden: true
+        },
+        {
+            title: 'Membership Status',
+            field: 'status',
+            sorting: false,
+            render: rowData => rowData['EnrollmentRecords.id'] ? 'Active' : 'Expired'
+        }
     ];
 
     const handleOpen = () => {
@@ -56,6 +102,30 @@ const Members = () => {
     const handleClose = () => {
         setOpen(false);
     }
+
+    const handleDialogClose = () => {
+        setDialogState({
+            ...dialogState,
+            open: false
+        });
+    }
+
+    const handleDialogAction = () => {
+        ipcRenderer.send(channels.REMOVE_MEMBER, dialogState.memberId);
+    }
+
+    useEffect(() => {
+        ipcRenderer.on(channels.MEMBER_REMOVED, (event) => {
+            reloadGrid();
+            setDialogState({
+                ...dialogState,
+                open: false
+            })
+        })
+        return () => {
+            ipcRenderer.removeAllListeners(channels.MEMBER_REMOVED);
+        }
+    })
 
     const reloadGrid = () => {
         tableRef.current && tableRef.current.onQueryChange();
@@ -68,14 +138,22 @@ const Members = () => {
                 onClose={handleClose}
                 disableBackdropClick={true}>
                 {modalForm.type === "memberForm" ?
-                    <MemberForm memberId={modalForm.memberId} parentCBHI={modalForm.parentCBHI} parentId={modalForm.parentId} reloadGrid={reloadGrid} closeModal={handleClose} />
-                    : <RenewalForm memberId={modalForm.memberId} closeModal={handleClose} />}
+                    <MemberForm memberId={modalForm.memberId} householdId={modalForm.householdId} householdCBHI={modalForm.householdCBHI} parentId={modalForm.parentId} reloadGrid={reloadGrid} closeModal={handleClose} />
+                    : <RenewalForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />}
             </Modal>
+            <DialogWindow
+                open={dialogState.open}
+                title={dialogState.title}
+                message={dialogState.message}
+                recordId={dialogState.memberId}
+                handleClose={handleDialogClose}
+                handleAction={handleDialogAction}
+            />
             <MaterialTable
                 title="CBHI Members & Beneficiaries"
                 tableRef={tableRef}
                 icons={TableIcons}
-                parentChildData={(row, rows) => rows.find(a => a.id === row.parentId)}
+                parentChildData={(row, rows) => rows.find(a => a['Members.id'] === row['Members.parentId'])}
                 options={{
                     padding: "dense",
                     pageSize: 10,
@@ -88,7 +166,7 @@ const Members = () => {
                     loadingType: "overlay",
                     toolbarButtonAlignment: "left",
                     rowStyle: rowData => ({
-                        backgroundColor: rowData.status === "expired" ? "#ffcdd2" : "inherit"
+                        backgroundColor: rowData['EnrollmentRecords.id'] ? "inherit" : "#ffcdd2"
                     })
                 }}
                 columns={columns}
@@ -113,8 +191,10 @@ const Members = () => {
                         onClick: (event) => {
                             setModalForm({
                                 type: "memberForm",
+                                householdId: null,
                                 memberId: null,
-                                parentId: null
+                                parentId: null,
+                                householdCBHI: null
                             });
                             handleOpen();
                         }
@@ -126,9 +206,10 @@ const Members = () => {
                         onClick: (event) => {
                             setModalForm({
                                 type: "memberForm",
-                                memberId: rowData.id,
-                                parentId: rowData.parentId,
-                                parentCBHI: null
+                                householdId: null,
+                                memberId: rowData['Members.id'],
+                                parentId: rowData['Members.parentId'],
+                                householdCBHI: rowData.cbhiId
                             });
                             handleOpen();
                         }
@@ -137,13 +218,14 @@ const Members = () => {
                         icon: () => <GroupAdd />,
                         tooltip: `Add Beneficiary`,
                         isFreeAction: false,
-                        hidden: rowData.parentId === null ? false : true,
+                        hidden: rowData['Members.parentId'] === null ? false : true,
                         onClick: (event) => {
                             setModalForm({
                                 type: "memberForm",
+                                householdId: rowData.id,
                                 memberId: null,
-                                parentId: rowData.id,
-                                parentCBHI: rowData.cbhiId
+                                parentId: rowData['Members.id'],
+                                householdCBHI: rowData.cbhiId
                             });
                             handleOpen();
                         }
@@ -152,13 +234,11 @@ const Members = () => {
                         icon: () => <RotateLeft color="secondary" />,
                         tooltip: 'Renew Membership',
                         isFreeAction: false,
-                        hidden: rowData.status === "expired" ? false : true,
+                        hidden: rowData['EnrollmentRecords.id'] || rowData['Members.parentId'] ? true : false,
                         onClick: (event) => {
                             setModalForm({
                                 type: "renewForm",
-                                memberId: rowData.id,
-                                parentId: rowData.parentId,
-                                parentCBHI: null
+                                householdId: rowData.id,
                             });
                             handleOpen();
                         }
@@ -167,8 +247,13 @@ const Members = () => {
                         icon: () => <Delete />,
                         tooltip: `Delete Beneficiary`,
                         isFreeAction: false,
-                        hidden: rowData.parentId === null ? true : false,
-                        onClick: (event) => alert("You want to add a new row")
+                        hidden: rowData['Members.parentId'] === null ? true : false,
+                        onClick: (event) => setDialogState({
+                            open: true,
+                            title: "Are you sure you want to delete the selected member?",
+                            message: "Attention! If you press Yes, the selected member will be deleted from the system.",
+                            memberId: rowData['Members.id']
+                        })
                     })]
                 }
             />

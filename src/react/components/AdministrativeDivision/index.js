@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Grid from '@material-ui/core/Grid'
 import { makeStyles } from '@material-ui/core/styles';
-import Kebele from './Kebele';
-import Gote from './Gote';
+import Kebele from './components/Kebele';
+import Gote from './components/Gote';
 
 const useStyles = makeStyles((theme) => ({
     root: {

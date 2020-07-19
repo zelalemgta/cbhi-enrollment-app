@@ -1,68 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import Grid from '@material-ui/core/Grid'
 import MaterialTable from 'material-table';
-import TableIcons from '../../TableIcons';
-import { channels } from '../../../../shared/constants';
+import TableIcons from '../../../TableIcons';
+import { channels } from '../../../../../shared/constants';
 
 const { ipcRenderer } = window;
 
-const Gote = (props) => {
-
-    const columns = [{ title: 'Gote Name', field: 'name' }];
+const Kebele = (props) => {
 
     const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(false);
+
+    const [selectedKebele, setSelectedKebele] = useState(0);
+
+    const columns = [{ title: 'Kebele Name', field: 'name' }, { title: 'Code', field: 'code' }];
 
     useEffect(() => {
-        if (props.parent >= 0) {
-            setLoading(true);
-            ipcRenderer.send(channels.LOAD_GOTE, props.parent);
-        }
-    }, [props.parent])
+        ipcRenderer.send(channels.LOAD_KEBELE);
+    }, [])
 
     useEffect(() => {
-        ipcRenderer.on(channels.LOAD_GOTE, (event, result) => {
+        ipcRenderer.on(channels.LOAD_KEBELE, (event, result) => {
             setData(result);
-            setLoading(false);
         });
         return () => {
-            ipcRenderer.removeAllListeners(channels.LOAD_GOTE);
+            ipcRenderer.removeAllListeners(channels.LOAD_KEBELE);
         }
     }, [data])
 
     return (
         <Grid item xs={6} md={6}>
             <MaterialTable
-                title="Gotes"
+                title="Kebeles"
                 icons={TableIcons}
                 options={{
                     padding: "dense",
                     pageSize: 5,
                     pageSizeOptions: [],
                     toolbarButtonAlignment: "left",
+                    rowStyle: rowData => ({
+                        backgroundColor: rowData.id === selectedKebele ? "#c2eafc" : "inherit"
+                    })
                 }}
-                isLoading={loading}
+                onRowClick={(event, rowData) => {
+                    setSelectedKebele(rowData.id);
+                    props.loadGotes(rowData.id);
+                }}
                 columns={columns}
                 data={data}
                 editable={{
                     onRowAdd: newData =>
                         new Promise((resolve, reject) => {
-                            newData.parent = props.parent;
-                            ipcRenderer.send(channels.CREATE_GOTE, newData);
-                            setLoading(true);
+                            ipcRenderer.send(channels.CREATE_KEBELE, newData);
                             resolve();
                         }),
                     onRowUpdate: (newData, oldData) =>
                         new Promise((resolve, reject) => {
-                            ipcRenderer.send(channels.UPDATE_GOTE, newData);
-                            setLoading(true);
+                            ipcRenderer.send(channels.UPDATE_KEBELE, newData);
                             resolve();
-
                         })
                 }}
             />
         </Grid>
-    );
+    )
 }
 
-export default Gote;
+export default Kebele;

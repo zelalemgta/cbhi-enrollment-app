@@ -15,7 +15,7 @@ const { ipcRenderer } = window;
 const theme = createMuiTheme({
   palette: {
     primary: {
-      main: '#222d32', //'#0288d1',
+      main: '#222d32',
       footer: '#0288d1'
     },
     secondary: {
