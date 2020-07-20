@@ -33,7 +33,7 @@ const AutocompleteFormControl = (props) => {
             autoHighlight
             options={options}
             getOptionSelected={(option, value) => option.id === value.id}
-            getOptionLabel={(option) => option && option.name}
+            getOptionLabel={(option) => option && `${option.name} (${option.level})`}
             renderInput={(params) => <TextField {...params} label="Kebele/Gote" variant="standard" />}
         />
     );

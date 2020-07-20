@@ -28,8 +28,11 @@ const useStyles = makeStyles((theme) => ({
         }
     },
     TextField: {
-        margin: theme.spacing(1),
-        width: "20ch"
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+        marginRight: "3px",
+        marginLeft: "3px",
+        width: "22ch"
     },
     fullWidth: {
         width: "100%",
@@ -89,6 +92,11 @@ const RenewalForm = React.forwardRef((props, ref) => {
     const handleStatusChange = (event) => {
         setMemberRenewal({
             ...memberRenewal,
+            contributionAmount: event.target.checked && 0,
+            registrationFee: event.target.checked && 0,
+            penalty: event.target.checked && 0,
+            otherFees: event.target.checked && 0,
+            receiptNo: event.target.checked && "",
             [event.target.name]: event.target.checked
         })
     }
@@ -123,7 +131,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
             </Box>
             <Divider />
             <Box display="flex" p={2}>
-                <form className={classes.fullWidth} onSubmit={handleSubmit} autoComplete="off" noValidate>
+                <form className={classes.fullWidth} onSubmit={handleSubmit} autoComplete="off">
                     <TextField className={classes.fullWidth}
                         id="householdHead"
                         name="householdHead"
@@ -158,11 +166,11 @@ const RenewalForm = React.forwardRef((props, ref) => {
                     </Grid>
 
                     <Box hidden={!memberRenewal.isPaying}>
-                        <TextField className={classes.fullWidth} required id="receiptNo" name="receiptNo" onChange={handleChange} value={memberRenewal.receiptNo} label="Reciept Number" />
-                        <TextField className={classes.TextField} required id="registrationFee" name="registrationFee" onChange={handleChange} value={memberRenewal.registrationFee} type="number" label="Registration Fee (ETB)" />
-                        <TextField className={classes.TextField} required id="contributionAmount" name="contributionAmount" onChange={handleChange} value={memberRenewal.contributionAmount} type="number" label="Contribution Amount (ETB)" />
-                        <TextField className={classes.TextField} required id="penalty" name="penalty" onChange={handleChange} value={memberRenewal.penalty} type="number" label="Penaltiy (ETB)" />
-                        <TextField className={classes.TextField} required id="otherFees" name="otherFees" onChange={handleChange} value={memberRenewal.otherFees} type="number" label="Other Fees (ETB)" />
+                        <TextField className={classes.fullWidth} required={memberRenewal.isPaying} id="receiptNo" name="receiptNo" onChange={handleChange} value={memberRenewal.receiptNo} label="Reciept Number" />
+                        <TextField className={classes.TextField} id="registrationFee" name="registrationFee" onChange={handleChange} value={memberRenewal.registrationFee} type="number" label="Registration Fee (ETB)" />
+                        <TextField className={classes.TextField} required={memberRenewal.isPaying} id="contributionAmount" name="contributionAmount" onChange={handleChange} value={memberRenewal.contributionAmount} type="number" label="Contribution Amount (ETB)" />
+                        <TextField className={classes.TextField} id="penalty" name="penalty" onChange={handleChange} value={memberRenewal.penalty} type="number" label="Penaltiy (ETB)" />
+                        <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={memberRenewal.otherFees} type="number" label="Other Fees (ETB)" />
                     </Box>
                     <TextField className={classes.TextField} required type="text"
                         placeholder="MM/DD/YYYY"

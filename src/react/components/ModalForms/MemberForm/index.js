@@ -41,16 +41,22 @@ const useStyles = makeStyles((theme) => ({
         }
     },
     TextField: {
-        margin: theme.spacing(1),
-        width: "20ch"
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+        marginRight: "3px",
+        marginLeft: "3px",
+        width: "22ch"
     },
     SelectField: {
         margin: "8px",
         width: "20ch",
     },
     AutocompleteField: {
-        margin: "8px",
-        width: "20ch",
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+        marginRight: "3px",
+        marginLeft: "3px",
+        width: "22ch",
         display: "inline-block"
     },
     fullWidth: {
@@ -113,7 +119,8 @@ const MemberForm = React.forwardRef((props, ref) => {
             if (result['Household.AdministrativeDivisionId'])
                 setSelectedOption({
                     id: result['Household.AdministrativeDivision.id'],
-                    name: result['Household.AdministrativeDivision.name']
+                    name: result['Household.AdministrativeDivision.name'],
+                    level: result['Household.AdministrativeDivision.level']
                 })
         });
         return () => {
