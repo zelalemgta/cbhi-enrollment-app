@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const url = require('url');
 const { channels } = require('../src/shared/constants');
@@ -8,6 +8,8 @@ const AdministrativeDivision = require('./businessLogic/AdministrativeDivision')
 const EnrollmentPeriod = require('./businessLogic/EnrollmentPeriod');
 const Member = require('./businessLogic/Member');
 const EnrollmentRecord = require('./businessLogic/EnrollmentRecord');
+const writeFile = require('fs').writeFile;
+const { Parser } = require('json2csv');
 
 let mainWindow;
 
@@ -48,6 +50,39 @@ app.on('activate', function () {
     }
 });
 
+//*********** - Export To CSV Functions - ***************/
+
+const exportEnrollmentData = async () => {
+
+    const fields = [
+        { label: 'Full Name', value: 'Members.fullName' },
+        { label: 'Date of Birth', value: 'Members.dateOfBirth' },
+        { label: 'Gender', value: 'Members.gender' },
+        { label: 'CBHI ID', value: 'Members.cbhiId' },
+        {
+            label: 'Kebele/Gote',
+            value: (rowData) => rowData['AdministrativeDivision.name'] + " (" + rowData['AdministrativeDivision.level'] + ")"
+        },
+        { label: 'Relationship', value: 'Members.relationship' },
+        { label: 'Profession', value: 'Members.profession' },
+        { label: 'Enrollment Date', value: 'Members.enrolledDate' },
+        {
+            label: 'Membership Status',
+            value: (rowData) => rowData['EnrollmentRecords.id'] ? 'Active' : 'Expired'
+        }
+    ];
+
+    try {
+        const allMembersData = await Member.getAllMembers();
+        const json2csvParser = new Parser({ fields });
+        const csvData = json2csvParser.parse(allMembersData);
+        return csvData;
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 //*********** - WOREDA PROFILE METHODS - ****************//
 
 ipcMain.on(channels.LOAD_PROFILE, (event) => {
@@ -75,7 +110,6 @@ ipcMain.on(channels.UPDATE_PROFILE, (event, profileObj) => {
             }).catch((err) => console.log(err));
     }).catch((err) => console.log(err));
 });
-
 
 //*********** - ADMINISTRATIVE DIVISION METHODS - ****************//
 
@@ -225,6 +259,33 @@ ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
         if (response.type === 'Success')
             mainWindow.webContents.send(channels.MEMBER_RENEWAL_SUCCESS);
     }).catch((err) => console.log(err));
+});
+
+//*********** - EXPORT ENROLLMENT DATA METHODS - ****************//
+
+ipcMain.on(channels.EXPORT_ENROLLMENT, (event, columns) => {
+    exportEnrollmentData(columns).then((dataset) => {
+        const options = {
+            title: 'Save Enrollment Data',
+            filters: [
+                { name: 'All files', extensions: ['csv'] }
+            ]
+        }
+        dialog.showSaveDialog(options).then((result) => {
+            if (result.filePath)
+                writeFile(result.filePath, dataset, (err) => {
+                    if (err) {
+                        console.log(err);
+                    }
+                    const response = {
+                        type: "Success",
+                        message: "Enrollment data exported successfully"
+                    }
+                    mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+                    mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
+                });
+        }).catch((error) => console.log(error));
+    }).catch((error) => { console.log(error) });
 });
 
 //*********** - REPORT METHODS - ****************//

@@ -44,6 +44,10 @@ const Members = () => {
 
     const tableRef = React.createRef();
 
+    const [gridState, setGridState] = useState({
+        isLoading: false
+    })
+
     const [modalForm, setModalForm] = useState({
         type: "",
         householdId: null,
@@ -127,6 +131,18 @@ const Members = () => {
         }
     })
 
+    useEffect(() => {
+        ipcRenderer.on(channels.EXPORT_ENROLLMENT, (event) => {
+            setGridState({
+                ...gridState,
+                isLoading: false
+            })
+        })
+        return () => {
+            ipcRenderer.removeAllListeners(channels.EXPORT_ENROLLMENT);
+        }
+    })
+
     const reloadGrid = () => {
         tableRef.current && tableRef.current.onQueryChange();
     }
@@ -153,12 +169,20 @@ const Members = () => {
                 title="CBHI Members & Beneficiaries"
                 tableRef={tableRef}
                 icons={TableIcons}
+                isLoading={gridState.isLoading}
                 parentChildData={(row, rows) => rows.find(a => a['Members.id'] === row['Members.parentId'])}
                 options={{
                     padding: "dense",
                     pageSize: 10,
                     pageSizeOptions: [],
                     exportButton: true,
+                    exportCsv: (columns, data) => {
+                        ipcRenderer.send(channels.EXPORT_ENROLLMENT);
+                        setGridState({
+                            ...gridState,
+                            isLoading: true
+                        })
+                    },
                     grouping: false,
                     draggable: false,
                     columnsButton: true,

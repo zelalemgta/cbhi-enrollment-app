@@ -27,6 +27,7 @@ module.exports = {
         CREATE_BENEFICIARY_RENEWAL: 'create_beneficiary_renewal',
         REMOVE_MEMBER_RENEWAL: 'remove_member_renewal',
         MEMBER_RENEWAL_SUCCESS: 'member_renewal_success',
+        EXPORT_ENROLLMENT: 'export_enrollment',
         SEND_NOTIFICATION: 'send_notification',
         DEV_TOOLS: 'dev_tools',
     },

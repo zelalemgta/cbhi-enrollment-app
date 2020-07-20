@@ -184,6 +184,37 @@ class Member {
         });
         return filiteredMembersList;
     };
+
+    static getAllMembers = async () => {
+        const activeYear = await models.EnrollmentPeriod.findOne({
+            where: {
+                coverageEndDate: { [Op.gte]: Date.now() }
+            }
+        });
+        const allMembersList = await models.Household.findAll({
+            include: [
+                {
+                    model: models.AdministrativeDivision,
+                    required: false,
+                },
+                {
+                    model: models.Member,
+                    required: true
+                },
+                {
+                    model: models.EnrollmentRecord,
+                    where: {
+                        EnrollmentPeriodId: activeYear ? activeYear.id : 0
+                    },
+                    required: false
+                }
+            ],
+            subQuery: false,
+            raw: true,
+            order: [["id", "ASC"], [models.Member, 'enrolledDate', 'ASC']]
+        });
+        return allMembersList;
+    }
 }
 
 module.exports = Member;
