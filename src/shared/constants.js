@@ -1,6 +1,11 @@
 module.exports = {
     channels: {
         APP_INFO: 'app_info',
+        WINDOW_STATE: 'window_state',
+        MINIMIZE_WINDOW: 'minimize_window',
+        MAXIMIZE_WINDOW: 'maximize_window',
+        UNMAXIMIZE_WINDOW: 'unmaximize_window',
+        CLOSE_APPLICATION: 'close_application',
         UPDATE_AVAILABLE: 'update_available',
         UPDATE_DOWNLOADED: 'update_downloaded',
         CREATE_PROFILE: 'create_profile',

@@ -25,12 +25,16 @@ function createWindow() {
         minHeight: 770,
         width: 1165,
         height: 770,
+        frame: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
         },
     });
     mainWindow.removeMenu();
     mainWindow.loadURL(startUrl);
+    mainWindow.on('moved', function () {
+        mainWindow.webContents.send(channels.WINDOW_STATE, false);
+    });
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
@@ -85,19 +89,42 @@ const exportEnrollmentData = async () => {
     }
 }
 
+//*********** - APPLICATION METHODS - ********************//
+ipcMain.on(channels.APP_INFO, (event) => {
+    mainWindow.webContents.send(channels.APP_INFO, app.getVersion());
+});
+
+ipcMain.on(channels.MINIMIZE_WINDOW, (event) => {
+    mainWindow.minimize();
+});
+
+ipcMain.on(channels.MAXIMIZE_WINDOW, (event) => {
+    mainWindow.maximize();
+    mainWindow.webContents.send(channels.WINDOW_STATE, true);
+});
+
+ipcMain.on(channels.UNMAXIMIZE_WINDOW, (event) => {
+    mainWindow.setSize(1165, 770);
+    mainWindow.webContents.send(channels.WINDOW_STATE, false);
+});
+
+ipcMain.on(channels.CLOSE_APPLICATION, (event) => {
+    mainWindow.close();
+});
+
 //*********** - AUTO UPDATE METHODS - ********************//
 
-autoUpdater.on('update-available', () => {
+autoUpdater.on('update-available', (info) => {
     const response = {
         type: "Info",
-        message: "A new update is available. Downloading now..."
+        message: `A new update ${info} is available. Downloading now...`
     };
     mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
 });
-autoUpdater.on('update-downloaded', () => {
+autoUpdater.on('update-downloaded', (info) => {
     const response = {
         type: "Info",
-        message: "Update Downloaded. It will be installed on next startup"
+        message: `A new update is ready to install. ${info} will automatically update on exit`
     };
     mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
 });
