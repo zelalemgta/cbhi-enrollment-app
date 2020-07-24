@@ -31,9 +31,6 @@ function createWindow() {
     });
     mainWindow.removeMenu();
     mainWindow.loadURL(startUrl);
-    mainWindow.once('ready-to-show', () => {
-        autoUpdater.checkForUpdatesAndNotify();
-    });
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
@@ -42,6 +39,7 @@ function createWindow() {
 app.on('ready', function () {
     initDatabase();
     createWindow();
+    setTimeout(() => { autoUpdater.checkForUpdatesAndNotify(); }, 21000)
 });
 
 app.on('window-all-closed', function () {
