@@ -45,11 +45,11 @@ const useStyles = makeStyles((theme) => ({
         marginBottom: theme.spacing(1),
         marginRight: "3px",
         marginLeft: "3px",
-        width: "22ch"
+        width: "14rem"
     },
     SelectField: {
         margin: "8px",
-        width: "20ch",
+        width: "13rem",
     },
     AutocompleteField: {
         marginTop: theme.spacing(1),

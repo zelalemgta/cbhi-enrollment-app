@@ -16,7 +16,7 @@ const { ipcRenderer } = window;
 const useStyles = makeStyles((theme) => ({
     root: {
         position: "absolute",
-        top: "10%",
+        top: "7%",
         left: `calc(50% - 200px)`,
         width: 500,
         height: 'auto',
@@ -25,6 +25,9 @@ const useStyles = makeStyles((theme) => ({
         borderRadius: "5px",
         '& h6': {
             padding: "12px"
+        },
+        '& input':{
+            height: "1em"
         }
     },
     TextField: {
@@ -32,11 +35,12 @@ const useStyles = makeStyles((theme) => ({
         marginBottom: theme.spacing(1),
         marginRight: "3px",
         marginLeft: "3px",
-        width: "22ch"
+        width: "14rem",
+
     },
     fullWidth: {
         width: "100%",
-        marginBottom: theme.spacing(1),
+        marginBottom: "16px"
     },
     label: {
         color: theme.palette.text.label
@@ -72,7 +76,6 @@ const RenewalForm = React.forwardRef((props, ref) => {
                 ...memberRenewal,
                 ...result
             });
-            console.log(result);
         })
         return () => {
             ipcRenderer.removeAllListeners(channels.LOAD_MEMBER_RENEWAL);
@@ -150,7 +153,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
                         label="CBHI Id"
                         value={memberRenewal.cbhiId}
                         variant="outlined" />
-                    <Divider variant="middle" style={{ margin: 10 }} />
+                    <Divider variant="middle" style={{ marginBottom: 10 }} />
                     <Grid component="div" spacing={1} container alignItems="center" justify="center">
                         <Grid item>Indigent</Grid>
                         <Grid item>
