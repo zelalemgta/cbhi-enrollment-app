@@ -3,6 +3,7 @@ const path = require('path');
 const url = require('url');
 const { channels } = require('../src/shared/constants');
 const initDatabase = require('./db/initDatabase');
+const { autoUpdater } = require('electron-updater');
 const Profile = require('./businessLogic/Profile');
 const AdministrativeDivision = require('./businessLogic/AdministrativeDivision');
 const EnrollmentPeriod = require('./businessLogic/EnrollmentPeriod');
@@ -30,6 +31,9 @@ function createWindow() {
     });
     mainWindow.removeMenu();
     mainWindow.loadURL(startUrl);
+    mainWindow.once('ready-to-show', () => {
+        autoUpdater.checkForUpdatesAndNotify();
+    });
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
@@ -82,6 +86,23 @@ const exportEnrollmentData = async () => {
         console.error(err);
     }
 }
+
+//*********** - AUTO UPDATE METHODS - ********************//
+
+autoUpdater.on('update-available', () => {
+    const response = {
+        type: "Info",
+        message: "A new update is available. Downloading now..."
+    };
+    mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+});
+autoUpdater.on('update-downloaded', () => {
+    const response = {
+        type: "Info",
+        message: "Update Downloaded. It will be installed on next startup"
+    };
+    mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+});
 
 //*********** - WOREDA PROFILE METHODS - ****************//
 

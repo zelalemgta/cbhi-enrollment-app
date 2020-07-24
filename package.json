@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "productName": "CBHI Enrollment App",
   "main": "electron/main.js",
+  "author": "Zelalem G. Tessema",
+  "license": "MIT",
   "private": true,
   "dependencies": {
     "@material-ui/core": "^4.10.2",
@@ -11,6 +13,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
+    "electron-updater": "^4.3.1",
     "ethiopian-date": "0.0.6",
     "fontsource-roboto": "^2.1.4",
     "json2csv": "^5.0.1",
@@ -26,10 +29,14 @@
   "homepage": "./",
   "scripts": {
     "start": "export BROWSER=none && react-scripts start",
+    "start-win": "set BROWSER=none && react-scripts start",
     "start-electron": "export ELECTRON_START_URL=http://localhost:3000 && electron .",
+    "start-electron-win": "set ELECTRON_START_URL=http://localhost:3000 && electron .",
     "build": "react-scripts build",
     "build-electron": "mkdir build/src && cp -r electron/. build/electron && cp -r src/shared/. build/src/shared",
+    "build-electron-win": "mkdir build/src & robocopy electron build/electron /S & robocopy src/shared build/src/shared /S",
     "package": "electron-builder build --win -c.extraMetadata.main=build/electron/main.js --publish never",
+    "deploy": "electron-builder --win -c.extraMetadata.main=build/electron/main.js --publish always",
     "postinstall": "electron-builder install-app-deps",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -55,6 +62,9 @@
     "sequelize-cli": "^6.0.0"
   },
   "build": {
+    "appId": "com.ehia.CBHIEnrollmentApp ",
+    "productName": "CBHI Enrollment App",
+    "copyright": "Copyright © 2020 ${author}",
     "files": [
       "build/**/*",
       "node_modules/**/*"

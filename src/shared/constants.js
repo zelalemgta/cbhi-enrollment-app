@@ -1,6 +1,8 @@
 module.exports = {
     channels: {
         APP_INFO: 'app_info',
+        UPDATE_AVAILABLE: 'update_available',
+        UPDATE_DOWNLOADED: 'update_downloaded',
         CREATE_PROFILE: 'create_profile',
         UPDATE_PROFILE: 'update_profile',
         LOAD_PROFILE: 'load_profile',
