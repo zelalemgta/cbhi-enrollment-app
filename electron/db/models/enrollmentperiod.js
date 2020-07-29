@@ -15,7 +15,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   EnrollmentPeriod.init({
-    enrollmentYear: DataTypes.INTEGER,
+    enrollmentYear: DataTypes.STRING,
+    eligibleHouseholds: DataTypes.INTEGER,
     enrollmentStartDate: DataTypes.DATEONLY,
     enrollmentEndDate: DataTypes.DATEONLY,
     coverageStartDate: DataTypes.DATEONLY,

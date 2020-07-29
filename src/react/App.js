@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
-import Header from './components/Header';
-import Navigation from './components/Navigation';
-import Footer from './components/Footer';
-import Members from './containers/Members';
-import Reports from './containers/Reports';
-import Settings from './containers/Settings';
-import Notification from './components/Notification';
+import Header from './components/organisms/Header';
+import Navigation from './components/organisms/Navigation';
+import Footer from './components/organisms/Footer';
+import Members from './components/pages/MemberPage';
+import Reports from './components/pages/ReportPage';
+import Settings from './components/pages/SettingsPage';
+import Notification from './components/organisms/Notification';
 import { channels } from '../shared/constants';
 
 const { ipcRenderer } = window;

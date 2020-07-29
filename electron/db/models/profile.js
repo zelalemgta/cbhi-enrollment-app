@@ -16,9 +16,9 @@ module.exports = (sequelize, DataTypes) => {
   Profile.init({
     zoneName: DataTypes.STRING,
     woredaName: DataTypes.STRING,
-    eligibleHouseholds: DataTypes.INTEGER,
     contributionAmount: DataTypes.FLOAT,
-    registrationFee: DataTypes.FLOAT
+    registrationFee: DataTypes.FLOAT,
+    additionalBeneficiaryFee: DataTypes.FLOAT
   }, {
     sequelize,
     modelName: 'Profile',

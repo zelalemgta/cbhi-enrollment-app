@@ -9,6 +9,7 @@ const AdministrativeDivision = require("./businessLogic/AdministrativeDivision")
 const EnrollmentPeriod = require("./businessLogic/EnrollmentPeriod");
 const Member = require("./businessLogic/Member");
 const EnrollmentRecord = require("./businessLogic/EnrollmentRecord");
+const Report = require("./businessLogic/Report");
 const writeFile = require("fs").writeFile;
 const { Parser } = require("json2csv");
 
@@ -34,6 +35,9 @@ function createWindow() {
   });
   mainWindow.removeMenu();
   mainWindow.loadURL(startUrl);
+  mainWindow.on("move", function () {
+    mainWindow.webContents.send(channels.WINDOW_STATE, mainWindow.isMaximized());
+  });
   mainWindow.on("maximize", function () {
     mainWindow.webContents.send(channels.WINDOW_STATE, true);
   });
@@ -412,6 +416,37 @@ ipcMain.on(channels.EXPORT_ENROLLMENT, (event, columns) => {
 });
 
 //*********** - REPORT METHODS - ****************//
+
+ipcMain.on(channels.REPORT_ELIGIBLE_HOUSEHOLDS, (event, enrollmentPeriodId) => {
+  Report.getEligibleHouseholds(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_ELIGIBLE_HOUSEHOLDS, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_MONTHLY_ENROLLMENT_STAT, (event, args) => {
+  Report.getMonthlyEnrollmentStat(args).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_MONTHLY_ENROLLMENT_STAT, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_ACTIVE_MEMBERS, (event, enrollmentPeriodId) => {
+  Report.getTotalActiveMembers(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_ACTIVE_MEMBERS, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTION, (event, enrollmentPeriodId) => {
+  Report.getTotalContribution(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_CONTRIBUTION, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_REGISTRATION_FEE, (event, enrollmentPeriodId) => {
+  Report.getTotalRegistrationFee(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_REGISTRATION_FEE, result);
+  });
+})
+
 
 //*********** -  DEVELOPER TOOLS - ****************//
 

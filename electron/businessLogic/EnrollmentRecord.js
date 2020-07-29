@@ -1,9 +1,8 @@
 const Sequelize = require("sequelize");
 const models = require("../db/models");
 const { toEthiopian, toGregorian } = require("ethiopian-date");
-const member = require("../db/models/member");
 
-//Initialize squelize operartor
+//Initialize sequelize operartor
 const Op = Sequelize.Op;
 
 const convertDate = (date, calendar) => {
@@ -56,6 +55,14 @@ class EnrollmentRecord {
     static addEnrollmentRecord = enrollmentRecordObj => {
         enrollmentRecordObj.receiptDate = convertDate(enrollmentRecordObj.receiptDate, 'GR');
         const result = models.EnrollmentRecord.create(enrollmentRecordObj).then(() => {
+            models.Household.update(
+                {
+                    cbhiId: enrollmentRecordObj.cbhiId
+                }, {
+                where: {
+                    id: enrollmentRecordObj.HouseholdId
+                }
+            })
             return {
                 type: "Success",
                 message: "Household Membership Renewed successfully"
@@ -71,68 +78,68 @@ class EnrollmentRecord {
         return result;
     };
 
-    static editEnrollmentRecord = enrollmentRecordObj => {
-        enrollmentRecordObj.receiptDate = convertDate(enrollmentRecordObj.receiptDate, 'GR');
-        const results = models.EnrollmentRecord.update(enrollmentRecordObj, {
-            where: {
-                id: enrollmentRecordObj.id
-            }
-        }).then(() => {
-            return {
-                type: "Success",
-                message: "Household Membership updated successfully"
-            };
-        }
-        ).catch((error) => {
-            console.log(error);
-            return {
-                type: "Error",
-                message: "Error updating Household Membership"
-            }
-        });
+    // static editEnrollmentRecord = enrollmentRecordObj => {
+    //     enrollmentRecordObj.receiptDate = convertDate(enrollmentRecordObj.receiptDate, 'GR');
+    //     const results = models.EnrollmentRecord.update(enrollmentRecordObj, {
+    //         where: {
+    //             id: enrollmentRecordObj.id
+    //         }
+    //     }).then(() => {
+    //         return {
+    //             type: "Success",
+    //             message: "Household Membership updated successfully"
+    //         };
+    //     }
+    //     ).catch((error) => {
+    //         console.log(error);
+    //         return {
+    //             type: "Error",
+    //             message: "Error updating Household Membership"
+    //         }
+    //     });
 
-        return results;
-    };
+    //     return results;
+    // };
 
-    static updateBeneficiaryEnrollmentRecord = async (parentId) => {
-        const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
-            where: {
-                coverageEndDate: { [Op.gte]: Date.now() }
-            }
-        });
+    // static updateBeneficiaryEnrollmentRecord = async (parentId) => {
+    //     const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+    //         where: {
+    //             coverageEndDate: { [Op.gte]: Date.now() }
+    //         }
+    //     });
 
-        // All ages of beneficiaries under the household will be automatically 
-        // enrolled for current active year
-        const beneficiaries = await models.Member.findAll({
-            raw: true,
-            subQuery: false,
-            include: [{
-                model: models.EnrollmentRecord,
-                where: {
-                    id: activeEnrollmentPeriod.id
-                },
-                required: false
-            }],
-            where: {
-                [Op.and]: [
-                    { parentId: parentId },
-                    { '$EnrollmentRecord.id$': null }
-                ]
-            }
-        });
-        console.log(beneficiaries);
-        return true
-    }
+    //     // All ages of beneficiaries under the household will be automatically 
+    //     // enrolled for current active year
+    //     const beneficiaries = await models.Member.findAll({
+    //         raw: true,
+    //         subQuery: false,
+    //         include: [{
+    //             model: models.EnrollmentRecord,
+    //             where: {
+    //                 id: activeEnrollmentPeriod.id
+    //             },
+    //             required: false
+    //         }],
+    //         where: {
+    //             [Op.and]: [
+    //                 { parentId: parentId },
+    //                 { '$EnrollmentRecord.id$': null }
+    //             ]
+    //         }
+    //     });
+    //     console.log(beneficiaries);
+    //     return true
+    // }
 
-    static getEnrollmentRecord = (id) => {
-        const enrollmentRecord = models.EnrollmentRecord.findByPk(id, {
-            raw: true
-        }).then(result => {
-            result.receiptDate = convertDate(result.receiptDate, 'ET');
-            return result;
-        });
-        return enrollmentRecord;
-    };
+    // static getEnrollmentRecord = (id) => {
+    //     const enrollmentRecord = models.EnrollmentRecord.findByPk(id, {
+    //         raw: true
+    //     }).then(result => {
+    //         result.receiptDate = convertDate(result.receiptDate, 'ET');
+    //         return result;
+    //     });
+    //     return enrollmentRecord;
+    // };
 }
 
 module.exports = EnrollmentRecord;

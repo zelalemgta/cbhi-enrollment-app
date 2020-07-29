@@ -14,13 +14,13 @@ module.exports = {
       woredaName: {
         type: Sequelize.STRING
       },
-      eligibleHouseholds: {
-        type: Sequelize.INTEGER
-      },
       contributionAmount: {
         type: Sequelize.FLOAT
       },
       registrationFee: {
+        type: Sequelize.FLOAT
+      },
+      additionalBeneficiaryFee: {
         type: Sequelize.FLOAT
       },
       createdAt: {

@@ -9,6 +9,9 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       enrollmentYear: {
+        type: Sequelize.STRING
+      },
+      eligibleHouseholds: {
         type: Sequelize.INTEGER
       },
       enrollmentStartDate: {
