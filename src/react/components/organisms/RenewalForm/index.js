@@ -65,7 +65,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
         otherFees: "",
         receiptNo: "",
         receiptDate: "",
-        isPaying: false,
+        isPaying: true,
         cbhiId: ""
     });
 

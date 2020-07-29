@@ -46,7 +46,7 @@ module.exports = {
     },
     genderOptions: ['Male', 'Female'],
     relationshipOptions: ['Household Head', 'Parent', 'Husband', 'Wife', 'Son', 'Daughter', 'Other'],
-    professionOptions: ['Farmer', 'Student'],
+    professionOptions: ['Farmer', 'Merchant', 'Job Seeker', 'Housewife', 'Stay at home husband', 'Daily Laborer', 'Student', 'Other'],
     administrativeLevelOptions: ['Kebele', 'Gote'],
     EthiopianMonths: ['Meskerem', 'Tikemt', 'Hidar', 'Tahesas', 'Tir', 'Yekatit', 'Megabit', 'Miyazia', 'Ginbot', 'Sene', 'Hamle', 'Nehase'],
 };
