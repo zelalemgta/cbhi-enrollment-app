@@ -1,0 +1,78 @@
+{
+  "name": "cbhi-enrollment-app",
+  "version": "0.1.0",
+  "productName": "CBHI Enrollment App",
+  "main": "electron/main.js",
+  "author": "Zelalem G. Tessema",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@material-ui/core": "^4.10.2",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.56",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.5.0",
+    "@testing-library/user-event": "^7.2.1",
+    "electron-updater": "^4.3.1",
+    "ethiopian-date": "0.0.6",
+    "fontsource-roboto": "^2.1.4",
+    "json2csv": "^5.0.1",
+    "material-table": "^1.62.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "3.4.1",
+    "sequelize": "^6.2.0",
+    "sqlite3": "^4.2.0",
+    "umzug": "^2.3.0"
+  },
+  "homepage": "./",
+  "scripts": {
+    "start": "export BROWSER=none && react-scripts start",
+    "start-win": "set BROWSER=none && react-scripts start",
+    "start-electron": "export ELECTRON_START_URL=http://localhost:3000 && electron .",
+    "start-electron-win": "set ELECTRON_START_URL=http://localhost:3000 && electron .",
+    "build": "react-scripts build",
+    "build-electron": "mkdir build/src && cp -r electron/. build/electron && cp -r src/shared/. build/src/shared",
+    "build-electron-win": "mkdir build/src & robocopy electron build/electron /S & robocopy src/shared build/src/shared /S",
+    "package": "electron-builder build --win -c.extraMetadata.main=build/electron/main.js --publish never",
+    "deploy": "electron-builder --win -c.extraMetadata.main=build/electron/main.js --publish always",
+    "postinstall": "electron-builder install-app-deps",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^9.0.5",
+    "electron-builder": "^22.7.0",
+    "sequelize-cli": "^6.0.0"
+  },
+  "build": {
+    "appId": "com.ehia.CBHIEnrollmentApp ",
+    "productName": "CBHI Enrollment App",
+    "copyright": "Copyright © 2020 ${author}",
+    "files": [
+      "build/**/*",
+      "node_modules/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "repo": "cbhi-enrollment-app",
+      "owner": "zelalemgta"
+    }
+  }
+}
