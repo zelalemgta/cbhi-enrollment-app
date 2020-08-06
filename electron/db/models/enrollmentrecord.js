@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
   EnrollmentRecord.init({
     contributionAmount: DataTypes.FLOAT,
     registrationFee: DataTypes.FLOAT,
-    penalty: DataTypes.FLOAT,
+    additionalBeneficiaryFee: DataTypes.FLOAT,
     otherFees: DataTypes.FLOAT,
     receiptNo: DataTypes.STRING,
     receiptDate: DataTypes.DATEONLY,

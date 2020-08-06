@@ -61,11 +61,11 @@ const RenewalForm = React.forwardRef((props, ref) => {
         enrollmentPeriod: "",
         contributionAmount: "",
         registrationFee: "",
-        penalty: "",
+        additionalBeneficiaryFee: "",
         otherFees: "",
         receiptNo: "",
         receiptDate: "",
-        isPaying: false,
+        isPaying: true,
         cbhiId: ""
     });
 
@@ -100,7 +100,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
             ...memberRenewal,
             contributionAmount: event.target.checked && 0,
             registrationFee: event.target.checked && 0,
-            penalty: event.target.checked && 0,
+            additionalBeneficiaryFee: event.target.checked && 0,
             otherFees: event.target.checked && 0,
             receiptNo: event.target.checked && "",
             [event.target.name]: event.target.checked
@@ -174,7 +174,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
                         <TextField className={classes.fullWidth} required={memberRenewal.isPaying} id="receiptNo" name="receiptNo" onChange={handleChange} value={memberRenewal.receiptNo} label="Reciept Number" />
                         <TextField className={classes.TextField} id="registrationFee" name="registrationFee" onChange={handleChange} value={memberRenewal.registrationFee} type="number" label="Registration Fee (ETB)" />
                         <TextField className={classes.TextField} required={memberRenewal.isPaying} id="contributionAmount" name="contributionAmount" onChange={handleChange} value={memberRenewal.contributionAmount} type="number" label="Contribution Amount (ETB)" />
-                        <TextField className={classes.TextField} id="penalty" name="penalty" onChange={handleChange} value={memberRenewal.penalty} type="number" label="Penaltiy (ETB)" />
+                        <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={memberRenewal.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
                         <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={memberRenewal.otherFees} type="number" label="Other Fees (ETB)" />
                     </Box>
                     <TextField className={classes.TextField} required type="text"

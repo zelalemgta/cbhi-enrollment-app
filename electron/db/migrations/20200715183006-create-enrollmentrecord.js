@@ -14,7 +14,7 @@ module.exports = {
       registrationFee: {
         type: Sequelize.FLOAT
       },
-      penalty: {
+      additionalBeneficiaryFee: {
         type: Sequelize.FLOAT
       },
       otherFees: {
