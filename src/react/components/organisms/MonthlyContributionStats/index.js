@@ -17,31 +17,46 @@ const useStyles = makeStyles((theme) => ({
     }
 }))
 
-const MonthlyContributionStat = () => {
+const MonthlyContributionStats = (props) => {
 
     const [contributionStat, setContributionStat] = useState({
         newMembersContributions: 0,
-        renewedMembersContribution: 0,
-        registrationFees: 0
+        renewedMembersContributions: 0,
+        registrationFees: 0,
+        additionalBeneficiariesFees: 0,
+        otherFees: 0
     })
 
     const tableData = [{
         stat: "New Members Contributions",
-        value: contributionStat.newMembersContributions
+        value: contributionStat.newMembersContributions.toLocaleString()
     }, {
         stat: "Renewed Members Contributions",
-        value: contributionStat.renewedMembersContribution
+        value: contributionStat.renewedMembersContributions.toLocaleString()
     }, {
         stat: "Registration Fees",
-        value: contributionStat.registrationFees
+        value: contributionStat.registrationFees.toLocaleString()
+    }, {
+        stat: "Additional Beneficiary Fees",
+        value: contributionStat.additionalBeneficiariesFees.toLocaleString()
+    }, {
+        stat: "Other Fees",
+        value: contributionStat.otherFees.toLocaleString()
     }]
 
     useEffect(() => {
-        ipcRenderer.on(channels.REPORT_MONTHLY_ENROLLMENT_STAT, (event, result) => {
+        if (props.monthFrom && props.enrollmentPeriod)
+            ipcRenderer.send(channels.REPORT_MONTHLY_CONTRIBUTION_STATS,
+                {
+                    enrollmentPeriodId: props.enrollmentPeriod,
+                    monthFrom: props.monthFrom,
+                    monthTo: props.monthTo ? props.monthTo : null
+                })
+        ipcRenderer.on(channels.REPORT_MONTHLY_CONTRIBUTION_STATS, (event, result) => {
             setContributionStat(result);
         });
-        //return () => { ipcRenderer.removeAllListeners(channels.REPORT_MONTHLY_ENROLLMENT_STAT); }
-    })
+        return () => { ipcRenderer.removeAllListeners(channels.REPORT_MONTHLY_CONTRIBUTION_STATS); }
+    }, [props])
 
     const classes = useStyles();
     return (
@@ -49,7 +64,7 @@ const MonthlyContributionStat = () => {
             <Table aria-label="Monthly Statistics" size="small">
                 <TableHead>
                     <TableRow>
-                        <TableCell>Contribution Stats</TableCell>
+                        <TableCell>Selected Month/s Contribution Stats</TableCell>
                         <TableCell align="right">(ETB)</TableCell>
                     </TableRow>
                 </TableHead>
@@ -68,4 +83,4 @@ const MonthlyContributionStat = () => {
     )
 }
 
-export default MonthlyContributionStat;
+export default MonthlyContributionStats;

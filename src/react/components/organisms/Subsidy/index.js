@@ -3,7 +3,6 @@ import Grid from '@material-ui/core/Grid';
 import MaterialTable from 'material-table';
 import { makeStyles } from '@material-ui/core/styles';
 import TableIcons from '../../molecules/TableIcons';
-
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -19,32 +18,48 @@ const useStyles = makeStyles((theme) => ({
         }
     }
 }));
-const EnrollmentPeriod = () => {
+
+const Subsidy = () => {
 
     const classes = useStyles();
 
-    const columns = [
-        { title: 'Enrollment Year', field: 'enrollmentYear', defaultSort: 'desc' },
-        { title: 'Eligible Households', field: 'eligibleHouseholds', type: 'numeric' },
-        { title: 'Reg. Start Date', field: 'enrollmentStartDate' },
-        { title: 'Reg. End Date', field: 'enrollmentEndDate' },
-        { title: 'Coverage Start Date', field: 'coverageStartDate' },
-        { title: 'Coverage End Date', field: 'coverageEndDate' },
-        { title: 'Active', field: 'active', editable: 'never' },
-    ];
-
     const [data, setData] = useState([]);
+    const [enrollmentPeriods, setEnrollmentPeriods] = useState({});
+   
+    const columns = [
+        {
+            title: 'Enrollment Year',
+            field: 'EnrollmentPeriodId',
+            lookup: enrollmentPeriods,
+            cellStyle: { width: '25%' }
+        },
+        { title: 'General Subsidy', field: 'generalSubsidy', type: 'numeric' },
+        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric' },
+        { title: 'Other', field: 'other', type: 'numeric' },
+    ];
 
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_ENROLLMENT_PERIOD);
-    }, [])
+        ipcRenderer.send(channels.LOAD_SUBSIDIES);
+    }, []);
 
     useEffect(() => {
         ipcRenderer.on(channels.LOAD_ENROLLMENT_PERIOD, (event, result) => {
-            setData(result);
+            let lookupObj = {};
+            result.map(ep => lookupObj[ep.id] = ep.enrollmentYear);
+            setEnrollmentPeriods(lookupObj);
         });
         return () => {
             ipcRenderer.removeAllListeners(channels.LOAD_ENROLLMENT_PERIOD);
+        }
+    }, [enrollmentPeriods]);
+
+    useEffect(() => {
+        ipcRenderer.on(channels.LOAD_SUBSIDIES, (event, result) => {
+            setData(result);
+        });
+        return () => {
+            ipcRenderer.removeAllListeners(channels.LOAD_SUBSIDIES);
         }
     }, [data]);
 
@@ -52,26 +67,23 @@ const EnrollmentPeriod = () => {
         <Grid container spacing={2} className={classes.root}>
             <Grid item xs={12} md={12}>
                 <MaterialTable
-                    title="Enrollment Periods"
+                    title="Subsidies"
                     icons={TableIcons}
                     options={{
                         padding: "dense",
                         pageSize: 5,
                         pageSizeOptions: [],
-                        toolbarButtonAlignment: "left",
-                        rowStyle: rowData => ({
-                            backgroundColor: rowData.active ? "#a5d6a7" : "inherit"
-                        })
+                        toolbarButtonAlignment: "left"
                     }}
                     columns={columns}
                     data={data}
                     editable={{
                         onRowAdd: newData =>
                             new Promise((resolve, reject) => {
-                                if (Object.keys(newData).length < 6)
+                                if (Object.keys(newData).length < 4)
                                     reject();
                                 else {
-                                    ipcRenderer.send(channels.CREATE_ENROLLMENT_PERIOD, newData);
+                                    ipcRenderer.send(channels.CREATE_SUBSIDY, newData);
                                     resolve();
                                 }
                             }),
@@ -82,10 +94,15 @@ const EnrollmentPeriod = () => {
                                 if (emptyValueCount > 0)
                                     reject();
                                 else {
-                                    ipcRenderer.send(channels.UPDATE_ENROLLMENT_PERIOD, newData);
+                                    ipcRenderer.send(channels.UPDATE_SUBSIDY, newData);
                                     resolve();
                                 }
-                            })
+                            }),
+                        onRowDelete: oldData =>
+                            new Promise((resolve, reject) => {
+                                ipcRenderer.send(channels.REMOVE_SUBSIDY, oldData.id);
+                                resolve();
+                            }),
                     }}
                 />
             </Grid>
@@ -93,4 +110,4 @@ const EnrollmentPeriod = () => {
     )
 }
 
-export default EnrollmentPeriod;
+export default Subsidy;

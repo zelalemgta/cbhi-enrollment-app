@@ -1,21 +1,21 @@
 'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Households', {
+    await queryInterface.createTable('Subsidies', {
       id: {
         allowNull: false,
-        type: Sequelize.UUID,
-        autoIncrement: false,
+        autoIncrement: true,
         primaryKey: true,
+        type: Sequelize.INTEGER
       },
-      cbhiId: {
-        type: Sequelize.STRING
+      generalSubsidy: {
+        type: Sequelize.FLOAT
       },
-      enrolledDate: {
-        type: Sequelize.DATEONLY
+      targetedSubsidy: {
+        type: Sequelize.FLOAT
       },
-      isDeleted: {
-        type: Sequelize.BOOLEAN
+      other: {
+        type: Sequelize.FLOAT
       },
       createdAt: {
         allowNull: false,
@@ -28,6 +28,6 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Households');
+    await queryInterface.dropTable('Subsidies');
   }
 };

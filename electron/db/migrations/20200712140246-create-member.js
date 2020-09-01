@@ -4,9 +4,9 @@ module.exports = {
     await queryInterface.createTable('Members', {
       id: {
         allowNull: false,
-        autoIncrement: true,
+        type: Sequelize.UUID,
+        autoIncrement: false,
         primaryKey: true,
-        type: Sequelize.INTEGER
       },
       fullName: {
         type: Sequelize.STRING
@@ -27,7 +27,8 @@ module.exports = {
         type: Sequelize.STRING
       },
       parentId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.UUID,
+        allowNull: true
       },
       enrolledDate: {
         type: Sequelize.DATEONLY

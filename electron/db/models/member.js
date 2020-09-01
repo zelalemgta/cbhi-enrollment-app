@@ -1,5 +1,6 @@
 'use strict';
 const { Model } = require('sequelize');
+const { v4: uuidv4 } = require('uuid');
 module.exports = (sequelize, DataTypes) => {
   class Member extends Model {
     /**
@@ -13,16 +14,30 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   Member.init({
+    id: {
+      allowNull: true,
+      primaryKey: true,
+      autoIncrement: false,
+      type: DataTypes.UUID,
+    },
     fullName: DataTypes.STRING,
     dateOfBirth: DataTypes.DATEONLY,
     gender: DataTypes.STRING,
     cbhiId: DataTypes.STRING,
     relationship: DataTypes.STRING,
     profession: DataTypes.STRING,
-    parentId: DataTypes.INTEGER,
+    parentId: {
+      type: DataTypes.UUID,
+      allowNull: true
+    },
     enrolledDate: DataTypes.DATEONLY,
     isDeleted: DataTypes.BOOLEAN
   }, {
+    hooks: {
+      beforeCreate: (member, options) => {
+        member.id = uuidv4();
+      }
+    },
     sequelize,
     modelName: 'Member',
   });

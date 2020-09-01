@@ -9,14 +9,14 @@ const TotalContribution = (props) => {
 
     useEffect(() => {
         if (props.enrollmentPeriod)
-            ipcRenderer.send(channels.REPORT_TOTAL_CONTRIBUTION, props.enrollmentPeriod);
-        ipcRenderer.on(channels.REPORT_TOTAL_CONTRIBUTION, (event, result) => {
+            ipcRenderer.send(channels.REPORT_TOTAL_CONTRIBUTIONS, props.enrollmentPeriod);
+        ipcRenderer.on(channels.REPORT_TOTAL_CONTRIBUTIONS, (event, result) => {
             setTotalContribution(result);
         });
-        return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_CONTRIBUTION) }
+        return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_CONTRIBUTIONS) }
     }, [props.enrollmentPeriod])
     return (
-        <ReportCard title="Total Contribution Amount" value={totalContribution} />
+        <ReportCard title="Total Contribution Amount" value={totalContribution.toLocaleString()} />
     )
 }
 

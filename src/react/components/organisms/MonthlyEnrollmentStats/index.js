@@ -28,30 +28,31 @@ const MonthlyEnrollmentStat = (props) => {
 
     const tableData = [{
         stat: "New Paying Members",
-        value: enrollmentStat.newPayingMembers
+        value: enrollmentStat.newPayingMembers.toLocaleString()
     }, {
         stat: "New Indigents",
-        value: enrollmentStat.newIndigents
+        value: enrollmentStat.newIndigents.toLocaleString()
     }, {
         stat: "Renewed Paying Members",
-        value: enrollmentStat.renewedPayingMembers
+        value: enrollmentStat.renewedPayingMembers.toLocaleString()
     }, {
         stat: "Renewed Indigents",
-        value: enrollmentStat.renewedIndigents
+        value: enrollmentStat.renewedIndigents.toLocaleString()
     }]
 
     useEffect(() => {
-        if (props.month && props.enrollmentPeriod)
-            ipcRenderer.send(channels.REPORT_MONTHLY_ENROLLMENT_STAT,
+        if (props.monthFrom && props.enrollmentPeriod)
+            ipcRenderer.send(channels.REPORT_MONTHLY_ENROLLMENT_STATS,
                 {
                     enrollmentPeriodId: props.enrollmentPeriod,
-                    month: props.month
+                    monthFrom: props.monthFrom,
+                    monthTo: props.monthTo ? props.monthTo : null
                 })
-        ipcRenderer.on(channels.REPORT_MONTHLY_ENROLLMENT_STAT, (event, result) => {
+        ipcRenderer.on(channels.REPORT_MONTHLY_ENROLLMENT_STATS, (event, result) => {
             setEnrollmentStat(result);
         });
-        return () => { ipcRenderer.removeAllListeners(channels.REPORT_MONTHLY_ENROLLMENT_STAT); }
-    }, [props.month, props.enrollmentPeriod])
+        return () => { ipcRenderer.removeAllListeners(channels.REPORT_MONTHLY_ENROLLMENT_STATS); }
+    }, [props])
 
     const classes = useStyles();
     return (
@@ -59,7 +60,7 @@ const MonthlyEnrollmentStat = (props) => {
             <Table aria-label="Monthly Statistics" size="small">
                 <TableHead>
                     <TableRow>
-                        <TableCell>Enrollment Stats</TableCell>
+                        <TableCell>Selected Month/s Enrollment Stats</TableCell>
                         <TableCell align="right">#</TableCell>
                     </TableRow>
                 </TableHead>

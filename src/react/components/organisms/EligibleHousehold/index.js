@@ -17,7 +17,7 @@ const EligibleHousehold = (props) => {
     }, [props.enrollmentPeriod])
 
     return (
-        <ReportCard title="Eligible Households" value={eligibleHouseholds} />
+        <ReportCard title="Eligible Households" value={eligibleHouseholds.toLocaleString()} />
     )
 }
 

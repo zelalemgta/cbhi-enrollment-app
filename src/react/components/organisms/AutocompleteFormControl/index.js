@@ -30,6 +30,7 @@ const AutocompleteFormControl = (props) => {
             onChange={(event, newValue) => {
                 props.handleChange(newValue);
             }}
+            disabled={props.disabled}
             autoHighlight
             options={options}
             getOptionSelected={(option, value) => option.id === value.id}

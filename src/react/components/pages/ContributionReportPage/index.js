@@ -4,13 +4,14 @@ import Grid from '@material-ui/core/Grid';
 import SelectField from '../../molecules/SelectField';
 import ReportDivider from '../../molecules/ReportDivider';
 import { EthiopianMonths } from '../../../../shared/constants';
+import RemoveIcon from '@material-ui/icons/Remove';
 import { makeStyles } from '@material-ui/core/styles';
-import EligibleHousehold from '../../organisms/EligibleHousehold';
-import TotalEnrollment from '../../organisms/TotalEnrollment';
+import Subsidies from '../../organisms/Subsidies';
 import TotalContribution from '../../organisms/TotalContribution';
-import TotalRegistrationFee from '../../organisms/TotalRegistrationFee';
-import MonthlyEnrollmentStat from '../../organisms/MonthlyEnrollmentStat';
-import MonthlyContributionStat from '../../organisms/MonthlyContributionStat';
+import TotalSubsidy from '../../organisms/TotalSubsidy';
+import TotalContributionCollected from '../../organisms/TotalContributionCollected';
+import TotalContributionStats from '../../organisms/TotalContributionStats';
+import MonthlyContributionStats from '../../organisms/MonthlyContributionStats';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -26,6 +27,9 @@ const useStyles = makeStyles((theme) => ({
             padding: '1em'
         }
     },
+    inputDivider: {
+        margin: '30px 7px 0 7px'
+    },
     footer: {
         width: `calc(100% - 200px)`,
         position: 'fixed',
@@ -33,12 +37,13 @@ const useStyles = makeStyles((theme) => ({
         bottom: '35px'
     }
 }))
-const Reports = () => {
+const ContributionReports = () => {
 
     const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
 
     const [selectedDate, setSelectedDate] = useState({
-        month: '',
+        monthFrom: '',
+        monthTo: '',
         year: ''
     });
 
@@ -65,33 +70,35 @@ const Reports = () => {
             <Grid className={classes.root} spacing={2} component="div" container alignItems="center">
                 <Grid item xs={12}>
                     <SelectField id="year" name="year" labelId="yearLabel" label="Select Year" options={enrollmentPeriods} selectedValue={selectedDate.year} onChange={handleChange} />
-                    <SelectField id="month" name="month" labelId="monthLabel" label="Select Month" options={ethiopianMonthOptions} selectedValue={selectedDate.month} onChange={handleChange} />
-                </Grid>
-                <Grid item xs={4}>
-                    <EligibleHousehold enrollmentPeriod={selectedDate.year} />
+                    <SelectField id="monthFrom" name="monthFrom" labelId="monthFromLabel" label="Select From Month" options={ethiopianMonthOptions} selectedValue={selectedDate.monthFrom} onChange={handleChange} />
+                    <RemoveIcon className={classes.inputDivider} />
+                    <SelectField id="monthTo" name="monthTo" labelId="monthToLabel" label="Select To Month" options={ethiopianMonthOptions} selectedValue={selectedDate.monthTo} onChange={handleChange} />
                 </Grid>
                 <Grid item xs={12}>
-                    <ReportDivider title="Enrollments & Contributions (For Selected Month)" />
+                    <Subsidies enrollmentPeriod={selectedDate.year} />
+                </Grid>
+                <Grid item xs={12}>
+                    <ReportDivider title="" />
                 </Grid>
                 <Grid item xs={6}>
-                    <MonthlyEnrollmentStat enrollmentPeriod={selectedDate.year} month={selectedDate.month} />
+                    <MonthlyContributionStats enrollmentPeriod={selectedDate.year} monthFrom={selectedDate.monthFrom} monthTo={selectedDate.monthTo} />
                 </Grid>
                 <Grid item xs={6}>
-                    <MonthlyContributionStat enrollmentPeriod={selectedDate.year} month={selectedDate.month} />
+                    <TotalContributionStats enrollmentPeriod={selectedDate.year} />
                 </Grid>
 
                 <Grid className={classes.footer} component="div" spacing={2} container alignItems="center">
                     <Grid item xs={12}>
-                        <ReportDivider title="Total Enrollments & Contributions" />
-                    </Grid>
-                    <Grid item xs={4}>
-                        <TotalEnrollment enrollmentPeriod={selectedDate.year} />
+                        <ReportDivider title="Total Contributions & Subsidies" />
                     </Grid>
                     <Grid item xs={4}>
                         <TotalContribution enrollmentPeriod={selectedDate.year} />
                     </Grid>
                     <Grid item xs={4}>
-                        <TotalRegistrationFee enrollmentPeriod={selectedDate.year} />
+                        <TotalSubsidy enrollmentPeriod={selectedDate.year} />
+                    </Grid>
+                    <Grid item xs={4}>
+                        <TotalContributionCollected enrollmentPeriod={selectedDate.year} />
                     </Grid>
                 </Grid>
             </Grid >
@@ -99,4 +106,4 @@ const Reports = () => {
     );
 }
 
-export default Reports;
+export default ContributionReports;

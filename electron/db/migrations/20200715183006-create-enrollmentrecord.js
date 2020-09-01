@@ -4,9 +4,9 @@ module.exports = {
     await queryInterface.createTable('EnrollmentRecords', {
       id: {
         allowNull: false,
-        autoIncrement: true,
+        type: Sequelize.UUID,
+        autoIncrement: false,
         primaryKey: true,
-        type: Sequelize.INTEGER
       },
       contributionAmount: {
         type: Sequelize.FLOAT
@@ -14,7 +14,7 @@ module.exports = {
       registrationFee: {
         type: Sequelize.FLOAT
       },
-      penalty: {
+      additionalBeneficiaryFee: {
         type: Sequelize.FLOAT
       },
       otherFees: {

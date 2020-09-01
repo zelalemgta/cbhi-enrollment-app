@@ -19,9 +19,12 @@ const ReportCard = (props) => {
                 {props.title}
             </Typography>
             <Divider variant="fullWidth" />
-            <Typography className={classes.figures} variant="h4">
-                {props.value}
-            </Typography>
+            {
+                props.children ? props.children :
+                    <Typography className={classes.figures} variant="h4">
+                        {props.value}
+                    </Typography>
+            }
         </Paper>
     )
 }
