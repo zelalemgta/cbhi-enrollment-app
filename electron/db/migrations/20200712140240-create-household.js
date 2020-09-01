@@ -4,9 +4,9 @@ module.exports = {
     await queryInterface.createTable('Households', {
       id: {
         allowNull: false,
-        autoIncrement: true,
+        type: Sequelize.UUID,
+        autoIncrement: false,
         primaryKey: true,
-        type: Sequelize.INTEGER
       },
       cbhiId: {
         type: Sequelize.STRING

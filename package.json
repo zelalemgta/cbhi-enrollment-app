@@ -1,5 +1,5 @@
 {
-  "name": "cbhi-enrollment-app",
+  "name": "cbhi-app",
   "version": "0.1.0",
   "productName": "CBHI Enrollment App",
   "main": "electron/main.js",
@@ -21,10 +21,11 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.1",
+    "react-scripts": "^3.4.3",
     "sequelize": "^6.2.0",
     "sqlite3": "^4.2.0",
-    "umzug": "^2.3.0"
+    "umzug": "^2.3.0",
+    "uuid": "^8.3.0"
   },
   "homepage": "./",
   "scripts": {
@@ -35,8 +36,8 @@
     "build": "react-scripts build",
     "build-electron": "mkdir build/src && cp -r electron/. build/electron && cp -r src/shared/. build/src/shared",
     "build-electron-win": "mkdir build/src & robocopy electron build/electron /S & robocopy src/shared build/src/shared /S",
-    "package": "electron-builder build --win -c.extraMetadata.main=build/electron/main.js --publish never",
-    "deploy": "electron-builder --win -c.extraMetadata.main=build/electron/main.js --publish always",
+    "package": "electron-builder build --win --x64 --ia32 -c.extraMetadata.main=build/electron/main.js --publish never",
+    "deploy": "electron-builder --win --x64 --ia32 -c.extraMetadata.main=build/electron/main.js --publish always",
     "postinstall": "electron-builder install-app-deps",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -62,13 +63,22 @@
     "sequelize-cli": "^6.0.0"
   },
   "build": {
-    "appId": "com.ehia.CBHIEnrollmentApp ",
+    "appId": "com.ehia.CBHIApp",
     "productName": "CBHI Enrollment App",
     "copyright": "Copyright © 2020 ${author}",
     "files": [
       "build/**/*",
       "node_modules/**/*"
     ],
+    "win": {
+      "target": [
+        "nsis-web"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true
+    },
     "publish": {
       "provider": "github",
       "repo": "cbhi-enrollment-app",

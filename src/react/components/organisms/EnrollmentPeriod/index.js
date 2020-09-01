@@ -48,7 +48,6 @@ const EnrollmentPeriod = () => {
         }
     }, [data]);
 
-
     return (
         <Grid container spacing={2} className={classes.root}>
             <Grid item xs={12} md={12}>

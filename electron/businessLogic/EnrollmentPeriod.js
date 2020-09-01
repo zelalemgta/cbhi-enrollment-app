@@ -7,8 +7,8 @@ const { toEthiopian, toGregorian } = require("ethiopian-date");
 
 const convertDate = (date, calendar) => {
     if (calendar === 'GR') {
-        const etDate = date.split('/');
-        const convertedDate = toGregorian(parseInt(etDate[2]), parseInt(etDate[1]), parseInt(etDate[0]));
+        const etDate = date.split('/').map(Number);
+        const convertedDate = toGregorian(etDate[2], etDate[1], etDate[0]);
         return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`;
     } else {
         const dateObj = new Date(date);

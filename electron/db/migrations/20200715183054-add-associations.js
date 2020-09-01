@@ -26,7 +26,7 @@ module.exports = {
       'Members', // name of Source model
       'HouseholdId', // name of the key we're adding 
       {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: 'Households', // name of Target model
           key: 'id', // key in Target model that we're referencing
@@ -40,7 +40,7 @@ module.exports = {
       'EnrollmentRecords',
       'HouseholdId',
       {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: {
           model: 'Households',
           key: 'id',
@@ -63,6 +63,21 @@ module.exports = {
         onDelete: 'CASCADE'
       }
     );
+
+    await queryInterface.addColumn(
+      'Subsidies',
+      'EnrollmentPeriodId',
+      {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'EnrollmentPeriods',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      }
+    );
+
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -86,6 +101,10 @@ module.exports = {
     );
     await queryInterface.removeColumn(
       'EnrollmentRecords', // name of Source model
+      'EnrollmentPeriodId' // key we want to remove
+    );
+    await queryInterface.removeColumn(
+      'Subsidies', // name of Source model
       'EnrollmentPeriodId' // key we want to remove
     );
   }

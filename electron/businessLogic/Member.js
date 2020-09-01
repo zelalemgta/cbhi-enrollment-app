@@ -7,8 +7,8 @@ const Op = Sequelize.Op;
 
 const convertDate = (date, calendar) => {
     if (calendar === 'GR') {
-        const etDate = date.split('/');
-        const convertedDate = toGregorian(parseInt(etDate[2]), parseInt(etDate[1]), parseInt(etDate[0]));
+        const etDate = date.split('/').map(Number);
+        const convertedDate = toGregorian(etDate[2], etDate[1], etDate[0]);
         return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`;
     } else {
         const dateObj = new Date(date);
@@ -29,7 +29,8 @@ class Member {
     static addMember = memberObj => {
         memberObj.dateOfBirth = convertDate(memberObj.dateOfBirth, 'GR');
         memberObj.enrolledDate = convertDate(memberObj.enrolledDate, 'GR');
-        if (memberObj.HouseholdId) {
+        if (memberObj["Household.id"]) {
+            memberObj.HouseholdId = memberObj["Household.id"];
             const result = models.Member.create(memberObj).then(() => {
                 return {
                     type: "Success",
@@ -45,7 +46,7 @@ class Member {
             return result;
         } else {
             const result = models.Household.create({
-                cbhiId: memberObj.cbhiId,
+                cbhiId: memberObj["Household.cbhiId"],
                 AdministrativeDivisionId: memberObj.AdministrativeDivisionId,
                 enrolledDate: memberObj.enrolledDate,
                 Members: [{
@@ -85,10 +86,10 @@ class Member {
             }
         }).then(async () => {
             memberObj.parentId || await models.Household.update({
-                cbhiId: memberObj.cbhiId,
+                cbhiId: memberObj["Household.cbhiId"],
                 enrolledDate: memberObj.enrolledDate,
                 AdministrativeDivisionId: memberObj.AdministrativeDivisionId
-            }, { where: { id: memberObj.HouseholdId } });
+            }, { where: { id: memberObj["Household.id"] } });
             return {
                 type: "Success",
                 message: "Member updated successfully"
@@ -211,7 +212,7 @@ class Member {
             ],
             subQuery: false,
             raw: true,
-            order: [["id", "ASC"], [models.Member, 'enrolledDate', 'ASC']]
+            order: [["createdAt", "ASC"], [models.Member, 'enrolledDate', 'ASC']]
         });
         return allMembersList;
     }

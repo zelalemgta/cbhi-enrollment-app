@@ -54,7 +54,7 @@ const Members = () => {
         householdId: null,
         memberId: null,
         parentId: null,
-        householdCBHI: null
+        householdCBHIId: null
     });
 
     const [dialogState, setDialogState] = useState({
@@ -76,7 +76,12 @@ const Members = () => {
             sorting: false
         },
         { title: 'Gender', field: 'Members.gender' },
-        { title: 'CBHI ID', field: 'Members.cbhiId', cellStyle: { width: '25%' } },
+        {
+            title: 'CBHI ID',
+            field: 'Members.cbhiId',
+            cellStyle: { width: '25%' },
+            render: rowData => `${rowData.cbhiId}/${rowData['Members.cbhiId']}`
+        },
         {
             title: 'Kebele/Gote',
             field: 'AdministrativeDivision',
@@ -155,7 +160,7 @@ const Members = () => {
                 onClose={handleClose}
                 disableBackdropClick={true}>
                 {modalForm.type === "memberForm" ?
-                    <MemberForm memberId={modalForm.memberId} householdId={modalForm.householdId} householdCBHI={modalForm.householdCBHI} parentId={modalForm.parentId} reloadGrid={reloadGrid} closeModal={handleClose} />
+                    <MemberForm memberId={modalForm.memberId} parentId={modalForm.parentId} reloadGrid={reloadGrid} closeModal={handleClose} />
                     : <RenewalForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />}
             </Modal>
             <DialogWindow
@@ -216,10 +221,8 @@ const Members = () => {
                         onClick: (event) => {
                             setModalForm({
                                 type: "memberForm",
-                                householdId: null,
                                 memberId: null,
-                                parentId: null,
-                                householdCBHI: null
+                                parentId: null
                             });
                             handleOpen();
                         }
@@ -231,10 +234,8 @@ const Members = () => {
                         onClick: (event) => {
                             setModalForm({
                                 type: "memberForm",
-                                householdId: null,
                                 memberId: rowData['Members.id'],
-                                parentId: rowData['Members.parentId'],
-                                householdCBHI: rowData.cbhiId
+                                parentId: null
                             });
                             handleOpen();
                         }
@@ -247,10 +248,8 @@ const Members = () => {
                         onClick: (event) => {
                             setModalForm({
                                 type: "memberForm",
-                                householdId: rowData.id,
                                 memberId: null,
-                                parentId: rowData['Members.id'],
-                                householdCBHI: rowData.cbhiId
+                                parentId: rowData['Members.id']
                             });
                             handleOpen();
                         }
@@ -261,11 +260,16 @@ const Members = () => {
                         isFreeAction: false,
                         hidden: rowData['EnrollmentRecords.id'] || rowData['Members.parentId'] ? true : false,
                         onClick: (event) => {
-                            setModalForm({
-                                type: "renewForm",
-                                householdId: rowData.id,
-                            });
-                            handleOpen();
+                            ipcRenderer.send(channels.CHECK_ACTIVE_PERIOD);
+                            ipcRenderer.on(channels.CHECK_ACTIVE_PERIOD, (event, result) => {
+                                if (result) {
+                                    setModalForm({
+                                        type: "renewForm",
+                                        householdId: rowData.id,
+                                    });
+                                    handleOpen();
+                                }
+                            })
                         }
                     }),
                     rowData => ({

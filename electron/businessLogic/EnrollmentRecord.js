@@ -7,8 +7,8 @@ const Op = Sequelize.Op;
 
 const convertDate = (date, calendar) => {
     if (calendar === 'GR') {
-        const etDate = date.split('/');
-        const convertedDate = toGregorian(parseInt(etDate[2]), parseInt(etDate[1]), parseInt(etDate[0]));
+        const etDate = date.split('/').map(Number);
+        const convertedDate = toGregorian(etDate[2], etDate[1], etDate[0]);
         return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`;
     } else {
         const dateObj = new Date(date);
@@ -20,6 +20,16 @@ const convertDate = (date, calendar) => {
 }
 
 class EnrollmentRecord {
+
+    static checkActiveEnrollmentPeriod = async () => {
+        const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+            where: {
+                coverageEndDate: { [Op.gte]: Date.now() }
+            },
+            raw: true
+        });
+        return activeEnrollmentPeriod ? true : false;
+    }
 
     static loadNewEnrollmentRecord = async (householdId) => {
         const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
@@ -77,69 +87,6 @@ class EnrollmentRecord {
         })
         return result;
     };
-
-    // static editEnrollmentRecord = enrollmentRecordObj => {
-    //     enrollmentRecordObj.receiptDate = convertDate(enrollmentRecordObj.receiptDate, 'GR');
-    //     const results = models.EnrollmentRecord.update(enrollmentRecordObj, {
-    //         where: {
-    //             id: enrollmentRecordObj.id
-    //         }
-    //     }).then(() => {
-    //         return {
-    //             type: "Success",
-    //             message: "Household Membership updated successfully"
-    //         };
-    //     }
-    //     ).catch((error) => {
-    //         console.log(error);
-    //         return {
-    //             type: "Error",
-    //             message: "Error updating Household Membership"
-    //         }
-    //     });
-
-    //     return results;
-    // };
-
-    // static updateBeneficiaryEnrollmentRecord = async (parentId) => {
-    //     const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
-    //         where: {
-    //             coverageEndDate: { [Op.gte]: Date.now() }
-    //         }
-    //     });
-
-    //     // All ages of beneficiaries under the household will be automatically 
-    //     // enrolled for current active year
-    //     const beneficiaries = await models.Member.findAll({
-    //         raw: true,
-    //         subQuery: false,
-    //         include: [{
-    //             model: models.EnrollmentRecord,
-    //             where: {
-    //                 id: activeEnrollmentPeriod.id
-    //             },
-    //             required: false
-    //         }],
-    //         where: {
-    //             [Op.and]: [
-    //                 { parentId: parentId },
-    //                 { '$EnrollmentRecord.id$': null }
-    //             ]
-    //         }
-    //     });
-    //     console.log(beneficiaries);
-    //     return true
-    // }
-
-    // static getEnrollmentRecord = (id) => {
-    //     const enrollmentRecord = models.EnrollmentRecord.findByPk(id, {
-    //         raw: true
-    //     }).then(result => {
-    //         result.receiptDate = convertDate(result.receiptDate, 'ET');
-    //         return result;
-    //     });
-    //     return enrollmentRecord;
-    // };
 }
 
 module.exports = EnrollmentRecord;

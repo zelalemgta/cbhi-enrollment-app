@@ -3,10 +3,10 @@ import { makeStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import AccountBoxIcon from '@material-ui/icons/AccountBox';
 import Close from '@material-ui/icons/Close';
 import Divider from '@material-ui/core/Divider';
 import TextField from '@material-ui/core/TextField';
+import InputAdornment from '@material-ui/core/InputAdornment';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -33,13 +33,6 @@ const useStyles = makeStyles((theme) => ({
             display: "inline-block"
         }
     },
-    formHeader: {
-        backgroundColor: "#e3e3e3",
-        '& svg': {
-            verticalAlign: "bottom",
-            marginRight: "5px"
-        }
-    },
     TextField: {
         marginTop: theme.spacing(1),
         marginBottom: theme.spacing(1),
@@ -64,20 +57,20 @@ const useStyles = makeStyles((theme) => ({
         marginTop: theme.spacing(1),
         marginBottom: theme.spacing(1),
     },
+    householdCBHI: {
+        width: "60%",
+        marginTop: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+    },
+    memberCBHI: {
+        width: "30%",
+        margin: theme.spacing(1),
+        // marginBottom: theme.spacing(1),
+    },
     label: {
         color: theme.palette.text.label
     }
 }))
-
-const HouseholdHead = (props) => {
-    const classes = useStyles();
-    return (
-        <Typography className={classes.formHeader} display="inline" variant="subtitle2">
-            <AccountBoxIcon />
-            {props.cbhi}
-        </Typography>
-    )
-}
 
 const calculateDateOfBirth = (age) => {
     if (age) {
@@ -98,8 +91,8 @@ const MemberForm = React.forwardRef((props, ref) => {
         dateOfBirth: "",
         gender: "",
         cbhiId: "",
-        HouseholdId: props.householdId,
-        householdCBHI: props.householdCBHI,
+        'Household.id': "",
+        'Household.cbhiId': "",
         'Household.AdministrativeDivisionId': null,
         relationship: props.parentId ? "" : relationshipOptions[0],
         profession: "",
@@ -111,11 +104,20 @@ const MemberForm = React.forwardRef((props, ref) => {
     useEffect(() => {
         if (props.memberId !== null)
             ipcRenderer.send(channels.LOAD_MEMBER, props.memberId)
-    }, [props.memberId])
+        else if (props.parentId !== null)
+            ipcRenderer.send(channels.LOAD_MEMBER, props.parentId)
+    }, [props.memberId, props.parentId])
 
     useEffect(() => {
         ipcRenderer.on(channels.LOAD_MEMBER, (event, result) => {
-            setMember(result);
+            if (member.parentId === null)
+                setMember(result);
+            else
+                setMember({
+                    ...member,
+                    "Household.id": result['Household.id'],
+                    "Household.cbhiId": result['Household.cbhiId']
+                })
             if (result['Household.AdministrativeDivisionId'])
                 setSelectedOption({
                     id: result['Household.AdministrativeDivision.id'],
@@ -177,7 +179,6 @@ const MemberForm = React.forwardRef((props, ref) => {
                     <Typography component="h6" variant="h6">
                         {member.id ? "Update" : "Add"} {member.parentId ? "Beneficiary" : "Member"}
                     </Typography>
-                    {member.parentId && <HouseholdHead cbhi={props.householdCBHI} />}
                 </Box>
                 <Box p={0}>
                     <IconButton onClick={props.closeModal}>
@@ -215,8 +216,34 @@ const MemberForm = React.forwardRef((props, ref) => {
                             ))}
                         </Select>
                     </FormControl>
-                    <AutocompleteFormControl classes={classes.AutocompleteField} handleChange={handleAdministrativeDivisionChange} selectedOption={selectedOption} />
-                    <TextField className={classes.fullWidth} onChange={handleChange} required id="cbhiId" name="cbhiId" placeholder="00/00/00/P-000/00" helperText="eg. 01/01/02/P-001234/00" label="CBHI Id" value={member.cbhiId} />
+                    <AutocompleteFormControl classes={classes.AutocompleteField} handleChange={handleAdministrativeDivisionChange} disabled={member.parentId ? true : false} selectedOption={selectedOption} />
+                    <TextField
+                        className={classes.householdCBHI}
+                        onChange={handleChange}
+                        required={member.parentId ? true : false}
+                        InputProps={{
+                            endAdornment: <InputAdornment position="end">/</InputAdornment>,
+                            readOnly: member.parentId ? true : false
+                        }}
+                        variant={member.parentId ? "filled" : "standard"}
+                        id="Household.cbhiId"
+                        name="Household.cbhiId"
+                        placeholder="00/00/00/P-000/"
+                        helperText="eg. 01/01/02/P-001234/"
+                        label="Household CBHI Id"
+                        value={member["Household.cbhiId"]}
+                    />
+                    <TextField
+                        className={classes.memberCBHI}
+                        onChange={handleChange}
+                        required
+                        id="cbhiId"
+                        name="cbhiId"
+                        placeholder="00"
+                        helperText="eg. 01"
+                        label="Member CBHI Id"
+                        value={member.cbhiId}
+                    />
                     <FormControl variant={member.parentId ? "standard" : "filled"} className={classes.SelectField}>
                         <InputLabel id="genderLabel">Relationship</InputLabel>
                         <Select

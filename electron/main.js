@@ -7,6 +7,7 @@ const { autoUpdater } = require("electron-updater");
 const Profile = require("./businessLogic/Profile");
 const AdministrativeDivision = require("./businessLogic/AdministrativeDivision");
 const EnrollmentPeriod = require("./businessLogic/EnrollmentPeriod");
+const Subsidy = require("./businessLogic/Subsidy");
 const Member = require("./businessLogic/Member");
 const EnrollmentRecord = require("./businessLogic/EnrollmentRecord");
 const Report = require("./businessLogic/Report");
@@ -74,7 +75,11 @@ const exportEnrollmentData = async () => {
     { label: "Full Name", value: "Members.fullName" },
     { label: "Date of Birth", value: "Members.dateOfBirth" },
     { label: "Gender", value: "Members.gender" },
-    { label: "CBHI ID", value: "Members.cbhiId" },
+    {
+      label: "CBHI ID",
+      value: (rowData) =>
+        rowData.cbhiId + "/" + rowData["Members.cbhiId"],
+    },
     {
       label: "Kebele/Gote",
       value: (rowData) =>
@@ -317,6 +322,67 @@ ipcMain.on(channels.UPDATE_ENROLLMENT_PERIOD, (event, enrollmentPeriodObj) => {
     .catch((err) => console.log(err));
 });
 
+//*********** - SUBSIDY METHODS - ****************//
+
+ipcMain.on(channels.LOAD_SUBSIDIES, (event) => {
+  Subsidy.getSubsidies()
+    .then((result) => {
+      mainWindow.webContents.send(channels.LOAD_SUBSIDIES, result);
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on(channels.CREATE_SUBSIDY, (event, subsidyObj) => {
+  Subsidy.addSubsidy(subsidyObj)
+    .then((response) => {
+      mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      if (response.type === "Success")
+        Subsidy.getSubsidies()
+          .then((result) => {
+            mainWindow.webContents.send(
+              channels.LOAD_SUBSIDIES,
+              result
+            );
+          })
+          .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on(channels.UPDATE_SUBSIDY, (event, subsidyObj) => {
+  Subsidy.editSubsidy(subsidyObj)
+    .then((response) => {
+      mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      if (response.type === "Success")
+        Subsidy.getSubsidies()
+          .then((result) => {
+            mainWindow.webContents.send(
+              channels.LOAD_SUBSIDIES,
+              result
+            );
+          })
+          .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on(channels.REMOVE_SUBSIDY, (event, subsidyId) => {
+  Subsidy.removeSubsidy(subsidyId)
+    .then((response) => {
+      mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      if (response.type === "Success")
+        Subsidy.getSubsidies()
+          .then((result) => {
+            mainWindow.webContents.send(
+              channels.LOAD_SUBSIDIES,
+              result
+            );
+          })
+          .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
+});
+
 //*********** - MEMBERS & BENEFICIARIES METHODS - ****************//
 
 ipcMain.on(channels.LOAD_MEMBER, (event, id) => {
@@ -367,6 +433,19 @@ ipcMain.on(channels.REMOVE_MEMBER, (event, memberId) => {
 
 //*********** - MEMBER RENEWAL METHODS - ****************//
 
+ipcMain.on(channels.CHECK_ACTIVE_PERIOD, (event) => {
+  EnrollmentRecord.checkActiveEnrollmentPeriod().then((result) => {
+    if (!result) {
+      const response = {
+        type: "Warning",
+        message: "No Active Enrollment Period! Please make sure you have created a new Enrollment Period in settings page",
+      };
+      mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+    }
+    mainWindow.webContents.send(channels.CHECK_ACTIVE_PERIOD, result);
+  });
+});
+
 ipcMain.on(channels.LOAD_MEMBER_RENEWAL, (event, householdId) => {
   EnrollmentRecord.loadNewEnrollmentRecord(householdId).then((result) => {
     mainWindow.webContents.send(channels.LOAD_MEMBER_RENEWAL, result);
@@ -385,8 +464,8 @@ ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
 
 //*********** - EXPORT ENROLLMENT DATA METHODS - ****************//
 
-ipcMain.on(channels.EXPORT_ENROLLMENT, (event, columns) => {
-  exportEnrollmentData(columns)
+ipcMain.on(channels.EXPORT_ENROLLMENT, (event) => {
+  exportEnrollmentData()
     .then((dataset) => {
       const options = {
         title: "Save Enrollment Data",
@@ -395,7 +474,9 @@ ipcMain.on(channels.EXPORT_ENROLLMENT, (event, columns) => {
       dialog
         .showSaveDialog(options)
         .then((result) => {
-          if (result.filePath)
+          if (result.canceled)
+            mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
+          else if (result.filePath)
             writeFile(result.filePath, dataset, (err) => {
               if (err) {
                 console.log(err);
@@ -423,27 +504,87 @@ ipcMain.on(channels.REPORT_ELIGIBLE_HOUSEHOLDS, (event, enrollmentPeriodId) => {
   });
 })
 
-ipcMain.on(channels.REPORT_MONTHLY_ENROLLMENT_STAT, (event, args) => {
-  Report.getMonthlyEnrollmentStat(args).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_MONTHLY_ENROLLMENT_STAT, result);
+ipcMain.on(channels.REPORT_TOTAL_HOUSEHOLD_ENROLLED, (event, enrollmentPeriodId) => {
+  Report.getHouseholdsEnrolled(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_HOUSEHOLD_ENROLLED, result);
   });
 })
 
-ipcMain.on(channels.REPORT_TOTAL_ACTIVE_MEMBERS, (event, enrollmentPeriodId) => {
-  Report.getTotalActiveMembers(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_TOTAL_ACTIVE_MEMBERS, result);
+ipcMain.on(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, (event, enrollmentPeriodId) => {
+  Report.getBeneficiariesEnrolled(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, result);
   });
 })
 
-ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTION, (event, enrollmentPeriodId) => {
+ipcMain.on(channels.REPORT_MONTHLY_ENROLLMENT_STATS, (event, args) => {
+  Report.getMonthlyEnrollmentStats(args).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_MONTHLY_ENROLLMENT_STATS, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_STATS, (event, args) => {
+  Report.getTotalEnrollmentStats(args).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_ENROLLMENT_STATS, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_ENROLLMENT_RATE, (event, enrollmentPeriodId) => {
+  Report.getEnrollmentRate(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_ENROLLMENT_RATE, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_RENEWAL_RATE, (event, enrollmentPeriodId) => {
+  Report.getRenewalRate(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_RENEWAL_RATE, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, (event, enrollmentPeriodId) => {
+  Report.getTotalEnrollmentByStatus(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_HOUSEHOLDS_BY_GENDER, (event, enrollmentPeriodId) => {
+  Report.getHouseholdsByGender(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_HOUSEHOLDS_BY_GENDER, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_SUBSIDIES, (event, enrollmentPeriodId) => {
+  Report.getSubsidies(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_SUBSIDIES, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_MONTHLY_CONTRIBUTION_STATS, (event, args) => {
+  Report.getMonthlyContributionStats(args).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_MONTHLY_CONTRIBUTION_STATS, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTION_STATS, (event, enrollmentPeriodId) => {
+  Report.getTotalContributionStats(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_CONTRIBUTION_STATS, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS, (event, enrollmentPeriodId) => {
   Report.getTotalContribution(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_TOTAL_CONTRIBUTION, result);
+    mainWindow.webContents.send(channels.REPORT_TOTAL_CONTRIBUTIONS, result);
   });
 })
 
-ipcMain.on(channels.REPORT_TOTAL_REGISTRATION_FEE, (event, enrollmentPeriodId) => {
-  Report.getTotalRegistrationFee(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_TOTAL_REGISTRATION_FEE, result);
+ipcMain.on(channels.REPORT_TOTAL_SUBSIDY, (event, enrollmentPeriodId) => {
+  Report.getSubsidies(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_SUBSIDY, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeriodId) => {
+  Report.getTotalContributionCollected(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, result);
   });
 })
 

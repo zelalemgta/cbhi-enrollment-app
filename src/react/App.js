@@ -5,7 +5,8 @@ import Header from './components/organisms/Header';
 import Navigation from './components/organisms/Navigation';
 import Footer from './components/organisms/Footer';
 import Members from './components/pages/MemberPage';
-import Reports from './components/pages/ReportPage';
+import EnrollmentReport from './components/pages/EnrollmentReportPage';
+import ContributionReport from './components/pages/ContributionReportPage';
 import Settings from './components/pages/SettingsPage';
 import Notification from './components/organisms/Notification';
 import { channels } from '../shared/constants';
@@ -63,7 +64,8 @@ function App() {
         <Navigation />
         <Switch>
           <Route exact path="/" component={Members} />
-          <Route exact path="/reports" component={Reports} />
+          <Route exact path="/reports/enrollment" component={EnrollmentReport} />
+          <Route exact path="/reports/contribution" component={ContributionReport} />
           <Route exact path="/settings" component={Settings} />
           <Route render={() => <Redirect to="/" />} />
         </Switch>

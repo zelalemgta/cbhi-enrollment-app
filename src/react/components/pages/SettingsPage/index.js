@@ -9,7 +9,8 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import GeneralSettings from '../../organisms/GeneralSettings';
 import AdministrativeDivision from '../../organisms/AdministrativeDivision';
 import EnrollmentPeriod from '../../organisms/EnrollmentPeriod';
-import SystemSettings from '../../organisms/SystemSettings';
+import Subsidy from '../../organisms/Subsidy';
+//import SystemSettings from '../../organisms/SystemSettings';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -82,11 +83,26 @@ const Settings = () => {
                     <EnrollmentPeriod />
                 </ExpansionPanelDetails>
             </ExpansionPanel>
-            <ExpansionPanel expanded={expanded === 'panel4'} onChange={handleChange('panel4')}>
+            <ExpansionPanel expanded={expanded === 'panel4'} onChange={handleChange('panel4')} TransitionProps={{ unmountOnExit: true }}>
                 <ExpansionPanelSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel4bh-content"
                     id="panel4bh-header"
+                >
+                    <Typography className={classes.heading}>Subsidies</Typography>
+                    <Typography className={classes.secondaryHeading}>
+                        Manage General, Targeted & Other Subsidies
+                    </Typography>
+                </ExpansionPanelSummary>
+                <ExpansionPanelDetails>
+                    <Subsidy />
+                </ExpansionPanelDetails>
+            </ExpansionPanel>
+            {/* <ExpansionPanel expanded={expanded === 'panel5'} onChange={handleChange('panel5')}>
+                <ExpansionPanelSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel5bh-content"
+                    id="panel5bh-header"
                 >
                     <Typography className={classes.heading}>System Settings</Typography>
                     <Typography className={classes.secondaryHeading}>System management & configurations</Typography>
@@ -94,7 +110,7 @@ const Settings = () => {
                 <ExpansionPanelDetails>
                     <SystemSettings />
                 </ExpansionPanelDetails>
-            </ExpansionPanel>
+            </ExpansionPanel> */}
         </Box>
     );
 }

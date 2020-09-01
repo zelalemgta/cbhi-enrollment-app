@@ -1,7 +1,6 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
+const { v4: uuidv4 } = require('uuid');
 module.exports = (sequelize, DataTypes) => {
   class EnrollmentRecord extends Model {
     /**
@@ -16,6 +15,12 @@ module.exports = (sequelize, DataTypes) => {
     }
   };
   EnrollmentRecord.init({
+    id: {
+      allowNull: true,
+      primaryKey: true,
+      autoIncrement: false,
+      type: DataTypes.UUID
+    },
     contributionAmount: DataTypes.FLOAT,
     registrationFee: DataTypes.FLOAT,
     additionalBeneficiaryFee: DataTypes.FLOAT,
@@ -25,6 +30,11 @@ module.exports = (sequelize, DataTypes) => {
     isPaying: DataTypes.BOOLEAN,
     cbhiId: DataTypes.STRING
   }, {
+    hooks: {
+      beforeCreate: (household, options) => {
+        household.id = uuidv4();
+      }
+    },
     sequelize,
     modelName: 'EnrollmentRecord',
   });
