@@ -11,6 +11,7 @@
 # production
 /build
 /dist
+cbhi_db.sqlite3
 
 # misc
 .DS_Store
