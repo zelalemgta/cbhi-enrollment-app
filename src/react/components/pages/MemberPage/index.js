@@ -94,7 +94,7 @@ const Members = () => {
         {
             title: 'Enrollment Date',
             field: 'Members.enrolledDate',
-            render: rowData => convertDate(rowData.enrolledDate),
+            render: rowData => convertDate(rowData['Members.enrolledDate']),
             hidden: true
         },
         {
