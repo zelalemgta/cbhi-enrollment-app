@@ -10,6 +10,7 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import DatePicker from '../../atoms/DatePicker';
 import InputLabel from '@material-ui/core/InputLabel';
 import Button from '@material-ui/core/Button';
 import AutocompleteFormControl from '../AutocompleteFormControl';
@@ -78,7 +79,7 @@ const calculateDateOfBirth = (age) => {
         const ageInMilliseconds = age * (1000 * 60 * 60 * 24 * 365.25);
         const dateOfBirth = new Date(currentDate - ageInMilliseconds);
         const dobInEthiopian = toEthiopian(dateOfBirth.getFullYear(), dateOfBirth.getMonth() + 1, dateOfBirth.getDate());
-        return `${dobInEthiopian[2]}/${dobInEthiopian[1]}/${dobInEthiopian[0]}`;
+        return `${dobInEthiopian[0]}-${dobInEthiopian[1]}-${dobInEthiopian[2]}`;
     } else return '';
 }
 
@@ -199,7 +200,7 @@ const MemberForm = React.forwardRef((props, ref) => {
                         className={classes.TextField}
                         onChange={handleAgeChange}
                         type="number" id="age" name="age" label="Age" value={member.age} />
-                    <TextField className={classes.TextField} onChange={handleChange} required type="text" placeholder="DD/MM/YYYY" helperText="eg. 25/02/1970" id="dateOfBirth" name="dateOfBirth" label="Date of Birth" value={member.dateOfBirth} />
+                    <DatePicker required id="dateOfBirth" name="dateOfBirth" placeholder="YYYY-MM-DD" label="Date of Birth" materialUi onChange={handleChange} value={member.dateOfBirth} maxDate={0} />
                     <FormControl className={classes.SelectField}>
                         <InputLabel id="genderLabel">Gender</InputLabel>
                         <Select
@@ -273,7 +274,7 @@ const MemberForm = React.forwardRef((props, ref) => {
                             ))}
                         </Select>
                     </FormControl>
-                    <TextField className={classes.TextField} onChange={handleChange} required type="text" placeholder="DD/MM/YYYY" helperText="eg. 16/09/2008" id="enrolledDate" name="enrolledDate" label="Enrollment Date" value={member.enrolledDate} />
+                    <DatePicker required id="enrolledDate" name="enrolledDate" placeholder="YYYY-MM-DD" label="Enrollment Date" materialUi onChange={handleChange} value={member.enrolledDate} maxDate={0} />
                     <Divider />
                     <Box flexDirection="row-reverse" mt={2}>
                         <Button type="submit" variant="contained">Save</Button>

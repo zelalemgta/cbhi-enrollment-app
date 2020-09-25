@@ -8,7 +8,7 @@ const { ipcRenderer } = window;
 
 const Gote = (props) => {
 
-    const columns = [{ title: 'Gote Name', field: 'name' }];
+    const columns = [{ title: 'Gote / Block Name', field: 'name' }];
 
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -33,7 +33,7 @@ const Gote = (props) => {
     return (
         <Grid item xs={6} md={6}>
             <MaterialTable
-                title="Gotes"
+                title="Gotes / Block"
                 icons={TableIcons}
                 options={{
                     padding: "dense",

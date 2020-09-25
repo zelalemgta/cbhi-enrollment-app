@@ -12,7 +12,7 @@ const Kebele = (props) => {
 
     const [selectedKebele, setSelectedKebele] = useState(0);
 
-    const columns = [{ title: 'Kebele Name', field: 'name' }, { title: 'Code', field: 'code' }];
+    const columns = [{ title: 'Kebele / Ketena Name', field: 'name', width: "70%" }, { title: 'Code', field: 'code' }];
 
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_KEBELE);
@@ -30,7 +30,7 @@ const Kebele = (props) => {
     return (
         <Grid item xs={6} md={6}>
             <MaterialTable
-                title="Kebeles"
+                title="Kebeles / Ketena"
                 icons={TableIcons}
                 options={{
                     padding: "dense",

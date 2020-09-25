@@ -7,15 +7,15 @@ const Op = Sequelize.Op;
 
 const convertDate = (date, calendar) => {
     if (calendar === 'GR') {
-        const etDate = date.split('/').map(Number);
-        const convertedDate = toGregorian(etDate[2], etDate[1], etDate[0]);
+        const etDate = date.split('-').map(Number);
+        const convertedDate = toGregorian(...etDate);
         return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`;
     } else {
         const dateObj = new Date(date);
         const [year, month, day] = [dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate()];
         const convertedDate = toEthiopian(year, month, day);
-        //Returned Date Format DD/MM/YYYY
-        return `${convertedDate[2]}/${convertedDate[1]}/${convertedDate[0]}`
+        //Returned Date Format YYY-MM-DD
+        return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`
     }
 }
 
