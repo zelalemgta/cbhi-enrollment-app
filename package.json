@@ -35,6 +35,7 @@
     "start-electron": "export ELECTRON_START_URL=http://localhost:3000 && electron .",
     "start-electron-win": "set ELECTRON_START_URL=http://localhost:3000 && electron .",
     "build": "react-scripts build",
+    "build-electron-webpack": "webpack --config ./webpack.config.main.prod.js",
     "build-electron": "mkdir build/src && cp -r electron/. build/electron && cp -r src/shared/. build/src/shared",
     "build-electron-win": "mkdir build/src & robocopy electron build/electron /S & robocopy src/shared build/src/shared /S",
     "package": "electron-builder build --win --x64 --ia32 -c.extraMetadata.main=build/electron/main.js --publish never",
@@ -61,7 +62,11 @@
   "devDependencies": {
     "electron": "^9.0.5",
     "electron-builder": "^22.7.0",
-    "sequelize-cli": "^6.0.0"
+    "file-loader": "^6.1.0",
+    "sequelize-cli": "^6.0.0",
+    "terser-webpack-plugin": "^4.2.2",
+    "webpack-bundle-analyzer": "^3.9.0",
+    "webpack-cli": "^3.3.12"
   },
   "build": {
     "appId": "com.ehia.CBHIApp",

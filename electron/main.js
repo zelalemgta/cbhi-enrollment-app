@@ -15,6 +15,7 @@ const writeFile = require("fs").writeFile;
 const copyFile = require("fs").copyFile;
 const rename = require("fs").rename;
 const { Parser } = require("json2csv");
+const { toEthiopian } = require("ethiopian-date");
 
 let mainWindow;
 
@@ -75,7 +76,14 @@ app.on("activate", function () {
 const exportEnrollmentData = async () => {
   const fields = [
     { label: "Full Name", value: "Members.fullName" },
-    { label: "Date of Birth", value: "Members.dateOfBirth" },
+    {
+      label: "Date of Birth",
+      value: (rowData) => {
+        const etDate = toEthiopian(...rowData["Members.dateOfBirth"].split("-").map(Number));
+        return etDate.join("-");
+      },
+
+    },
     { label: "Gender", value: "Members.gender" },
     {
       label: "CBHI ID",
@@ -92,11 +100,22 @@ const exportEnrollmentData = async () => {
     },
     { label: "Relationship", value: "Members.relationship" },
     { label: "Profession", value: "Members.profession" },
-    { label: "Enrollment Date", value: "Members.enrolledDate" },
+    {
+      label: "Enrollment Date",
+      value: (rowData) => {
+        const etDate = toEthiopian(...rowData["Members.enrolledDate"].split("-").map(Number));
+        return etDate.join("-");
+      },
+    },
     {
       label: "Membership Status",
       value: (rowData) =>
         rowData["EnrollmentRecords.id"] ? "Active" : "Expired",
+    },
+    {
+      label: "Membership Type",
+      value: (rowData) =>
+        rowData["EnrollmentRecords.id"] ? rowData["EnrollmentRecords.isPaying"] ? "Paying" : "Indigent" : "",
     },
   ];
 
