@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Grid from '@material-ui/core/Grid';
 import MaterialTable from 'material-table';
+import DatePicker from '../../atoms/DatePicker';
 import { makeStyles } from '@material-ui/core/styles';
 import TableIcons from '../../molecules/TableIcons';
 
@@ -12,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
     root: {
         fontSize: "14px",
         '& input': {
-            fontSize: "13px"
+            fontSize: "13px",
         },
         '& label': {
             fontSize: "13px"
@@ -26,10 +27,47 @@ const EnrollmentPeriod = () => {
     const columns = [
         { title: 'Enrollment Year', field: 'enrollmentYear', defaultSort: 'desc' },
         { title: 'Eligible Households', field: 'eligibleHouseholds', type: 'numeric' },
-        { title: 'Reg. Start Date', field: 'enrollmentStartDate' },
-        { title: 'Reg. End Date', field: 'enrollmentEndDate' },
-        { title: 'Coverage Start Date', field: 'coverageStartDate' },
-        { title: 'Coverage End Date', field: 'coverageEndDate' },
+        {
+            title: 'Reg. Start Date',
+            field: 'enrollmentStartDate',
+            editComponent: props => (
+                <DatePicker
+                    value={props.value}
+                    onChange={e => props.onChange(e.target.value)}
+                    width={75}
+                />
+            )
+        },
+        {
+            title: 'Reg. End Date',
+            field: 'enrollmentEndDate',
+            editComponent: props => (
+                <DatePicker
+                    value={props.value}
+                    onChange={e => props.onChange(e.target.value)}
+                />
+            )
+        },
+        {
+            title: 'Coverage Start Date',
+            field: 'coverageStartDate',
+            editComponent: props => (
+                <DatePicker
+                    value={props.value}
+                    onChange={e => props.onChange(e.target.value)}
+                />
+            )
+        },
+        {
+            title: 'Coverage End Date',
+            field: 'coverageEndDate',
+            editComponent: props => (
+                <DatePicker
+                    value={props.value}
+                    onChange={e => props.onChange(e.target.value)}
+                />
+            )
+        },
         { title: 'Active', field: 'active', editable: 'never' },
     ];
 

@@ -12,6 +12,8 @@ import Modal from '@material-ui/core/Modal';
 import MemberForm from '../../organisms/MemberForm';
 import RenewalForm from '../../organisms/RenewalForm';
 import DialogWindow from '../../molecules/DialogWindow';
+import Tooltip from '@material-ui/core/Tooltip';
+import Badge from '@material-ui/core/Badge';
 import { channels } from '../../../../shared/constants';
 import { toEthiopian } from 'ethiopian-date';
 
@@ -22,6 +24,21 @@ const useStyles = makeStyles((theme) => ({
         paddingTop: "55px",
         marginLeft: 200,
         fontSize: 13
+    },
+    badge: {
+        '& span': {
+            top: "9px",
+            right: "-30px"
+        }
+    },
+    warningBadge: {
+        '& span': {
+            top: "9px",
+            right: "-30px",
+            padding: "0px 5px",
+            backgroundColor: theme.palette.warning.main
+        },
+
     }
 }));
 
@@ -31,7 +48,7 @@ const convertDate = (date) => {
     const [year, month, day] = [dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate()];
     convertedDate = toEthiopian(year, month, day);
     //Returned Date Format DD/MM/YYYY
-    return `${convertedDate[2]}/${convertedDate[1]}/${convertedDate[0]}`
+    return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`
 }
 
 const calculateAge = (dateOfBirth) => {
@@ -68,7 +85,7 @@ const Members = () => {
     const classes = useStyles();
 
     const columns = [
-        { title: 'Full Name', field: 'Members.fullName', cellStyle: { width: '32%' } },
+        { title: 'Full Name', field: 'Members.fullName', cellStyle: { width: '30%' } },
         {
             title: 'Age',
             field: 'Members.age',
@@ -101,7 +118,15 @@ const Members = () => {
             title: 'Membership Status',
             field: 'status',
             sorting: false,
-            render: rowData => rowData['EnrollmentRecords.id'] ? 'Active' : 'Expired'
+            render: rowData => rowData['EnrollmentRecords.id'] ?
+                rowData['EnrollmentRecords.isPaying'] ?
+                    <Tooltip title="Paying">
+                        <Badge className={classes.badge} badgeContent="P" color="secondary">Active</Badge>
+                    </Tooltip> :
+                    <Tooltip title="Indigent">
+                        <Badge className={classes.warningBadge} badgeContent="I">Active</Badge>
+                    </Tooltip> :
+                'Expired' 
         }
     ];
 

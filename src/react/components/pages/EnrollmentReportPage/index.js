@@ -3,7 +3,6 @@ import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
 import SelectField from '../../molecules/SelectField';
 import ReportDivider from '../../molecules/ReportDivider';
-import { EthiopianMonths } from '../../../../shared/constants';
 import { makeStyles } from '@material-ui/core/styles';
 import EligibleHousehold from '../../organisms/EligibleHousehold';
 import TotalHousehold from '../../organisms/TotalHousehold';
@@ -14,6 +13,7 @@ import EnrollmentRate from '../../organisms/EnrollmentRate';
 import RenewalRate from '../../organisms/RenewalRate';
 import TotalEnrollmentByStatus from '../../organisms/TotalEnrollmentByStatus';
 import HouseholdByGender from '../../organisms/TotalHouseholdsByGender';
+import DatePicker from '../../atoms/DatePicker';
 import RemoveIcon from '@material-ui/icons/Remove';
 import { channels } from '../../../../shared/constants';
 
@@ -40,22 +40,31 @@ const useStyles = makeStyles((theme) => ({
         bottom: '35px'
     }
 }))
+
+const convertDate = (date) => {
+    const etDate = date.split('-').map(Number);
+    return `${etDate[2]}/${etDate[1]}/${etDate[0]}`;
+}
+
 const EnrollmentReports = () => {
 
     const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
 
     const [selectedDate, setSelectedDate] = useState({
-        monthFrom: '',
-        monthTo: '',
-        year: ''
+        year: '',
+        dateFrom: '',
+        dateTo: ''
     });
-
-    const ethiopianMonthOptions = EthiopianMonths.map((month, index) => ({ text: month, value: index + 1 }));
 
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_ENROLLMENT_PERIOD);
         ipcRenderer.on(channels.LOAD_ENROLLMENT_PERIOD, (event, result) => {
-            const periods = result.map(period => ({ text: period.enrollmentYear, value: period.id }));
+            const periods = result.map(period => ({
+                text: period.enrollmentYear,
+                value: period.id,
+                minDate: convertDate(period.enrollmentStartDate),
+                maxDate: convertDate(period.enrollmentEndDate)
+            }));
             setEnrollmentPeriods(periods);
         });
         return () => { ipcRenderer.removeAllListeners(channels.LOAD_ENROLLMENT_PERIOD) }
@@ -69,13 +78,31 @@ const EnrollmentReports = () => {
     }
     const classes = useStyles();
     return (
-        <Box overflow="hidden">
+        <Box>
             <Grid className={classes.root} spacing={2} component="div" container alignItems="center">
                 <Grid item xs={12}>
                     <SelectField id="year" name="year" labelId="yearLabel" label="Select Year" options={enrollmentPeriods} selectedValue={selectedDate.year} onChange={handleChange} />
-                    <SelectField id="monthFrom" name="monthFrom" labelId="monthFromLabel" label="Select From Month" options={ethiopianMonthOptions} selectedValue={selectedDate.monthFrom} onChange={handleChange} />
-                    <RemoveIcon className={classes.inputDivider} />
-                    <SelectField id="monthTo" name="monthTo" labelId="monthToLabel" label="Select To Month" options={ethiopianMonthOptions} selectedValue={selectedDate.monthTo} onChange={handleChange} />
+                    <Box mx={2} display="inline">
+                        <DatePicker required id="dateFrom" name="dateFrom"
+                            placeholder="YYYY-MM-DD"
+                            label="Date From"
+                            materialUi
+                            onChange={handleChange}
+                            value={selectedDate.dateFrom}
+                            minDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].minDate : null}
+                            maxDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].maxDate : null}
+                        />
+                        <RemoveIcon className={classes.inputDivider} />
+                        <DatePicker required id="dateTo" name="dateTo"
+                            placeholder="YYYY-MM-DD"
+                            label="Date To"
+                            materialUi
+                            onChange={handleChange}
+                            value={selectedDate.dateTo}
+                            minDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].minDate : null}
+                            maxDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].maxDate : null}
+                        />
+                    </Box>
                 </Grid>
                 <Grid item xs={4}>
                     <EligibleHousehold enrollmentPeriod={selectedDate.year} />
@@ -90,7 +117,7 @@ const EnrollmentReports = () => {
                     <ReportDivider title="Enrollment Stats" />
                 </Grid>
                 <Grid item xs={6}>
-                    <MonthlyEnrollmentStats enrollmentPeriod={selectedDate.year} monthFrom={selectedDate.monthFrom} monthTo={selectedDate.monthTo} />
+                    <MonthlyEnrollmentStats enrollmentPeriod={selectedDate.year} dateFrom={selectedDate.dateFrom} dateTo={selectedDate.dateTo} />
                 </Grid>
                 <Grid item xs={6}>
                     <TotalEnrollmentStats enrollmentPeriod={selectedDate.year} />

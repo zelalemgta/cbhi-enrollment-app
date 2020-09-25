@@ -7,15 +7,15 @@ const { toEthiopian, toGregorian } = require("ethiopian-date");
 
 const convertDate = (date, calendar) => {
     if (calendar === 'GR') {
-        const etDate = date.split('/').map(Number);
-        const convertedDate = toGregorian(etDate[2], etDate[1], etDate[0]);
+        const etDate = date.split('-').map(Number);
+        const convertedDate = toGregorian(...etDate);
         return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`;
     } else {
         const dateObj = new Date(date);
         const [year, month, day] = [dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate()];
         const convertedDate = toEthiopian(year, month, day);
-        //Returned Date Format DD/MM/YYYY
-        return `${convertedDate[2]}/${convertedDate[1]}/${convertedDate[0]}`
+        //Returned Date Format YYY-MM-DD
+        return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`
     }
 }
 
@@ -71,7 +71,7 @@ class EnrollmentPeriod {
     static getEnrollmentPeriods = () => {
         const enrollmentPeriods = models.EnrollmentPeriod.findAll({ raw: true }).then(result => {
             const enrollmentPeriodResults = result.map(enrollmentPeriod => {
-                enrollmentPeriod.active = Date.now() <= Date.parse(enrollmentPeriod.coverageEndDate) ? true : false;
+                enrollmentPeriod.active = new Date().setHours(0, 0, 0, 0) <= Date.parse(enrollmentPeriod.coverageEndDate) ? true : false;
                 enrollmentPeriod.enrollmentStartDate = convertDate(enrollmentPeriod.enrollmentStartDate, 'ET')
                 enrollmentPeriod.enrollmentEndDate = convertDate(enrollmentPeriod.enrollmentEndDate, 'ET')
                 enrollmentPeriod.coverageStartDate = convertDate(enrollmentPeriod.coverageStartDate, 'ET')
