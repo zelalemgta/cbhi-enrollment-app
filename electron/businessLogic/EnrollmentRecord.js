@@ -7,8 +7,8 @@ const Op = Sequelize.Op;
 
 const convertDate = (date, calendar) => {
     if (calendar === 'GR') {
-        const etDate = date.split('/').map(Number);
-        const convertedDate = toGregorian(etDate[2], etDate[1], etDate[0]);
+        const etDate = date.split('-').map(Number);
+        const convertedDate = toGregorian(...etDate);
         return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`;
     } else {
         const dateObj = new Date(date);
@@ -24,7 +24,7 @@ class EnrollmentRecord {
     static checkActiveEnrollmentPeriod = async () => {
         const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
             where: {
-                coverageEndDate: { [Op.gte]: Date.now() }
+                coverageEndDate: { [Op.gte]: new Date().setHours(0, 0, 0, 0) }
             },
             raw: true
         });
@@ -57,7 +57,9 @@ class EnrollmentRecord {
             householdHead: householdObj['Members.fullName'],
             cbhiId: householdObj.cbhiId,
             EnrollmentPeriodId: activeEnrollmentPeriod.id,
-            enrollmentPeriod: `${convertDate(activeEnrollmentPeriod.coverageStartDate, 'ET')} - ${convertDate(activeEnrollmentPeriod.coverageEndDate, 'ET')}`,
+            enrollmentPeriod: `${convertDate(activeEnrollmentPeriod.coverageStartDate, 'ET')} <--> ${convertDate(activeEnrollmentPeriod.coverageEndDate, 'ET')}`,
+            minRegDate: convertDate(activeEnrollmentPeriod.enrollmentStartDate),
+            maxRegDate: convertDate(activeEnrollmentPeriod.enrollmentEndDate)
         };
         return newEnrollmentRecord;
     }

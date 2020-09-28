@@ -12,7 +12,10 @@ const Member = require("./businessLogic/Member");
 const EnrollmentRecord = require("./businessLogic/EnrollmentRecord");
 const Report = require("./businessLogic/Report");
 const writeFile = require("fs").writeFile;
+const copyFile = require("fs").copyFile;
+const rename = require("fs").rename;
 const { Parser } = require("json2csv");
+const { toEthiopian } = require("ethiopian-date");
 
 let mainWindow;
 
@@ -73,7 +76,14 @@ app.on("activate", function () {
 const exportEnrollmentData = async () => {
   const fields = [
     { label: "Full Name", value: "Members.fullName" },
-    { label: "Date of Birth", value: "Members.dateOfBirth" },
+    {
+      label: "Date of Birth",
+      value: (rowData) => {
+        const etDate = toEthiopian(...rowData["Members.dateOfBirth"].split("-").map(Number));
+        return etDate.join("-");
+      },
+
+    },
     { label: "Gender", value: "Members.gender" },
     {
       label: "CBHI ID",
@@ -90,11 +100,22 @@ const exportEnrollmentData = async () => {
     },
     { label: "Relationship", value: "Members.relationship" },
     { label: "Profession", value: "Members.profession" },
-    { label: "Enrollment Date", value: "Members.enrolledDate" },
+    {
+      label: "Enrollment Date",
+      value: (rowData) => {
+        const etDate = toEthiopian(...rowData["Members.enrolledDate"].split("-").map(Number));
+        return etDate.join("-");
+      },
+    },
     {
       label: "Membership Status",
       value: (rowData) =>
         rowData["EnrollmentRecords.id"] ? "Active" : "Expired",
+    },
+    {
+      label: "Membership Type",
+      value: (rowData) =>
+        rowData["EnrollmentRecords.id"] ? rowData["EnrollmentRecords.isPaying"] ? "Paying" : "Indigent" : "",
     },
   ];
 
@@ -588,6 +609,66 @@ ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeri
   });
 })
 
+//*********** -  SYSTEM RESTORE & BACKUP METHODS - ****************//
+
+ipcMain.on(channels.SYSTEM_BACKUP, (event) => {
+  const currentDb = path.join(app.getPath("userData"), "cbhi_db.sqlite3");
+  const options = {
+    title: "Save Backup",
+    filters: [{ name: "All files", extensions: ["sqlite3"] }],
+  };
+  dialog
+    .showSaveDialog(options)
+    .then((result) => {
+      if (result.filePath)
+        copyFile(currentDb, result.filePath, (err) => {
+          if (err) {
+            console.log(err);
+          }
+          const response = {
+            type: "Success",
+            message: "System backup saved successfully to '" + result.filePath + "'",
+          };
+          mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+        });
+    })
+    .catch((error) => console.log(error));
+});
+
+ipcMain.on(channels.SYSTEM_RESTORE, (event) => {
+  const currentDb = path.join(app.getPath("userData"), "cbhi_db.sqlite3");
+  const backUp = path.join(app.getPath("userData"), "cbhi_db_" + new Date().getTime() + ".sqlite3");
+  const options = {
+    title: "Upload latest backup",
+    filters: [{ name: "All files", extensions: ["sqlite3"] }],
+    properties: ['openFile']
+  };
+  dialog
+    .showOpenDialog(options)
+    .then((file) => {
+      if (!file.canceled) {
+        //Backup previous database to avoid overwrite
+        rename(currentDb, backUp, (err) => {
+          if (err)
+            console.log(err);
+          copyFile(file.filePaths[0], currentDb, (err) => {
+            if (err)
+              console.log(err);
+            const response = {
+              type: "Success",
+              message: "System restored successfully. Application will restart in 5 seconds to apply changes.",
+            };
+            mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+            app.relaunch();
+            setTimeout(() => {
+              app.exit();
+            }, 5000);
+          });
+        })
+      }
+    })
+    .catch((error) => console.log(error));
+});
 
 //*********** -  DEVELOPER TOOLS - ****************//
 

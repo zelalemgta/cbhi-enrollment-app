@@ -10,7 +10,7 @@ import GeneralSettings from '../../organisms/GeneralSettings';
 import AdministrativeDivision from '../../organisms/AdministrativeDivision';
 import EnrollmentPeriod from '../../organisms/EnrollmentPeriod';
 import Subsidy from '../../organisms/Subsidy';
-//import SystemSettings from '../../organisms/SystemSettings';
+import SystemSettings from '../../organisms/SystemSettings';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -61,7 +61,7 @@ const Settings = () => {
                 >
                     <Typography className={classes.heading}>Kebele/Gote Settings</Typography>
                     <Typography className={classes.secondaryHeading}>
-                        Define Kebeles and Gotes under the woreda
+                        Define Kebeles/Ketena and Gotes/Block under the woreda
                     </Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>
@@ -98,7 +98,7 @@ const Settings = () => {
                     <Subsidy />
                 </ExpansionPanelDetails>
             </ExpansionPanel>
-            {/* <ExpansionPanel expanded={expanded === 'panel5'} onChange={handleChange('panel5')}>
+            <ExpansionPanel expanded={expanded === 'panel5'} onChange={handleChange('panel5')}>
                 <ExpansionPanelSummary
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel5bh-content"
@@ -110,7 +110,7 @@ const Settings = () => {
                 <ExpansionPanelDetails>
                     <SystemSettings />
                 </ExpansionPanelDetails>
-            </ExpansionPanel> */}
+            </ExpansionPanel>
         </Box>
     );
 }

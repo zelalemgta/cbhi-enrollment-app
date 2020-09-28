@@ -1,7 +1,6 @@
 const Sequelize = require("sequelize");
 const models = require("../db/models");
-const { toEthiopian, toGregorian } = require("ethiopian-date");
-const { getSubsidies } = require("./Subsidy");
+const { toGregorian } = require("ethiopian-date");
 
 //Initialize squelize operartor
 const Op = Sequelize.Op;
@@ -55,16 +54,11 @@ class Report {
             newIndigents: 0,
             renewedPayingMembers: 0,
             renewedIndigents: 0,
-            //newMembersContributions: 0,
-            //renewedMembersContribution: 0,
-            //registrationFees: 0
         }
         const selectedEnrollmentPeriod = await models.EnrollmentPeriod.findByPk(args.enrollmentPeriodId, { raw: true });
-        const gregorianDate = selectedEnrollmentPeriod.coverageStartDate.split('-').map(Number);
-        const etDate = toEthiopian(gregorianDate[0], gregorianDate[1], gregorianDate[2]);
-        const filterStartDate = toGregorian(args.monthFrom < etDate[1] ? etDate[0] + 1 : etDate[0], args.monthFrom, 1).join('-');
-        const filterEndDate = args.monthTo ? toGregorian(args.monthTo < etDate[1] ? etDate[0] + 1 : etDate[0], args.monthTo, 30).join('-')
-            : toGregorian(args.monthFrom < etDate[1] ? etDate[0] + 1 : etDate[0], args.monthFrom, 30).join('-');
+        const filterStartDate = toGregorian(args.dateFrom.split('-').map(Number)).join('-');
+        const filterEndDate = toGregorian(args.dateTo.split('-').map(Number)).join('-');
+
         const newEnrollmentStat = await models.EnrollmentRecord.findAll(
             {
                 include: [
@@ -78,8 +72,6 @@ class Report {
                 ],
                 attributes: ['isPaying',
                     [Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalNewEnrollments'],
-                    //[Sequelize.fn('sum', Sequelize.col('contributionAmount')), 'totalContributionAmount'],
-                    //[Sequelize.fn('sum', Sequelize.col('registrationFee')), 'totalRegistrationFee']
                 ],
                 where: {
                     [Op.and]: [
@@ -103,7 +95,6 @@ class Report {
                 ],
                 attributes: ['isPaying',
                     [Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalRenewals'],
-                    //[Sequelize.fn('sum', Sequelize.col('contributionAmount')), 'totalContributionAmount']
                 ],
                 where: {
                     [Op.and]: [
@@ -117,8 +108,6 @@ class Report {
         newEnrollmentStat.map(stat => {
             if (stat.isPaying) {
                 enrollmentStat.newPayingMembers = stat.totalNewEnrollments;
-                //enrollmentStat.newMembersContributions = stat.totalContributionAmount;
-                //enrollmentStat.registrationFees = stat.totalRegistrationFee;
             }
             else
                 enrollmentStat.newIndigents = stat.totalNewEnrollments
@@ -127,7 +116,6 @@ class Report {
         renewalStat.map(stat => {
             if (stat.isPaying) {
                 enrollmentStat.renewedPayingMembers = stat.totalRenewals;
-                //enrollmentStat.renewedMembersContribution = stat.totalContributionAmount;
             }
             else
                 enrollmentStat.renewedIndigents = stat.totalRenewals
@@ -339,11 +327,8 @@ class Report {
             otherFees: 0
         }
         const selectedEnrollmentPeriod = await models.EnrollmentPeriod.findByPk(args.enrollmentPeriodId, { raw: true });
-        const gregorianDate = selectedEnrollmentPeriod.coverageStartDate.split('-').map(Number);
-        const etDate = toEthiopian(gregorianDate[0], gregorianDate[1], gregorianDate[2]);
-        const filterStartDate = toGregorian(args.monthFrom < etDate[1] ? etDate[0] + 1 : etDate[0], args.monthFrom, 1).join('-');
-        const filterEndDate = args.monthTo ? toGregorian(args.monthTo < etDate[1] ? etDate[0] + 1 : etDate[0], args.monthTo, 30).join('-')
-            : toGregorian(args.monthFrom < etDate[1] ? etDate[0] + 1 : etDate[0], args.monthFrom, 30).join('-');
+        const filterStartDate = toGregorian(args.dateFrom.split('-').map(Number)).join('-');
+        const filterEndDate = toGregorian(args.dateTo.split('-').map(Number)).join('-');
         const newEnrollmentStats = await models.EnrollmentRecord.findAll(
             {
                 include: [

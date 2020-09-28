@@ -41,12 +41,12 @@ const MonthlyEnrollmentStat = (props) => {
     }]
 
     useEffect(() => {
-        if (props.monthFrom && props.enrollmentPeriod)
+        if (props.dateFrom && props.dateTo && props.enrollmentPeriod)
             ipcRenderer.send(channels.REPORT_MONTHLY_ENROLLMENT_STATS,
                 {
                     enrollmentPeriodId: props.enrollmentPeriod,
-                    monthFrom: props.monthFrom,
-                    monthTo: props.monthTo ? props.monthTo : null
+                    dateFrom: props.dateFrom,
+                    dateTo: props.dateTo
                 })
         ipcRenderer.on(channels.REPORT_MONTHLY_ENROLLMENT_STATS, (event, result) => {
             setEnrollmentStat(result);
@@ -57,10 +57,10 @@ const MonthlyEnrollmentStat = (props) => {
     const classes = useStyles();
     return (
         <TableContainer className={classes.table} component={Paper}>
-            <Table aria-label="Monthly Statistics" size="small">
+            <Table aria-label="Selected Date Range Statistics" size="small">
                 <TableHead>
                     <TableRow>
-                        <TableCell>Selected Month/s Enrollment Stats</TableCell>
+                        <TableCell>Selected Dates Enrollment Stats</TableCell>
                         <TableCell align="right">#</TableCell>
                     </TableRow>
                 </TableHead>

@@ -55,6 +55,8 @@ module.exports = {
         REPORT_TOTAL_CONTRIBUTIONS: 'report_total_contributions',
         REPORT_TOTAL_SUBSIDY: 'report_total_subsidy',
         REPORT_TOTAL_CONTRIBUTIONS_COLLECTED: 'report_total_contributions_collected',
+        SYSTEM_BACKUP: 'system_backup',
+        SYSTEM_RESTORE: 'system_restore',
         SEND_NOTIFICATION: 'send_notification',
         DEV_TOOLS: 'dev_tools',
     },
@@ -62,5 +64,5 @@ module.exports = {
     relationshipOptions: ['Household Head', 'Parent', 'Husband', 'Wife', 'Son', 'Daughter', 'Other'],
     professionOptions: ['Farmer', 'Merchant', 'Job Seeker', 'Housewife', 'Stay at home husband', 'Daily Laborer', 'Student', 'Other'],
     administrativeLevelOptions: ['Kebele', 'Gote'],
-    EthiopianMonths: ['Meskerem', 'Tikemt', 'Hidar', 'Tahesas', 'Tir', 'Yekatit', 'Megabit', 'Miyazia', 'Ginbot', 'Sene', 'Hamle', 'Nehase'],
+    //EthiopianMonths: ['Meskerem', 'Tikemt', 'Hidar', 'Tahesas', 'Tir', 'Yekatit', 'Megabit', 'Miyazia', 'Ginbot', 'Sene', 'Hamle', 'Nehase'],
 };

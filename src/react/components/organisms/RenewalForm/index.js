@@ -9,6 +9,7 @@ import Divider from '@material-ui/core/Divider';
 import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import DatePicker from '../../atoms/DatePicker';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -59,6 +60,8 @@ const RenewalForm = React.forwardRef((props, ref) => {
         householdHead: "",
         EnrollmentPeriodId: null,
         enrollmentPeriod: "",
+        minRegDate: null,
+        maxRegDate: null,
         contributionAmount: "",
         registrationFee: "",
         additionalBeneficiaryFee: "",
@@ -119,6 +122,12 @@ const RenewalForm = React.forwardRef((props, ref) => {
         ipcRenderer.send(channels.CREATE_MEMBER_RENEWAL, memberRenewal);
     }
 
+    const handleClose = (e) => {
+        e.preventDefault();
+        ipcRenderer.removeAllListeners(channels.LOAD_MEMBER_RENEWAL);
+        props.closeModal();
+    }
+
     const classes = useStyles();
     return (
         <Box className={classes.root}>
@@ -129,7 +138,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
                     </Typography>
                 </Box>
                 <Box p={0}>
-                    <IconButton onClick={props.closeModal}>
+                    <IconButton onClick={handleClose}>
                         <Close />
                     </IconButton>
                 </Box>
@@ -177,14 +186,15 @@ const RenewalForm = React.forwardRef((props, ref) => {
                         <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={memberRenewal.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
                         <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={memberRenewal.otherFees} type="number" label="Other Fees (ETB)" />
                     </Box>
-                    <TextField className={classes.TextField} required type="text"
-                        placeholder="DD/MM/YYYY"
-                        helperText="25/09/2008"
-                        id="receiptDate"
-                        name="receiptDate"
-                        value={memberRenewal.receiptDate}
+                    <DatePicker required id="receiptDate" name="receiptDate"
+                        placeholder="YYYY-MM-DD"
+                        label="Renewed Date"
+                        materialUi
                         onChange={handleChange}
-                        label="Renewed Date" />
+                        value={memberRenewal.receiptDate}
+                        minDate={memberRenewal.minRegDate}
+                        maxDate={memberRenewal.maxRegDate}
+                    />
                     <Divider />
                     <Box flexDirection="row-reverse" mt={2}>
                         <Button type="submit" variant="contained">Renew Membership</Button>

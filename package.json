@@ -1,6 +1,6 @@
 {
   "name": "cbhi-app",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "productName": "CBHI Enrollment App",
   "main": "electron/main.js",
   "author": "Zelalem G. Tessema",
@@ -16,6 +16,7 @@
     "electron-updater": "^4.3.1",
     "ethiopian-date": "0.0.6",
     "fontsource-roboto": "^2.1.4",
+    "jquery": "^1.12.4",
     "json2csv": "^5.0.1",
     "material-table": "^1.62.0",
     "react": "^16.13.1",
