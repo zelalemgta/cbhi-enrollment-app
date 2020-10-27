@@ -119,6 +119,13 @@ class AdministrativeDivision {
         });
         return gotes;
     };
+
+    static getAllAdministrativeDivisions = async () => {
+        const administrativeDivisions = await models.AdministrativeDivision.findAll({
+            raw: true
+        })
+        return administrativeDivisions;
+    }
 }
 
 module.exports = AdministrativeDivision;

@@ -1,21 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@material-ui/core/Box'
-import MaterialTable from 'material-table';
+import MaterialTable, { MTableToolbar } from 'material-table';
+import BeneficiariesTableRow from '../../organisms/BeneficiariesTableRow';
 import { makeStyles } from '@material-ui/core/styles';
 import TableIcons from '../../molecules/TableIcons';
 import AddBox from '@material-ui/icons/AddBox';
 import Edit from '@material-ui/icons/Edit';
 import GroupAdd from '@material-ui/icons/GroupAdd';
 import RotateLeft from '@material-ui/icons/RotateLeft';
+import LocalAtmTwoToneIcon from '@material-ui/icons/LocalAtmTwoTone';
 import Delete from '@material-ui/icons/Delete';
 import Modal from '@material-ui/core/Modal';
 import MemberForm from '../../organisms/MemberForm';
 import RenewalForm from '../../organisms/RenewalForm';
+import additionalPaymentForm from '../../organisms/AdditionalPaymentForm';
 import DialogWindow from '../../molecules/DialogWindow';
 import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
+import MembersFilter from '../../molecules/MembersFilter';
 import { channels } from '../../../../shared/constants';
 import { toEthiopian } from 'ethiopian-date';
+import AdditionalPaymentForm from '../../organisms/AdditionalPaymentForm';
 
 const { ipcRenderer } = window;
 
@@ -66,6 +71,14 @@ const Members = () => {
         isLoading: false
     })
 
+    const [queryFilter, setQueryFilter] = useState({
+        administrativeDivisionId: "",
+        gender: "",
+        membershipType: "",
+        membershipStatus: "",
+        selectedOption: null
+    })
+
     const [modalForm, setModalForm] = useState({
         type: "",
         householdId: null,
@@ -81,23 +94,30 @@ const Members = () => {
         memberId: 0,
     });
 
-
     const classes = useStyles();
 
     const columns = [
         { title: 'Full Name', field: 'Members.fullName', cellStyle: { width: '30%' } },
         {
             title: 'Age',
-            field: 'Members.age',
+            field: 'Members.dateOfBirth',
             render: rowData => calculateAge(rowData['Members.dateOfBirth']),
-            sorting: false
+            sorting: false,
         },
         { title: 'Gender', field: 'Members.gender' },
         {
             title: 'CBHI ID',
             field: 'Members.cbhiId',
             cellStyle: { width: '25%' },
-            render: rowData => `${rowData.cbhiId}/${rowData['Members.cbhiId']}`
+            render: rowData => `${rowData.cbhiId}/${rowData['Members.cbhiId']}`,
+            sorting: false
+        },
+        {
+            title: 'Household Size',
+            field: 'householdSize',
+            render: rowData => rowData['Members.parentId'] === null && rowData.householdSize,
+            hidden: true,
+            sorting: false
         },
         {
             title: 'Kebele/Gote',
@@ -126,7 +146,7 @@ const Members = () => {
                     <Tooltip title="Indigent">
                         <Badge className={classes.warningBadge} badgeContent="I">Active</Badge>
                     </Tooltip> :
-                'Expired' 
+                'Expired'
         }
     ];
 
@@ -174,6 +194,54 @@ const Members = () => {
         }
     })
 
+    const handleFilterSubmit = (filterData) => {
+        reloadGrid()
+    }
+
+    const handleFilterChange = (e) => {
+        setQueryFilter({
+            ...queryFilter,
+            [e.target.name]: e.target.value,
+        })
+    }
+
+    const handleAdministrativeDivisionChange = (newSelectedOption) => {
+        setQueryFilter({
+            ...queryFilter,
+            selectedOption: newSelectedOption,
+            administrativeDivisionId: newSelectedOption ? newSelectedOption.id : null
+        })
+    }
+
+    const handleFilterReset = () => {
+        setQueryFilter({
+            administrativeDivisionId: "",
+            gender: "",
+            membershipType: "",
+            membershipStatus: "",
+            selectedOption: null
+        });
+        reloadGrid()
+    }
+
+    const handleEditBeneficiary = (id) => {
+        setModalForm({
+            type: "memberForm",
+            memberId: id,
+            parentId: null
+        });
+        handleOpen();
+    }
+
+    const handleDeleteBeneficiary = (id) => {
+        setDialogState({
+            open: true,
+            title: "Are you sure you want to delete the selected beneficiary?",
+            message: "Attention! If you press Yes, the selected beneficiary will be deleted from the system.",
+            memberId: id
+        })
+    }
+
     const reloadGrid = () => {
         tableRef.current && tableRef.current.onQueryChange();
     }
@@ -186,7 +254,8 @@ const Members = () => {
                 disableBackdropClick={true}>
                 {modalForm.type === "memberForm" ?
                     <MemberForm memberId={modalForm.memberId} parentId={modalForm.parentId} reloadGrid={reloadGrid} closeModal={handleClose} />
-                    : <RenewalForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />}
+                    : modalForm.type === "renewForm" ? <RenewalForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />
+                        : <AdditionalPaymentForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />}
             </Modal>
             <DialogWindow
                 open={dialogState.open}
@@ -201,10 +270,24 @@ const Members = () => {
                 tableRef={tableRef}
                 icons={TableIcons}
                 isLoading={gridState.isLoading}
-                parentChildData={(row, rows) => rows.find(a => a['Members.id'] === row['Members.parentId'])}
+                detailPanel=
+                {[
+                    rowData => ({
+                        tooltip: rowData["Members.parentId"] === null && "Beneficiaries",
+                        disabled: rowData["Members.parentId"] !== null,
+                        render: rowData =>
+                            <BeneficiariesTableRow
+                                rowId={rowData.tableData.id}
+                                householdId={rowData.id}
+                                householdCBHI={rowData.cbhiId}
+                                handleEditBeneficiary={handleEditBeneficiary}
+                                handleDeleteBeneficiary={handleDeleteBeneficiary}
+                            />
+                    })
+                ]}
                 options={{
                     padding: "dense",
-                    pageSize: 13,
+                    pageSize: 10,
                     pageSizeOptions: [],
                     exportButton: true,
                     exportCsv: (columns, data) => {
@@ -225,8 +308,22 @@ const Members = () => {
                     })
                 }}
                 columns={columns}
+                components={{
+                    Toolbar: props => (
+                        <>
+                            <MTableToolbar {...props} />
+                            <MembersFilter
+                                handleFilterSubmit={handleFilterSubmit}
+                                handleFilterReset={handleFilterReset}
+                                handleFilterChange={handleFilterChange}
+                                handleAdministrativeDivisionChange={handleAdministrativeDivisionChange}
+                                filterData={queryFilter} />
+                        </>
+                    ),
+                }}
                 data={query =>
                     new Promise((resolve, reject) => {
+                        query.filters = queryFilter
                         ipcRenderer.send(channels.LOAD_MEMBERS, query);
                         ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {
                             ipcRenderer.removeAllListeners(channels.LOAD_MEMBERS);
@@ -298,18 +395,31 @@ const Members = () => {
                         }
                     }),
                     rowData => ({
+                        icon: () => <LocalAtmTwoToneIcon color="secondary" />,
+                        tooltip: 'Additional Payment',
+                        isFreeAction: false,
+                        hidden: !rowData['EnrollmentRecords.id'] || rowData['Members.parentId'] ? true : false,
+                        onClick: (event) => {
+                            setModalForm({
+                                type: "additionalPaymentForm",
+                                householdId: rowData.id,
+                            });
+                            handleOpen();
+                        }
+                    }),
+                    rowData => ({
                         icon: () => <Delete />,
                         tooltip: `Delete Beneficiary`,
                         isFreeAction: false,
                         hidden: rowData['Members.parentId'] === null ? true : false,
                         onClick: (event) => setDialogState({
                             open: true,
-                            title: "Are you sure you want to delete the selected member?",
-                            message: "Attention! If you press Yes, the selected member will be deleted from the system.",
+                            title: "Are you sure you want to delete the selected beneficiary?",
+                            message: "Attention! If you press Yes, the selected beneficiary will be deleted from the system.",
                             memberId: rowData['Members.id']
                         })
-                    })]
-                }
+                    })
+                ]}
             />
         </Box>
     )

@@ -95,6 +95,7 @@ const MemberForm = React.forwardRef((props, ref) => {
         'Household.id': "",
         'Household.cbhiId': "",
         'Household.AdministrativeDivisionId': null,
+        'Household.address': "",
         relationship: props.parentId ? "" : relationshipOptions[0],
         profession: "",
         parentId: props.parentId,
@@ -111,13 +112,18 @@ const MemberForm = React.forwardRef((props, ref) => {
 
     useEffect(() => {
         ipcRenderer.on(channels.LOAD_MEMBER, (event, result) => {
+            console.log(result)
             if (member.parentId === null)
-                setMember(result);
+                setMember({
+                    ...result,
+                    "Household.address": result['Household.address'] || ""
+                });
             else
                 setMember({
                     ...member,
                     "Household.id": result['Household.id'],
-                    "Household.cbhiId": result['Household.cbhiId']
+                    "Household.cbhiId": result['Household.cbhiId'],
+                    "Household.address": result['Household.address'] || ""
                 })
             if (result['Household.AdministrativeDivisionId'])
                 setSelectedOption({
@@ -159,7 +165,7 @@ const MemberForm = React.forwardRef((props, ref) => {
     const handleAdministrativeDivisionChange = (newSelectedOption) => {
         setMember({
             ...member,
-            AdministrativeDivisionId: newSelectedOption ? newSelectedOption.id : null
+            "Household.AdministrativeDivisionId": newSelectedOption ? newSelectedOption.id : null
         })
         setSelectedOption(newSelectedOption);
     }
@@ -275,6 +281,20 @@ const MemberForm = React.forwardRef((props, ref) => {
                         </Select>
                     </FormControl>
                     <DatePicker required id="enrolledDate" name="enrolledDate" placeholder="YYYY-MM-DD" label="Enrollment Date" materialUi onChange={handleChange} value={member.enrolledDate} maxDate={0} />
+                    <TextField
+                        className={classes.TextField}
+                        onChange={handleChange}
+                        id="Household.address"
+                        multiline
+                        InputProps={{
+                            readOnly: member.parentId ? true : false
+                        }}
+                        variant={member.parentId ? "filled" : "standard"}
+                        name="Household.address"
+                        helperText="eg. Phone No; House No; ..."
+                        label="Household Address"
+                        value={member['Household.address']}
+                    />
                     <Divider />
                     <Box flexDirection="row-reverse" mt={2}>
                         <Button type="submit" variant="contained">Save</Button>

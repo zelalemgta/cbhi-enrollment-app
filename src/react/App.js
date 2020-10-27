@@ -8,6 +8,7 @@ import Members from './components/pages/MemberPage';
 import EnrollmentReport from './components/pages/EnrollmentReportPage';
 import ContributionReport from './components/pages/ContributionReportPage';
 import Settings from './components/pages/SettingsPage';
+import SystemProgess from './components/organisms/SystemProgress';
 import Notification from './components/organisms/Notification';
 import { channels } from '../shared/constants';
 
@@ -59,6 +60,7 @@ function App() {
   return (
     <Router>
       <ThemeProvider theme={theme}>
+        <SystemProgess />
         <Notification open={notification.open} type={notification.type} message={notification.message} />
         <Header />
         <Navigation />

@@ -38,7 +38,7 @@ const StatsRenderer = (props) => {
     )
 }
 
-const TotalBeneficiary = (props) => {
+const TotalAdditionalBeneficiaries = (props) => {
 
     const [enrollmentByStatus, setEnrollmentByStatus] = useState({
         indigent: 0,
@@ -47,18 +47,17 @@ const TotalBeneficiary = (props) => {
 
     useEffect(() => {
         if (props.enrollmentPeriod)
-            ipcRenderer.send(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, props.enrollmentPeriod);
-        ipcRenderer.on(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, (event, result) => {
+            ipcRenderer.send(channels.REPORT_TOTAL_ADDITIONAL_BENEFICIARIES, props.enrollmentPeriod);
+        ipcRenderer.on(channels.REPORT_TOTAL_ADDITIONAL_BENEFICIARIES, (event, result) => {
             setEnrollmentByStatus(result);
         });
-        return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED) }
+        return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_ADDITIONAL_BENEFICIARIES) }
     }, [props.enrollmentPeriod])
-
     return (
-        <ReportCard title="Beneficiaries Enrolled By Status">
+        <ReportCard title="Additional Beneficiaries By Status">
             <StatsRenderer indigent={enrollmentByStatus.indigent.toLocaleString()} paying={enrollmentByStatus.paying.toLocaleString()} />
         </ReportCard>
     )
 }
 
-export default TotalBeneficiary;
+export default TotalAdditionalBeneficiaries;

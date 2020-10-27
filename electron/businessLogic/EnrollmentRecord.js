@@ -36,7 +36,8 @@ class EnrollmentRecord {
             where: {
                 coverageEndDate: { [Op.gte]: Date.now() }
             },
-            raw: true
+            raw: true,
+            order: [['coverageEndDate', 'DESC']]
         });
 
         const householdObj = await models.Household.findByPk(householdId,
@@ -62,6 +63,60 @@ class EnrollmentRecord {
             maxRegDate: convertDate(activeEnrollmentPeriod.enrollmentEndDate)
         };
         return newEnrollmentRecord;
+    }
+
+    static loadHouseholdPayment = async (householdId) => {
+        const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+            where: {
+                coverageEndDate: { [Op.gte]: Date.now() }
+            },
+            raw: true,
+            order: [['coverageEndDate', 'DESC']]
+        });
+
+        const householdPayments = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { HouseholdId: householdId },
+                    { EnrollmentPeriodId: activeEnrollmentPeriod.id }
+                ]
+            },
+            include: [
+                {
+                    model: models.Household,
+                    required: true,
+                    include: [
+                        {
+                            model: models.Member,
+                            required: true,
+                            where: {
+                                parentId: { [Op.is]: null }
+                            }
+                        }
+                    ]
+                }
+            ],
+            subQuery: false,
+            raw: true,
+        });
+        const householdPaymentObj = {
+            HouseholdId: householdId,
+            householdHead: householdPayments[0]['Household.Members.fullName'],
+            cbhiId: householdPayments[0].cbhiId,
+            isPaying: householdPayments[0].isPaying,
+            EnrollmentPeriodId: activeEnrollmentPeriod.id,
+            enrollmentPeriod: `${convertDate(activeEnrollmentPeriod.coverageStartDate, 'ET')} <--> ${convertDate(activeEnrollmentPeriod.coverageEndDate, 'ET')}`,
+            minPaymentDate: convertDate(activeEnrollmentPeriod.coverageStartDate),
+            maxPaymentDate: convertDate(activeEnrollmentPeriod.coverageEndDate),
+            totalPaid: {
+                receipts: householdPayments.reduce((a, b) => a !== "" ? a + ", " + b.receiptNo : b.receiptNo, ""),
+                totalContribution: householdPayments.reduce((a, b) => a + (b.contributionAmount ? b.contributionAmount : 0), 0),
+                totalRegistrationFee: householdPayments.reduce((a, b) => a + (b.registrationFee ? b.registrationFee : 0), 0),
+                totalAddBeneficiaryFee: householdPayments.reduce((a, b) => a + (b.additionalBeneficiaryFee ? b.additionalBeneficiaryFee : 0), 0),
+                totalOtherFees: householdPayments.reduce((a, b) => a + (b.otherFees ? b.otherFees : 0), 0)
+            }
+        }
+        return householdPaymentObj;
     }
 
     static addEnrollmentRecord = enrollmentRecordObj => {

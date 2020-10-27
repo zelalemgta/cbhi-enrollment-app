@@ -30,6 +30,7 @@ const AutocompleteFormControl = (props) => {
             onChange={(event, newValue) => {
                 props.handleChange(newValue);
             }}
+            disableClearable={props.disableClearable}
             disabled={props.disabled}
             autoHighlight
             options={options}

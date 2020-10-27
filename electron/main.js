@@ -15,6 +15,7 @@ const writeFile = require("fs").writeFile;
 const copyFile = require("fs").copyFile;
 const rename = require("fs").rename;
 const { Parser } = require("json2csv");
+const XLSX = require("xlsx");
 const { toEthiopian } = require("ethiopian-date");
 
 let mainWindow;
@@ -82,7 +83,6 @@ const exportEnrollmentData = async () => {
         const etDate = toEthiopian(...rowData["Members.dateOfBirth"].split("-").map(Number));
         return etDate.join("-");
       },
-
     },
     { label: "Gender", value: "Members.gender" },
     {
@@ -422,6 +422,14 @@ ipcMain.on(channels.LOAD_MEMBERS, (event, query) => {
     .catch((err) => console.log(err));
 });
 
+ipcMain.on(channels.LOAD_BENEFICIARIES, (event, householdId) => {
+  Member.getBeneficiaries(householdId)
+    .then((result) => {
+      mainWindow.webContents.send(channels.LOAD_BENEFICIARIES, result);
+    })
+    .catch((err) => console.log(err));
+});
+
 ipcMain.on(channels.CREATE_MEMBER, (event, memberObj) => {
   Member.addMember(memberObj)
     .then((response) => {
@@ -448,6 +456,14 @@ ipcMain.on(channels.REMOVE_MEMBER, (event, memberId) => {
       mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
       if (response.type === "Success")
         mainWindow.webContents.send(channels.MEMBER_REMOVED);
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
+  EnrollmentRecord.loadHouseholdPayment(householdId)
+    .then((result) => {
+      mainWindow.webContents.send(channels.LOAD_HOUSEHOLD_PAYMENTS, result);
     })
     .catch((err) => console.log(err));
 });
@@ -567,6 +583,12 @@ ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, (event, enrollmentPeriodI
   });
 })
 
+ipcMain.on(channels.REPORT_TOTAL_ADDITIONAL_BENEFICIARIES, (event, enrollmentPeriodId) => {
+  Report.getTotalAdditionalBeneficiariesByStatus(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_ADDITIONAL_BENEFICIARIES, result);
+  });
+})
+
 ipcMain.on(channels.REPORT_HOUSEHOLDS_BY_GENDER, (event, enrollmentPeriodId) => {
   Report.getHouseholdsByGender(enrollmentPeriodId).then((result) => {
     mainWindow.webContents.send(channels.REPORT_HOUSEHOLDS_BY_GENDER, result);
@@ -609,6 +631,149 @@ ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeri
   });
 })
 
+ipcMain.on(channels.EXPORT_TO_PDF, (event) => {
+  const options = {
+    title: "Export to PDF",
+    filters: [{ name: "All files", extensions: ["pdf"] }],
+  };
+  dialog
+    .showSaveDialog(options)
+    .then((result) => {
+      if (result.filePath)
+        mainWindow.webContents.printToPDF({
+          marginsType: 1,
+          printBackground: true,
+          printSelectionOnly: false,
+          landscape: true,
+          pageSize: 'A4',
+          scaleFactor: 95
+        }).then(data => {
+          writeFile(result.filePath, data, (error) => {
+            if (error) console.log(error)
+            const response = {
+              type: "Success",
+              message: "Saved PDF successfully to '" + result.filePath + "'",
+            };
+            //Delayed notification trigger to exclude it from the screen snapshot
+            setTimeout(() => mainWindow.webContents.send(channels.SEND_NOTIFICATION, response), 500);
+          })
+        }).catch(error => {
+          const response = {
+            type: "Success",
+            message: "Failed to export PDF to '" + result.filePath + "'",
+          }
+          mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+        })
+      mainWindow.webContents.send(channels.EXPORT_TO_PDF);
+    })
+    .catch((error) => {
+      console.log(error)
+      mainWindow.webContents.send(channels.EXPORT_TO_PDF);
+    });
+})
+
+//*********** -  Import Enrollment Data  METHODS - ****************//
+
+ipcMain.on(channels.DOWNLOAD_ENROLLMENT_TEMPLATE, (event) => {
+  const workbook = XLSX.utils.book_new();
+  const template_name = "CBHI Sheet";
+
+  /* make worksheet */
+  const template_data = [
+    {
+      "Full Name": "",
+      "Date Of Birth(YYYY-MM-DD)": "",
+      "Gender(Male/Female)": "",
+      "Household CBHI Id": "",
+      "Beneficiary CBHI Id": "",
+      "Kebele/Gote": "",
+      "Relationship": "",
+      "Profession": "",
+      "Enrollment Date (YYYY-MM-DD)": "",
+      "is Household Head (1/0)": ""
+    }
+  ];
+  const ws = XLSX.utils.json_to_sheet(template_data);
+  XLSX.utils.book_append_sheet(workbook, ws, template_name);
+  const options = {
+    title: "Save Enrollment Template",
+    filters: [{ name: "All files", extensions: ["xlsx"] }],
+  };
+  dialog
+    .showSaveDialog(options)
+    .then((result) => {
+      if (result.filePath) {
+        XLSX.writeFile(workbook, result.filePath);
+        const response = {
+          type: "Success",
+          message: "Enrollment template saved successfully to '" + result.filePath + "'",
+        };
+
+        mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      }
+    })
+    .catch((error) => console.log(error));
+});
+
+ipcMain.on(channels.IMPORT_ENROLLMENT, (event) => {
+  const options = {
+    title: "Upload Enrollment Excel Data",
+    filters: [{ name: "All files", extensions: ["xlsx", "csv"] }],
+    properties: ['openFile']
+  };
+  dialog.showOpenDialog(options).then((file) => {
+    if (!file.canceled) {
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "Analyzing Enrollment Data...",
+        progressValue: 1
+      })
+      const workbook = XLSX.readFile(file.filePaths[0]);
+      const firstSheetName = workbook.SheetNames[0];
+      const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {
+        header: ["fullName", "dateOfBirth", "gender", "cbhiId", "beneficiaryCBHIId", "administrativeDivision", "relationship", "profession", "enrolledDate", "isHouseholdHead"],
+        range: 1,
+      });
+      setTimeout(() => {
+        Member.excelDataParser(excelData).then((response) => {
+          if (response.type === "Error") {
+            mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+              open: false,
+              progressTitle: "",
+              progressValue: 0
+            })
+            mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+          }
+          else {
+            mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+              open: true,
+              progressTitle: "Importing Enrollment Data...",
+              progressValue: 50
+            })
+            Member.importEnrollmentData(response.data).then((response) => {
+              if (response.type === "Success") {
+                mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                  open: false,
+                  progressTitle: "Importing Enrollment Data Complete",
+                  progressValue: 100
+                })
+                mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+              }
+            }).catch((err) => {
+              mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                open: false,
+                progressTitle: "Importing Enrollment Data Failed",
+                progressValue: 75
+              })
+            });
+          }
+        })
+      }, 3000);
+    }
+  })
+    .catch((error) => console.log(error));
+});
+
 //*********** -  SYSTEM RESTORE & BACKUP METHODS - ****************//
 
 ipcMain.on(channels.SYSTEM_BACKUP, (event) => {
@@ -647,6 +812,11 @@ ipcMain.on(channels.SYSTEM_RESTORE, (event) => {
     .showOpenDialog(options)
     .then((file) => {
       if (!file.canceled) {
+        mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+          open: true,
+          progressTitle: "System Restore in Progress...",
+          progressValue: 0
+        });
         //Backup previous database to avoid overwrite
         rename(currentDb, backUp, (err) => {
           if (err)
@@ -661,6 +831,11 @@ ipcMain.on(channels.SYSTEM_RESTORE, (event) => {
             mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
             app.relaunch();
             setTimeout(() => {
+              mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                open: false,
+                progressTitle: "System Restore Complete!",
+                progressValue: 100
+              });
               app.exit();
             }, 5000);
           });

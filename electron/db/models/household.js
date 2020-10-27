@@ -23,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID
     },
     cbhiId: DataTypes.STRING,
+    address: DataTypes.TEXT,
     enrolledDate: DataTypes.DATEONLY,
     isDeleted: DataTypes.BOOLEAN
   }, {

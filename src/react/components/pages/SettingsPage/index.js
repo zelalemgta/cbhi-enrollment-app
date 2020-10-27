@@ -10,6 +10,7 @@ import GeneralSettings from '../../organisms/GeneralSettings';
 import AdministrativeDivision from '../../organisms/AdministrativeDivision';
 import EnrollmentPeriod from '../../organisms/EnrollmentPeriod';
 import Subsidy from '../../organisms/Subsidy';
+import ImportExcel from '../../organisms/ImportExcel';
 import SystemSettings from '../../organisms/SystemSettings';
 
 const useStyles = makeStyles((theme) => ({
@@ -103,6 +104,19 @@ const Settings = () => {
                     expandIcon={<ExpandMoreIcon />}
                     aria-controls="panel5bh-content"
                     id="panel5bh-header"
+                >
+                    <Typography className={classes.heading}>Import Excel</Typography>
+                    <Typography className={classes.secondaryHeading}>Import enrollment data from Excel</Typography>
+                </ExpansionPanelSummary>
+                <ExpansionPanelDetails>
+                    <ImportExcel />
+                </ExpansionPanelDetails>
+            </ExpansionPanel>
+            <ExpansionPanel expanded={expanded === 'panel6'} onChange={handleChange('panel6')}>
+                <ExpansionPanelSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel6bh-content"
+                    id="panel6bh-header"
                 >
                     <Typography className={classes.heading}>System Settings</Typography>
                     <Typography className={classes.secondaryHeading}>System management & configurations</Typography>
