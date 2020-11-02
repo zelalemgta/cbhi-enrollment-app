@@ -68,7 +68,7 @@ class Member {
                     cbhiId: memberObj.cbhiId,
                     relationship: memberObj.relationship,
                     profession: memberObj.profession,
-                    parentId: memberObj.parentId,
+                    isHouseholdHead: memberObj.isHouseholdHead,
                     enrolledDate: memberObj.enrolledDate,
                 }]
             }, {
@@ -97,7 +97,7 @@ class Member {
                 id: memberObj.id
             }
         }).then(() => {
-            memberObj.parentId || models.Household.update({
+            memberObj.isHouseholdHead && models.Household.update({
                 cbhiId: memberObj["Household.cbhiId"],
                 AdministrativeDivisionId: memberObj["Household.AdministrativeDivisionId"],
                 address: memberObj["Household.address"],
@@ -181,16 +181,20 @@ class Member {
             }
         });
         let filiteredMembersList = models.Household.findAndCountAll({
-            attributes: {
-                include: [[Sequelize.literal(`(
-                    SELECT COUNT(*)
-                    FROM Members AS member
-                    WHERE
-                        member.HouseholdId = Household.id
-                        AND
-                        member.isDeleted IS NOT 1
-                )`), "householdSize"]]
-            },
+            //(Removed for Better Performance)
+            //***This adds significant time on the total query. 
+            //**** */ Household size will be calculated for each individual record
+            //
+            // attributes: {
+            //     include: [[Sequelize.literal(`(
+            //         SELECT COUNT(*)
+            //         FROM Members AS member
+            //         WHERE
+            //             member.HouseholdId = Household.id
+            //             AND
+            //             member.isDeleted IS NOT 1
+            //     )`), "householdSize"]]
+            // },
             include: [
                 {
                     model: models.AdministrativeDivision,
@@ -204,7 +208,7 @@ class Member {
                     model: models.Member,
                     where: {
                         [Op.and]: [
-                            { parentId: search !== "" ? { [Op.or]: [{ [Op.is]: null }, { [Op.not]: null }] } : { [Op.is]: null } },
+                            { isHouseholdHead: search !== "" ? { [Op.or]: [{ [Op.is]: true }, { [Op.not]: true }] } : { [Op.is]: true } },
                             { gender: filters.gender ? { [Op.is]: filters.gender } : { [Op.not]: null } }
                         ]
                     },
@@ -255,7 +259,7 @@ class Member {
             where: {
                 [Op.and]: [
                     { HouseholdId: { [Op.is]: householdId } },
-                    { relationship: { [Op.not]: relationshipOptions[0] } }
+                    { isHouseholdHead: { [Op.not]: true } }
                 ]
             },
             order: [["enrolledDate", "ASC"]],
@@ -383,7 +387,7 @@ class Member {
     }
 
     static importEnrollmentData = async (parsedMemberData) => {
-        let householdId; let parentId; let response = {}; let householdCount = 0;
+        let householdId; let response = {}; let householdCount = 0;
         for (let i = 0; i < parsedMemberData.length; i++) {
             if (parsedMemberData[i].isHouseholdHead) {
                 const householdObj = await models.Household.create({
@@ -397,18 +401,17 @@ class Member {
                         cbhiId: parsedMemberData[i].beneficiaryCBHIId,
                         relationship: relationshipOptions[0],
                         profession: parsedMemberData[i].profession,
-                        parentId: null,
+                        isHouseholdHead: true,
                         enrolledDate: parsedMemberData[i].enrolledDate,
                     }]
                 }, {
                     include: [models.Member]
                 });
                 householdId = householdObj.id;
-                parentId = householdObj.Members[0].id;
                 householdCount += 1;
             } else {
                 parsedMemberData[i].HouseholdId = householdId;
-                parsedMemberData[i].parentId = parentId;
+                parsedMemberData[i].isHouseholdHead = false;
                 await models.Member.create(parsedMemberData[i]);
             }
         }

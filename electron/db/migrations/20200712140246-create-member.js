@@ -26,9 +26,8 @@ module.exports = {
       profession: {
         type: Sequelize.STRING
       },
-      parentId: {
-        type: Sequelize.UUID,
-        allowNull: true
+      isHouseholdHead: {
+        type: Sequelize.BOOLEAN
       },
       enrolledDate: {
         type: Sequelize.DATEONLY

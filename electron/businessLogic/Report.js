@@ -301,7 +301,7 @@ class Report {
                             model: models.Member,
                             required: true,
                             where: {
-                                parentId: null
+                                isHouseholdHead: true
                             }
                         }
                     ]
@@ -475,7 +475,7 @@ class Report {
         });
 
         renewalStats.map(result => {
-            contributionStats.renewedMembersContributions = result.totalContributionAmount;
+            contributionStats.renewedMembersContributions = result.totalContributionAmount ? result.totalContributionAmount : 0;
             contributionStats.registrationFees += result.totalRegistrationFee;
             contributionStats.additionalBeneficiariesFees += result.totalAdditionalBeneficiaryFee;
             contributionStats.otherFees += result.totalOtherFee;

@@ -22,19 +22,42 @@ const convertDate = (date, calendar) => {
 class EnrollmentRecord {
 
     static checkActiveEnrollmentPeriod = async () => {
-        const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+        let response = {};
+        const activeEnrollmentPeriod = await models.EnrollmentPeriod.findAll({
             where: {
-                coverageEndDate: { [Op.gte]: new Date().setHours(0, 0, 0, 0) }
+                [Op.and]: [
+                    { coverageStartDate: { [Op.lte]: new Date().setHours(0, 0, 0, 0) } },
+                    { coverageEndDate: { [Op.gte]: new Date().setHours(0, 0, 0, 0) } }
+                ]
             },
             raw: true
         });
-        return activeEnrollmentPeriod ? true : false;
+        if (activeEnrollmentPeriod.length === 0) {
+            response = {
+                type: "Error",
+                message: "No Active Enrollment Period! Please make sure you have created a new Enrollment Period in settings page"
+            }
+        } else if (activeEnrollmentPeriod.length > 1) {
+            response = {
+                type: "Error",
+                message: "There is more than one(1) Active Enrollment Period! Please make sure you only have on Active Enrollment Period for current fiscal year in settings page"
+            }
+        } else {
+            response = {
+                type: "Success",
+                message: ""
+            }
+        }
+        return response;
     }
 
     static loadNewEnrollmentRecord = async (householdId) => {
         const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
             where: {
-                coverageEndDate: { [Op.gte]: Date.now() }
+                [Op.and]: [
+                    { coverageStartDate: { [Op.lte]: new Date().setHours(0, 0, 0, 0) } },
+                    { coverageEndDate: { [Op.gte]: new Date().setHours(0, 0, 0, 0) } }
+                ]
             },
             raw: true,
             order: [['coverageEndDate', 'DESC']]
@@ -48,7 +71,7 @@ class EnrollmentRecord {
                     model: models.Member,
                     required: true,
                     where: {
-                        parentId: null
+                        isHouseholdHead: true
                     }
                 }]
             })
@@ -68,7 +91,10 @@ class EnrollmentRecord {
     static loadHouseholdPayment = async (householdId) => {
         const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
             where: {
-                coverageEndDate: { [Op.gte]: Date.now() }
+                [Op.and]: [
+                    { coverageStartDate: { [Op.lte]: new Date().setHours(0, 0, 0, 0) } },
+                    { coverageEndDate: { [Op.gte]: new Date().setHours(0, 0, 0, 0) } }
+                ]
             },
             raw: true,
             order: [['coverageEndDate', 'DESC']]
@@ -90,7 +116,7 @@ class EnrollmentRecord {
                             model: models.Member,
                             required: true,
                             where: {
-                                parentId: { [Op.is]: null }
+                                isHouseholdHead: true
                             }
                         }
                     ]

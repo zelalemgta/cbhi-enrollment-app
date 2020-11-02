@@ -63,6 +63,7 @@ module.exports = {
         EXPORT_TO_PDF: 'export_to_pdf',
         SYSTEM_BACKUP: 'system_backup',
         SYSTEM_RESTORE: 'system_restore',
+        SYSTEM_RESET: 'system_reset',
         SYSTEM_PROGRESS: 'system_progress',
         SEND_NOTIFICATION: 'send_notification',
         DEV_TOOLS: 'dev_tools',

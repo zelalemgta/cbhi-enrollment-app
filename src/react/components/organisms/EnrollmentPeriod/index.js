@@ -25,25 +25,29 @@ const EnrollmentPeriod = () => {
     const classes = useStyles();
 
     const columns = [
-        { title: 'Enrollment Year', field: 'enrollmentYear', defaultSort: 'desc' },
+        {
+            title: 'Enrollment Year', field: 'enrollmentYear', defaultSort: 'desc'
+        },
         { title: 'Eligible Households', field: 'eligibleHouseholds', type: 'numeric' },
         {
             title: 'Reg. Start Date',
             field: 'enrollmentStartDate',
-            editComponent: props => (
-                <DatePicker
-                    value={props.value}
-                    onChange={e => props.onChange(e.target.value)}
-                    width={75}
-                />
-            )
+            editComponent: props => {
+                return (
+                    <DatePicker
+                        value={props.value ? props.value : ""}
+                        onChange={e => props.onChange(e.target.value)}
+                        width={75}
+                    />
+                )
+            }
         },
         {
             title: 'Reg. End Date',
             field: 'enrollmentEndDate',
             editComponent: props => (
                 <DatePicker
-                    value={props.value}
+                    value={props.value ? props.value : ""}
                     onChange={e => props.onChange(e.target.value)}
                 />
             )
@@ -53,7 +57,7 @@ const EnrollmentPeriod = () => {
             field: 'coverageStartDate',
             editComponent: props => (
                 <DatePicker
-                    value={props.value}
+                    value={props.value ? props.value : ""}
                     onChange={e => props.onChange(e.target.value)}
                 />
             )
@@ -63,7 +67,7 @@ const EnrollmentPeriod = () => {
             field: 'coverageEndDate',
             editComponent: props => (
                 <DatePicker
-                    value={props.value}
+                    value={props.value ? props.value : ""}
                     onChange={e => props.onChange(e.target.value)}
                 />
             )

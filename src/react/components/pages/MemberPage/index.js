@@ -13,7 +13,6 @@ import Delete from '@material-ui/icons/Delete';
 import Modal from '@material-ui/core/Modal';
 import MemberForm from '../../organisms/MemberForm';
 import RenewalForm from '../../organisms/RenewalForm';
-import additionalPaymentForm from '../../organisms/AdditionalPaymentForm';
 import DialogWindow from '../../molecules/DialogWindow';
 import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
@@ -76,15 +75,16 @@ const Members = () => {
         gender: "",
         membershipType: "",
         membershipStatus: "",
-        selectedOption: null
+        selectedOption: null,
+        page: null
     })
 
     const [modalForm, setModalForm] = useState({
         type: "",
         householdId: null,
         memberId: null,
-        parentId: null,
-        householdCBHIId: null
+        isHouseholdHead: false,
+        isNew: false
     });
 
     const [dialogState, setDialogState] = useState({
@@ -97,14 +97,14 @@ const Members = () => {
     const classes = useStyles();
 
     const columns = [
-        { title: 'Full Name', field: 'Members.fullName', cellStyle: { width: '30%' } },
+        { title: 'Full Name', field: 'Members.fullName', cellStyle: { width: '30%' }, sorting: false },
         {
             title: 'Age',
             field: 'Members.dateOfBirth',
             render: rowData => calculateAge(rowData['Members.dateOfBirth']),
             sorting: false,
         },
-        { title: 'Gender', field: 'Members.gender' },
+        { title: 'Gender', field: 'Members.gender', sorting: false },
         {
             title: 'CBHI ID',
             field: 'Members.cbhiId',
@@ -112,13 +112,13 @@ const Members = () => {
             render: rowData => `${rowData.cbhiId}/${rowData['Members.cbhiId']}`,
             sorting: false
         },
-        {
-            title: 'Household Size',
-            field: 'householdSize',
-            render: rowData => rowData['Members.parentId'] === null && rowData.householdSize,
-            hidden: true,
-            sorting: false
-        },
+        // {
+        //     title: 'Household Size',
+        //     field: 'householdSize',
+        //     render: rowData => rowData['Members.isHouseholdHead'] && rowData.householdSize,
+        //     hidden: true,
+        //     sorting: false
+        // },
         {
             title: 'Kebele/Gote',
             field: 'AdministrativeDivision',
@@ -126,13 +126,14 @@ const Members = () => {
             hidden: true,
             sorting: false
         },
-        { title: 'Relationship', field: 'Members.relationship', hidden: true },
-        { title: 'Profession', field: 'Members.profession', hidden: true },
+        { title: 'Relationship', field: 'Members.relationship', hidden: true, sorting: false },
+        { title: 'Profession', field: 'Members.profession', hidden: true, sorting: false },
         {
             title: 'Enrollment Date',
             field: 'Members.enrolledDate',
             render: rowData => convertDate(rowData['Members.enrolledDate']),
-            hidden: true
+            hidden: true,
+            sorting: false
         },
         {
             title: 'Membership Status',
@@ -202,6 +203,7 @@ const Members = () => {
         setQueryFilter({
             ...queryFilter,
             [e.target.name]: e.target.value,
+            page: 0
         })
     }
 
@@ -219,7 +221,8 @@ const Members = () => {
             gender: "",
             membershipType: "",
             membershipStatus: "",
-            selectedOption: null
+            selectedOption: null,
+            page: null
         });
         reloadGrid()
     }
@@ -227,8 +230,7 @@ const Members = () => {
     const handleEditBeneficiary = (id) => {
         setModalForm({
             type: "memberForm",
-            memberId: id,
-            parentId: null
+            memberId: id
         });
         handleOpen();
     }
@@ -253,7 +255,7 @@ const Members = () => {
                 onClose={handleClose}
                 disableBackdropClick={true}>
                 {modalForm.type === "memberForm" ?
-                    <MemberForm memberId={modalForm.memberId} parentId={modalForm.parentId} reloadGrid={reloadGrid} closeModal={handleClose} />
+                    <MemberForm memberId={modalForm.memberId} isNew={modalForm.isNew} reloadGrid={reloadGrid} closeModal={handleClose} />
                     : modalForm.type === "renewForm" ? <RenewalForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />
                         : <AdditionalPaymentForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />}
             </Modal>
@@ -273,8 +275,8 @@ const Members = () => {
                 detailPanel=
                 {[
                     rowData => ({
-                        tooltip: rowData["Members.parentId"] === null && "Beneficiaries",
-                        disabled: rowData["Members.parentId"] !== null,
+                        tooltip: rowData["Members.isHouseholdHead"] && "Beneficiaries",
+                        disabled: !rowData["Members.isHouseholdHead"],
                         render: rowData =>
                             <BeneficiariesTableRow
                                 rowId={rowData.tableData.id}
@@ -299,6 +301,7 @@ const Members = () => {
                     },
                     grouping: false,
                     draggable: false,
+                    debounceInterval: 500,
                     columnsButton: true,
                     exportAllData: true,
                     loadingType: "overlay",
@@ -323,9 +326,14 @@ const Members = () => {
                 }}
                 data={query =>
                     new Promise((resolve, reject) => {
-                        query.filters = queryFilter
+                        query.filters = queryFilter;
+                        query.page = queryFilter.page === 0 ? 0 : query.page
                         ipcRenderer.send(channels.LOAD_MEMBERS, query);
                         ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {
+                            setQueryFilter({
+                                ...queryFilter,
+                                page: null
+                            })
                             ipcRenderer.removeAllListeners(channels.LOAD_MEMBERS);
                             resolve({
                                 data: result.rows,
@@ -344,7 +352,7 @@ const Members = () => {
                             setModalForm({
                                 type: "memberForm",
                                 memberId: null,
-                                parentId: null
+                                isNew: true
                             });
                             handleOpen();
                         }
@@ -357,7 +365,7 @@ const Members = () => {
                             setModalForm({
                                 type: "memberForm",
                                 memberId: rowData['Members.id'],
-                                parentId: null
+                                isNew: false
                             });
                             handleOpen();
                         }
@@ -366,12 +374,12 @@ const Members = () => {
                         icon: () => <GroupAdd />,
                         tooltip: `Add Beneficiary`,
                         isFreeAction: false,
-                        hidden: rowData['Members.parentId'] === null ? false : true,
+                        hidden: !rowData['Members.isHouseholdHead'],
                         onClick: (event) => {
                             setModalForm({
                                 type: "memberForm",
-                                memberId: null,
-                                parentId: rowData['Members.id']
+                                memberId: rowData['Members.id'],
+                                isNew: true
                             });
                             handleOpen();
                         }
@@ -380,7 +388,7 @@ const Members = () => {
                         icon: () => <RotateLeft color="secondary" />,
                         tooltip: 'Renew Membership',
                         isFreeAction: false,
-                        hidden: rowData['EnrollmentRecords.id'] || rowData['Members.parentId'] ? true : false,
+                        hidden: rowData['EnrollmentRecords.id'] || !rowData['Members.isHouseholdHead'],
                         onClick: (event) => {
                             ipcRenderer.send(channels.CHECK_ACTIVE_PERIOD);
                             ipcRenderer.on(channels.CHECK_ACTIVE_PERIOD, (event, result) => {
@@ -391,14 +399,16 @@ const Members = () => {
                                     });
                                     handleOpen();
                                 }
+                                ipcRenderer.removeAllListeners(channels.CHECK_ACTIVE_PERIOD);
                             })
+
                         }
                     }),
                     rowData => ({
                         icon: () => <LocalAtmTwoToneIcon color="secondary" />,
                         tooltip: 'Additional Payment',
                         isFreeAction: false,
-                        hidden: !rowData['EnrollmentRecords.id'] || rowData['Members.parentId'] ? true : false,
+                        hidden: !rowData['EnrollmentRecords.id'] || !rowData['Members.isHouseholdHead'] ? true : false,
                         onClick: (event) => {
                             setModalForm({
                                 type: "additionalPaymentForm",
@@ -411,7 +421,7 @@ const Members = () => {
                         icon: () => <Delete />,
                         tooltip: `Delete Beneficiary`,
                         isFreeAction: false,
-                        hidden: rowData['Members.parentId'] === null ? true : false,
+                        hidden: rowData['Members.isHouseholdHead'],
                         onClick: (event) => setDialogState({
                             open: true,
                             title: "Are you sure you want to delete the selected beneficiary?",

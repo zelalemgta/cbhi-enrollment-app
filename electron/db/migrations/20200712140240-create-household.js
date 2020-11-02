@@ -11,6 +11,9 @@ module.exports = {
       cbhiId: {
         type: Sequelize.STRING
       },
+      address: {
+        type: Sequelize.TEXT
+      },
       enrolledDate: {
         type: Sequelize.DATEONLY
       },

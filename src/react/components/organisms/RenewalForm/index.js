@@ -107,7 +107,8 @@ const RenewalForm = React.forwardRef((props, ref) => {
             otherFees: "",
             receiptNo: "",
             receiptDate: "",
-            [event.target.name]: event.target.checked
+            [event.target.name]: event.target.checked,
+            isSubmitted: false
         })
 
     }
@@ -122,6 +123,11 @@ const RenewalForm = React.forwardRef((props, ref) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (memberRenewal.isSubmitted) return;
+        setMemberRenewal({
+            ...memberRenewal,
+            isSubmitted: true
+        })
         ipcRenderer.send(channels.CREATE_MEMBER_RENEWAL, memberRenewal);
     }
 

@@ -13,7 +13,7 @@ const EnrollmentRecord = require("./businessLogic/EnrollmentRecord");
 const Report = require("./businessLogic/Report");
 const writeFile = require("fs").writeFile;
 const copyFile = require("fs").copyFile;
-const rename = require("fs").rename;
+const removeFile = require("fs").unlink;
 const { Parser } = require("json2csv");
 const XLSX = require("xlsx");
 const { toEthiopian } = require("ethiopian-date");
@@ -471,28 +471,53 @@ ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
 //*********** - MEMBER RENEWAL METHODS - ****************//
 
 ipcMain.on(channels.CHECK_ACTIVE_PERIOD, (event) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Member Renewal...",
+    progressValue: 0
+  })
   EnrollmentRecord.checkActiveEnrollmentPeriod().then((result) => {
-    if (!result) {
+    if (result.type !== "Success") {
       const response = {
         type: "Warning",
-        message: "No Active Enrollment Period! Please make sure you have created a new Enrollment Period in settings page",
+        message: result.message,
       };
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "",
+        progressValue: 0
+      })
       mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
     }
-    mainWindow.webContents.send(channels.CHECK_ACTIVE_PERIOD, result);
+    mainWindow.webContents.send(channels.CHECK_ACTIVE_PERIOD, result.type === "Success");
   });
 });
 
 ipcMain.on(channels.LOAD_MEMBER_RENEWAL, (event, householdId) => {
   EnrollmentRecord.loadNewEnrollmentRecord(householdId).then((result) => {
     mainWindow.webContents.send(channels.LOAD_MEMBER_RENEWAL, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Member Renewal...",
+      progressValue: 99
+    })
   });
 });
 
 ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Saving...",
+    progressValue: 0
+  })
   EnrollmentRecord.addEnrollmentRecord(enrollmentRecordObj)
     .then((response) => {
       mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "Saving...",
+        progressValue: 0
+      })
       if (response.type === "Success")
         mainWindow.webContents.send(channels.MEMBER_RENEWAL_SUCCESS);
     })
@@ -536,6 +561,11 @@ ipcMain.on(channels.EXPORT_ENROLLMENT, (event) => {
 //*********** - REPORT METHODS - ****************//
 
 ipcMain.on(channels.REPORT_ELIGIBLE_HOUSEHOLDS, (event, enrollmentPeriodId) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Enrollment Report...",
+    progressValue: 1
+  })
   Report.getEligibleHouseholds(enrollmentPeriodId).then((result) => {
     mainWindow.webContents.send(channels.REPORT_ELIGIBLE_HOUSEHOLDS, result);
   });
@@ -547,39 +577,31 @@ ipcMain.on(channels.REPORT_TOTAL_HOUSEHOLD_ENROLLED, (event, enrollmentPeriodId)
   });
 })
 
-ipcMain.on(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, (event, enrollmentPeriodId) => {
-  Report.getBeneficiariesEnrolled(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, result);
+ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, (event, enrollmentPeriodId) => {
+  Report.getTotalEnrollmentByStatus(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, result);
   });
 })
 
 ipcMain.on(channels.REPORT_MONTHLY_ENROLLMENT_STATS, (event, args) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Enrollment Report...",
+    progressValue: 0
+  })
   Report.getMonthlyEnrollmentStats(args).then((result) => {
     mainWindow.webContents.send(channels.REPORT_MONTHLY_ENROLLMENT_STATS, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Enrollment Report...",
+      progressValue: 99
+    })
   });
 })
 
 ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_STATS, (event, args) => {
   Report.getTotalEnrollmentStats(args).then((result) => {
     mainWindow.webContents.send(channels.REPORT_TOTAL_ENROLLMENT_STATS, result);
-  });
-})
-
-ipcMain.on(channels.REPORT_ENROLLMENT_RATE, (event, enrollmentPeriodId) => {
-  Report.getEnrollmentRate(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_ENROLLMENT_RATE, result);
-  });
-})
-
-ipcMain.on(channels.REPORT_RENEWAL_RATE, (event, enrollmentPeriodId) => {
-  Report.getRenewalRate(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_RENEWAL_RATE, result);
-  });
-})
-
-ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, (event, enrollmentPeriodId) => {
-  Report.getTotalEnrollmentByStatus(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, result);
   });
 })
 
@@ -595,15 +617,58 @@ ipcMain.on(channels.REPORT_HOUSEHOLDS_BY_GENDER, (event, enrollmentPeriodId) => 
   });
 })
 
+ipcMain.on(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, (event, enrollmentPeriodId) => {
+  Report.getBeneficiariesEnrolled(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_ENROLLMENT_RATE, (event, enrollmentPeriodId) => {
+  Report.getEnrollmentRate(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_ENROLLMENT_RATE, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: true,
+      progressTitle: "Loading Enrollment Report...",
+      progressValue: 50
+    })
+  });
+})
+
+ipcMain.on(channels.REPORT_RENEWAL_RATE, (event, enrollmentPeriodId) => {
+  Report.getRenewalRate(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_RENEWAL_RATE, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Enrollment Report...",
+      progressValue: 99
+    })
+  });
+})
+
 ipcMain.on(channels.REPORT_SUBSIDIES, (event, enrollmentPeriodId) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Contribution Report...",
+    progressValue: 1
+  })
   Report.getSubsidies(enrollmentPeriodId).then((result) => {
     mainWindow.webContents.send(channels.REPORT_SUBSIDIES, result);
   });
 })
 
 ipcMain.on(channels.REPORT_MONTHLY_CONTRIBUTION_STATS, (event, args) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Contribution Report...",
+    progressValue: 1
+  })
   Report.getMonthlyContributionStats(args).then((result) => {
     mainWindow.webContents.send(channels.REPORT_MONTHLY_CONTRIBUTION_STATS, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Contribution Report...",
+      progressValue: 99
+    })
   });
 })
 
@@ -628,6 +693,11 @@ ipcMain.on(channels.REPORT_TOTAL_SUBSIDY, (event, enrollmentPeriodId) => {
 ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeriodId) => {
   Report.getTotalContributionCollected(enrollmentPeriodId).then((result) => {
     mainWindow.webContents.send(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Contribution Report...",
+      progressValue: 99
+    })
   });
 })
 
@@ -818,12 +888,10 @@ ipcMain.on(channels.SYSTEM_RESTORE, (event) => {
           progressValue: 0
         });
         //Backup previous database to avoid overwrite
-        rename(currentDb, backUp, (err) => {
-          if (err)
-            console.log(err);
+        copyFile(currentDb, backUp, (err) => {
+          if (err) console.log(err);
           copyFile(file.filePaths[0], currentDb, (err) => {
-            if (err)
-              console.log(err);
+            if (err) console.log(err);
             const response = {
               type: "Success",
               message: "System restored successfully. Application will restart in 5 seconds to apply changes.",
@@ -842,6 +910,61 @@ ipcMain.on(channels.SYSTEM_RESTORE, (event) => {
         })
       }
     })
+    .catch((error) => console.log(error));
+});
+
+ipcMain.on(channels.SYSTEM_RESET, (event) => {
+  const currentDb = path.join(app.getPath("userData"), "cbhi_db.sqlite3");
+  const options = {
+    title: "Save Backup",
+    filters: [{ name: "All files", extensions: ["sqlite3"] }],
+  };
+  dialog.showSaveDialog(options).then((result) => {
+    let timer = 5;
+    if (result.filePath) {
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "System Resetting in Progress...",
+        progressValue: 0
+      });
+      copyFile(currentDb, result.filePath, (err) => {
+        if (err) console.log(err)
+        else {
+          removeFile(currentDb, (err) => {
+            if (err) {
+              mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                open: false,
+                progressTitle: "System Resetting in Progress...",
+                progressValue: 0
+              });
+              const response = {
+                type: "Error",
+                message: "System reset failed! Please try again or contact System Administrators",
+              };
+              mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+            } else {
+              const response = {
+                type: "Success",
+                message: "All data have been cleaned form the system successfully. A backup of previous database is saved to '" + result.filePath + "'",
+              };
+              mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+              app.relaunch();
+              setInterval(() => {
+                if (timer >= 0) {
+                  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                    open: true,
+                    progressTitle: "System Restarting in " + timer + "Seconds",
+                    progressValue: 99
+                  });
+                  timer -= 1;
+                } else app.exit();
+              }, 1000)
+            }
+          })
+        }
+      });
+    }
+  })
     .catch((error) => console.log(error));
 });
 

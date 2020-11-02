@@ -47,6 +47,7 @@ const Gote = (props) => {
                 editable={{
                     onRowAdd: newData =>
                         new Promise((resolve, reject) => {
+                            if (!newData.name) return reject();
                             newData.parent = props.parent;
                             ipcRenderer.send(channels.CREATE_GOTE, newData);
                             setLoading(true);
@@ -54,6 +55,7 @@ const Gote = (props) => {
                         }),
                     onRowUpdate: (newData, oldData) =>
                         new Promise((resolve, reject) => {
+                            if (!newData.name) return reject();
                             ipcRenderer.send(channels.UPDATE_GOTE, newData);
                             setLoading(true);
                             resolve();
