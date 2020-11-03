@@ -75,7 +75,7 @@
     "win": {
       "target": [
         "nsis-web"
-      ]      
+      ]
     },
     "nsis": {
       "oneClick": true,
