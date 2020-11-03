@@ -302,6 +302,7 @@ const Members = () => {
                     grouping: false,
                     draggable: false,
                     debounceInterval: 500,
+                    searchAutoFocus: true,
                     columnsButton: true,
                     exportAllData: true,
                     loadingType: "overlay",
@@ -410,11 +411,17 @@ const Members = () => {
                         isFreeAction: false,
                         hidden: !rowData['EnrollmentRecords.id'] || !rowData['Members.isHouseholdHead'] ? true : false,
                         onClick: (event) => {
-                            setModalForm({
-                                type: "additionalPaymentForm",
-                                householdId: rowData.id,
-                            });
-                            handleOpen();
+                            ipcRenderer.send(channels.CHECK_ACTIVE_PERIOD);
+                            ipcRenderer.on(channels.CHECK_ACTIVE_PERIOD, (event, result) => {
+                                if (result) {
+                                    setModalForm({
+                                        type: "additionalPaymentForm",
+                                        householdId: rowData.id,
+                                    });
+                                    handleOpen();
+                                }
+                                ipcRenderer.removeAllListeners(channels.CHECK_ACTIVE_PERIOD);
+                            })
                         }
                     }),
                     rowData => ({

@@ -49,6 +49,7 @@ const Gote = (props) => {
                         new Promise((resolve, reject) => {
                             if (!newData.name) return reject();
                             newData.parent = props.parent;
+                            newData.name = newData.name.trim();
                             ipcRenderer.send(channels.CREATE_GOTE, newData);
                             setLoading(true);
                             resolve();
@@ -56,6 +57,7 @@ const Gote = (props) => {
                     onRowUpdate: (newData, oldData) =>
                         new Promise((resolve, reject) => {
                             if (!newData.name) return reject();
+                            newData.name = newData.name.trim();
                             ipcRenderer.send(channels.UPDATE_GOTE, newData);
                             setLoading(true);
                             resolve();

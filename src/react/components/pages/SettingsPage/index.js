@@ -105,7 +105,7 @@ const Settings = () => {
                     aria-controls="panel5bh-content"
                     id="panel5bh-header"
                 >
-                    <Typography className={classes.heading}>Import Excel</Typography>
+                    <Typography className={classes.heading}>Excel Import</Typography>
                     <Typography className={classes.secondaryHeading}>Import enrollment data from Excel</Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>

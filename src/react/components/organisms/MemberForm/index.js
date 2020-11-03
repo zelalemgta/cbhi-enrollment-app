@@ -125,7 +125,6 @@ const MemberForm = React.forwardRef((props, ref) => {
     useEffect(() => {
         ipcRenderer.on(channels.LOAD_MEMBER, (event, result) => {
             if (props.isNew) {
-                console.log("triggered")
                 setMember({
                     ...member,
                     "Household.id": result['Household.id'],
@@ -135,7 +134,8 @@ const MemberForm = React.forwardRef((props, ref) => {
             }
             else
                 setMember({
-                    ...result
+                    ...result,
+                    "Household.address": result['Household.address'] || ""
                 });
             if (result['Household.AdministrativeDivisionId'])
                 setSelectedOption({

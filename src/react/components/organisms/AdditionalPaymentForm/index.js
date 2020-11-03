@@ -72,7 +72,8 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
         receiptNo: "",
         receiptDate: "",
         cbhiId: "",
-        totalPaid: {}
+        totalPaid: {},
+        isSubmitted: false
     })
 
     useEffect(() => {
@@ -111,6 +112,11 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (additionalPayment.isSubmitted) return;
+        setAdditionalPayment({
+            ...additionalPayment,
+            isSubmitted: true
+        })
         ipcRenderer.send(channels.CREATE_MEMBER_RENEWAL, additionalPayment);
     }
 

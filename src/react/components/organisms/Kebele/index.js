@@ -52,12 +52,14 @@ const Kebele = (props) => {
                     onRowAdd: newData =>
                         new Promise((resolve, reject) => {
                             if (!newData.name) return reject();
+                            newData.name = newData.name.trim();
                             ipcRenderer.send(channels.CREATE_KEBELE, newData);
                             resolve();
                         }),
                     onRowUpdate: (newData, oldData) =>
                         new Promise((resolve, reject) => {
                             if (!newData.name) return reject();
+                            newData.name = newData.name.trim();
                             ipcRenderer.send(channels.UPDATE_KEBELE, newData);
                             resolve();
                         })

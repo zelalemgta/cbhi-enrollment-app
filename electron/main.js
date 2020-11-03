@@ -3,6 +3,7 @@ const path = require("path");
 const url = require("url");
 const { channels } = require("../src/shared/constants");
 const initDatabase = require("./db/initDatabase");
+const db = require("./db/models");
 const { autoUpdater } = require("electron-updater");
 const Profile = require("./businessLogic/Profile");
 const AdministrativeDivision = require("./businessLogic/AdministrativeDivision");
@@ -463,6 +464,11 @@ ipcMain.on(channels.REMOVE_MEMBER, (event, memberId) => {
 ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
   EnrollmentRecord.loadHouseholdPayment(householdId)
     .then((result) => {
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "Loading Previous Payments...",
+        progressValue: 99
+      })
       mainWindow.webContents.send(channels.LOAD_HOUSEHOLD_PAYMENTS, result);
     })
     .catch((err) => console.log(err));
@@ -930,36 +936,38 @@ ipcMain.on(channels.SYSTEM_RESET, (event) => {
       copyFile(currentDb, result.filePath, (err) => {
         if (err) console.log(err)
         else {
-          removeFile(currentDb, (err) => {
-            if (err) {
-              mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
-                open: false,
-                progressTitle: "System Resetting in Progress...",
-                progressValue: 0
-              });
-              const response = {
-                type: "Error",
-                message: "System reset failed! Please try again or contact System Administrators",
-              };
-              mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
-            } else {
-              const response = {
-                type: "Success",
-                message: "All data have been cleaned form the system successfully. A backup of previous database is saved to '" + result.filePath + "'",
-              };
-              mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
-              app.relaunch();
-              setInterval(() => {
-                if (timer >= 0) {
-                  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
-                    open: true,
-                    progressTitle: "System Restarting in " + timer + "Seconds",
-                    progressValue: 99
-                  });
-                  timer -= 1;
-                } else app.exit();
-              }, 1000)
-            }
+          db.sequelize.close().then(() => {
+            removeFile(currentDb, (err) => {
+              if (err) {
+                mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                  open: false,
+                  progressTitle: "System Resetting in Progress...",
+                  progressValue: 0
+                });
+                const response = {
+                  type: "Error",
+                  message: "System reset failed! Please try again or contact System Administrators",
+                };
+                mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+              } else {
+                const response = {
+                  type: "Success",
+                  message: "All data have been cleaned form the system successfully. A backup of previous database is saved to '" + result.filePath + "'",
+                };
+                mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+                app.relaunch();
+                setInterval(() => {
+                  if (timer >= 0) {
+                    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                      open: true,
+                      progressTitle: "System Restarting in " + timer + " Seconds.",
+                      progressValue: 99
+                    });
+                    timer -= 1;
+                  } else app.exit();
+                }, 1000)
+              }
+            })
           })
         }
       });
