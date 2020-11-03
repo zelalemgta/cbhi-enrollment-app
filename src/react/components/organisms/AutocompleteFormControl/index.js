@@ -30,12 +30,13 @@ const AutocompleteFormControl = (props) => {
             onChange={(event, newValue) => {
                 props.handleChange(newValue);
             }}
+            disableClearable={props.disableClearable}
             disabled={props.disabled}
             autoHighlight
             options={options}
             getOptionSelected={(option, value) => option.id === value.id}
             getOptionLabel={(option) => option && `${option.name} (${option.level})`}
-            renderInput={(params) => <TextField {...params} label="Kebele/Gote" variant="standard" />}
+            renderInput={(params) => <TextField {...params} required={props.required} label="Kebele/Gote" variant="standard" />}
         />
     );
 }

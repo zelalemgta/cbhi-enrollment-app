@@ -5,6 +5,13 @@ const { toGregorian } = require("ethiopian-date");
 //Initialize squelize operartor
 const Op = Sequelize.Op;
 
+const calculateDateOfBirth = (age) => {
+    const currentDate = new Date().getTime();
+    const ageInMilliseconds = age * (1000 * 60 * 60 * 24 * 365.25);
+    const dateOfBirth = new Date(currentDate - ageInMilliseconds);
+    return `${dateOfBirth.getFullYear()}-${dateOfBirth.getMonth() + 1}-${dateOfBirth.getDate()}`;
+}
+
 class Report {
 
     static getEligibleHouseholds = async (enrollmentPeriodId) => {
@@ -16,7 +23,10 @@ class Report {
         const totalHouseholdsEnrolled = await models.EnrollmentRecord.count(
             {
                 where: {
-                    enrollmentPeriodId: enrollmentPeriodId
+                    [Op.and]: [
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
                 },
                 raw: true
             }
@@ -25,10 +35,17 @@ class Report {
     };
 
     static getBeneficiariesEnrolled = async (enrollmentPeriodId) => {
+        const beneficiariesByStatus = {
+            indigent: 0,
+            paying: 0
+        }
         const totalBeneficiariesEnrolled = await models.EnrollmentRecord.findAll(
             {
                 where: {
-                    enrollmentPeriodId: enrollmentPeriodId
+                    [Op.and]: [
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
                 },
                 include: [
                     {
@@ -42,10 +59,13 @@ class Report {
                         ]
                     }
                 ],
-                attributes: [[Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']],
+                attributes: ['isPaying', [Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']],
+                //attributes: [[Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']],
+                group: ['isPaying'],
                 raw: true
             });
-        return totalBeneficiariesEnrolled[0].count;
+        totalBeneficiariesEnrolled.map(result => result.isPaying ? beneficiariesByStatus.paying = result.count : beneficiariesByStatus.indigent = result.count)
+        return beneficiariesByStatus;
     }
 
     static getMonthlyEnrollmentStats = async (args) => {
@@ -76,6 +96,7 @@ class Report {
                 where: {
                     [Op.and]: [
                         { enrollmentPeriodId: args.enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } },
                         { receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
                     ]
                 },
@@ -99,6 +120,7 @@ class Report {
                 where: {
                     [Op.and]: [
                         { enrollmentPeriodId: args.enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } },
                         { receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
                     ]
                 },
@@ -151,6 +173,7 @@ class Report {
                 where: {
                     [Op.and]: [
                         { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
                     ]
                 },
                 group: ['isPaying'],
@@ -172,7 +195,8 @@ class Report {
                 ],
                 where: {
                     [Op.and]: [
-                        { enrollmentPeriodId: enrollmentPeriodId }
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
                     ]
                 },
                 group: ['isPaying'],
@@ -203,7 +227,10 @@ class Report {
         const totalHouseholdsEnrolled = await models.EnrollmentRecord.count(
             {
                 where: {
-                    enrollmentPeriodId: enrollmentPeriodId
+                    [Op.and]: [
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
                 },
                 raw: true
             }
@@ -235,7 +262,10 @@ class Report {
                 attributes: [[Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalRenewals']
                 ],
                 where: {
-                    enrollmentPeriodId: enrollmentPeriodId
+                    [Op.and]: [
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
                 },
                 raw: true
             }
@@ -244,7 +274,10 @@ class Report {
         const previousTotalHouseholdsEnrolled = previousEnrollmentPeriod ? await models.EnrollmentRecord.count(
             {
                 where: {
-                    enrollmentPeriodId: previousEnrollmentPeriod.id
+                    [Op.and]: [
+                        { enrollmentPeriodId: previousEnrollmentPeriod.id },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
                 },
                 raw: true
             }
@@ -268,14 +301,17 @@ class Report {
                             model: models.Member,
                             required: true,
                             where: {
-                                parentId: null
+                                isHouseholdHead: true
                             }
                         }
                     ]
                 }
             ],
             where: {
-                enrollmentPeriodId: enrollmentPeriodId
+                [Op.and]: [
+                    { enrollmentPeriodId: enrollmentPeriodId },
+                    { contributionAmount: { [Op.not]: null } }
+                ]
             },
             raw: true,
             attributes: [[Sequelize.col('Household.Members.gender'), 'gender'], [Sequelize.fn('count', Sequelize.col('Household.Members.Id')), 'count']],
@@ -295,7 +331,10 @@ class Report {
         const filteredHouseholds = await models.EnrollmentRecord.count(
             {
                 where: {
-                    enrollmentPeriodId: enrollmentPeriodId
+                    [Op.and]: [
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
                 },
                 attributes: ['isPaying', [Sequelize.fn('count', Sequelize.col('HouseholdId')), 'count']],
                 group: ['isPaying'],
@@ -304,6 +343,50 @@ class Report {
         );
         filteredHouseholds.map(result => result.isPaying ? enrollmentByStatus.paying = result.count : enrollmentByStatus.indigent = result.count)
         return enrollmentByStatus;
+    }
+
+    static getTotalAdditionalBeneficiariesByStatus = async (enrollmentPeriodId) => {
+        //At runtime, a date from Now will be calculated for a beneficiary to mark as 18 & above
+        const dob = calculateDateOfBirth(18);
+        const additionalBeneficiariesByStatus = {
+            indigent: 0,
+            paying: 0
+        }
+        const filteredHouseholds = await models.EnrollmentRecord.count(
+            {
+                where: {
+                    [Op.and]: [
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
+                },
+                include: [
+                    {
+                        model: models.Household,
+                        required: true,
+                        include: [
+                            {
+                                model: models.Member,
+                                required: true,
+                                where: {
+                                    [Op.and]: [
+                                        { dateOfBirth: { [Op.lte]: dob } },
+                                        { relationship: { [Op.notIn]: ['Household Head', 'Husband', 'Wife'] } },
+                                        { profession: { [Op.not]: 'Disabled' } }
+                                    ]
+
+                                }
+                            }
+                        ]
+                    }
+                ],
+                attributes: ['isPaying', [Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']],
+                group: ['isPaying'],
+                raw: true
+            }
+        );
+        filteredHouseholds.map(result => result.isPaying ? additionalBeneficiariesByStatus.paying = result.count : additionalBeneficiariesByStatus.indigent = result.count)
+        return additionalBeneficiariesByStatus;
     }
 
     /********************* - Contribution Reports - ***************************/
@@ -392,7 +475,7 @@ class Report {
         });
 
         renewalStats.map(result => {
-            contributionStats.renewedMembersContributions = result.totalContributionAmount;
+            contributionStats.renewedMembersContributions = result.totalContributionAmount ? result.totalContributionAmount : 0;
             contributionStats.registrationFees += result.totalRegistrationFee;
             contributionStats.additionalBeneficiariesFees += result.totalAdditionalBeneficiaryFee;
             contributionStats.otherFees += result.totalOtherFee;
@@ -491,7 +574,10 @@ class Report {
                     [Sequelize.fn('sum', Sequelize.col('otherFees')), 'totalOtherFee']
                 ],
                 where: {
-                    enrollmentPeriodId: enrollmentPeriodId
+                    [Op.and]: [
+                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { isPaying: true }
+                    ]
                 },
                 raw: true
             });

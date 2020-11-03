@@ -71,7 +71,8 @@ class EnrollmentPeriod {
     static getEnrollmentPeriods = () => {
         const enrollmentPeriods = models.EnrollmentPeriod.findAll({ raw: true }).then(result => {
             const enrollmentPeriodResults = result.map(enrollmentPeriod => {
-                enrollmentPeriod.active = new Date().setHours(0, 0, 0, 0) <= Date.parse(enrollmentPeriod.coverageEndDate) ? true : false;
+                enrollmentPeriod.active = new Date().setHours(0, 0, 0, 0) >= Date.parse(enrollmentPeriod.coverageStartDate) &&
+                    new Date().setHours(0, 0, 0, 0) <= Date.parse(enrollmentPeriod.coverageEndDate) ? true : false;
                 enrollmentPeriod.enrollmentStartDate = convertDate(enrollmentPeriod.enrollmentStartDate, 'ET')
                 enrollmentPeriod.enrollmentEndDate = convertDate(enrollmentPeriod.enrollmentEndDate, 'ET')
                 enrollmentPeriod.coverageStartDate = convertDate(enrollmentPeriod.coverageStartDate, 'ET')

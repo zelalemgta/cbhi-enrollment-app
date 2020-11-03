@@ -1,6 +1,6 @@
 {
   "name": "cbhi-app",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "productName": "CBHI Enrollment App",
   "main": "electron/main.js",
   "author": "Zelalem G. Tessema",
@@ -22,11 +22,12 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "^3.4.3",
+    "react-scripts": "^4.0.0",
     "sequelize": "^6.2.0",
     "sqlite3": "^4.2.0",
     "umzug": "^2.3.0",
-    "uuid": "^8.3.0"
+    "uuid": "^8.3.0",
+    "xlsx": "^0.16.8"
   },
   "homepage": "./",
   "scripts": {

@@ -95,30 +95,48 @@ const MemberForm = React.forwardRef((props, ref) => {
         'Household.id': "",
         'Household.cbhiId': "",
         'Household.AdministrativeDivisionId': null,
-        relationship: props.parentId ? "" : relationshipOptions[0],
+        'Household.address': "",
+        relationship: "",
         profession: "",
-        parentId: props.parentId,
-        enrolledDate: ""
+        isHouseholdHead: false,
+        enrolledDate: "",
+        isSubmitted: false
     })
     const [selectedOption, setSelectedOption] = useState(null);
 
     useEffect(() => {
         if (props.memberId !== null)
             ipcRenderer.send(channels.LOAD_MEMBER, props.memberId)
-        else if (props.parentId !== null)
-            ipcRenderer.send(channels.LOAD_MEMBER, props.parentId)
-    }, [props.memberId, props.parentId])
+        else if (props.isNew) {
+            setMember(memberState => ({
+                ...memberState,
+                relationship: relationshipOptions[0],
+                isHouseholdHead: true
+            }))
+        }
+        else {
+            setMember(memberState => ({
+                ...memberState,
+                isHouseholdHead: false
+            }))
+        }
+    }, [props.memberId, props.isNew])
 
     useEffect(() => {
         ipcRenderer.on(channels.LOAD_MEMBER, (event, result) => {
-            if (member.parentId === null)
-                setMember(result);
-            else
+            if (props.isNew) {
                 setMember({
                     ...member,
                     "Household.id": result['Household.id'],
-                    "Household.cbhiId": result['Household.cbhiId']
+                    "Household.cbhiId": result['Household.cbhiId'],
+                    "Household.address": result['Household.address'] || ""
                 })
+            }
+            else
+                setMember({
+                    ...result,
+                    "Household.address": result['Household.address'] || ""
+                });
             if (result['Household.AdministrativeDivisionId'])
                 setSelectedOption({
                     id: result['Household.AdministrativeDivision.id'],
@@ -129,7 +147,7 @@ const MemberForm = React.forwardRef((props, ref) => {
         return () => {
             ipcRenderer.removeAllListeners(channels.LOAD_MEMBER);
         }
-    }, [member])
+    }, [member, props.isNew])
 
     useEffect(() => {
         ipcRenderer.on(channels.MEMBER_SUCCESS, (event) => {
@@ -159,13 +177,18 @@ const MemberForm = React.forwardRef((props, ref) => {
     const handleAdministrativeDivisionChange = (newSelectedOption) => {
         setMember({
             ...member,
-            AdministrativeDivisionId: newSelectedOption ? newSelectedOption.id : null
+            "Household.AdministrativeDivisionId": newSelectedOption ? newSelectedOption.id : null
         })
         setSelectedOption(newSelectedOption);
     }
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (member.isSubmitted) return;
+        setMember({
+            ...member,
+            isSubmitted: true
+        })
         if (member.id === null)
             ipcRenderer.send(channels.CREATE_MEMBER, member);
         else
@@ -178,7 +201,7 @@ const MemberForm = React.forwardRef((props, ref) => {
             <Box display="flex">
                 <Box flexGrow={1}>
                     <Typography component="h6" variant="h6">
-                        {member.id ? "Update" : "Add"} {member.parentId ? "Beneficiary" : "Member"}
+                        {member.id ? "Update" : "Add"} {member.isHouseholdHead ? "Member" : "Beneficiary"}
                     </Typography>
                 </Box>
                 <Box p={0}>
@@ -217,16 +240,22 @@ const MemberForm = React.forwardRef((props, ref) => {
                             ))}
                         </Select>
                     </FormControl>
-                    <AutocompleteFormControl classes={classes.AutocompleteField} handleChange={handleAdministrativeDivisionChange} disabled={member.parentId ? true : false} selectedOption={selectedOption} />
+                    <AutocompleteFormControl
+                        classes={classes.AutocompleteField}
+                        handleChange={handleAdministrativeDivisionChange}
+                        disabled={!member.isHouseholdHead}
+                        required={member.isHouseholdHead ? true : false}
+                        selectedOption={selectedOption}
+                    />
                     <TextField
                         className={classes.householdCBHI}
                         onChange={handleChange}
-                        required={member.parentId ? true : false}
+                        required={member.isHouseholdHead ? true : false}
                         InputProps={{
                             endAdornment: <InputAdornment position="end">/</InputAdornment>,
-                            readOnly: member.parentId ? true : false
+                            readOnly: member.isHouseholdHead ? false : true
                         }}
-                        variant={member.parentId ? "filled" : "standard"}
+                        variant={!member.isHouseholdHead ? "filled" : "standard"}
                         id="Household.cbhiId"
                         name="Household.cbhiId"
                         placeholder="00/00/00/P-000/"
@@ -245,14 +274,14 @@ const MemberForm = React.forwardRef((props, ref) => {
                         label="Member CBHI Id"
                         value={member.cbhiId}
                     />
-                    <FormControl variant={member.parentId ? "standard" : "filled"} className={classes.SelectField}>
+                    <FormControl variant={!member.isHouseholdHead ? "standard" : "filled"} className={classes.SelectField}>
                         <InputLabel id="genderLabel">Relationship</InputLabel>
                         <Select
-                            readOnly={member.parentId ? false : true}
+                            readOnly={member.isHouseholdHead ? true : false}
                             labelId="relationshipLabel"
                             id="relationship"
                             name="relationship"
-                            value={member.parentId ? member.relationship : relationshipOptions[0]}
+                            value={member.isHouseholdHead ? relationshipOptions[0] : member.relationship}
                             onChange={handleChange}
                         >
                             {relationshipOptions.map((relationship, index) => (
@@ -275,6 +304,20 @@ const MemberForm = React.forwardRef((props, ref) => {
                         </Select>
                     </FormControl>
                     <DatePicker required id="enrolledDate" name="enrolledDate" placeholder="YYYY-MM-DD" label="Enrollment Date" materialUi onChange={handleChange} value={member.enrolledDate} maxDate={0} />
+                    <TextField
+                        className={classes.TextField}
+                        onChange={handleChange}
+                        id="Household.address"
+                        multiline
+                        InputProps={{
+                            readOnly: member.isHouseholdHead ? false : true
+                        }}
+                        variant={!member.isHouseholdHead ? "filled" : "standard"}
+                        name="Household.address"
+                        helperText="eg. Phone No; House No; ..."
+                        label="Household Address"
+                        value={member['Household.address']}
+                    />
                     <Divider />
                     <Box flexDirection="row-reverse" mt={2}>
                         <Button type="submit" variant="contained">Save</Button>

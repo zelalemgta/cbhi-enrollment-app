@@ -12,9 +12,11 @@ import MonthlyEnrollmentStats from '../../organisms/MonthlyEnrollmentStats';
 import EnrollmentRate from '../../organisms/EnrollmentRate';
 import RenewalRate from '../../organisms/RenewalRate';
 import TotalEnrollmentByStatus from '../../organisms/TotalEnrollmentByStatus';
+import TotalAdditionalBeneficiaries from '../../organisms/TotalAdditionalBeneficiaries';
 import HouseholdByGender from '../../organisms/TotalHouseholdsByGender';
 import DatePicker from '../../atoms/DatePicker';
 import RemoveIcon from '@material-ui/icons/Remove';
+import ExportPDF from '../../organisms/ExportPDF';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -33,6 +35,11 @@ const useStyles = makeStyles((theme) => ({
     inputDivider: {
         margin: '30px 7px 0 7px'
     },
+    exportBtn: {
+        verticalAlign: "top",
+        marginTop: "8px",
+        float: "right"
+    },
     footer: {
         width: `calc(100% - 200px)`,
         position: 'fixed',
@@ -49,7 +56,6 @@ const convertDate = (date) => {
 const EnrollmentReports = () => {
 
     const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
-
     const [selectedDate, setSelectedDate] = useState({
         year: '',
         dateFrom: '',
@@ -76,10 +82,11 @@ const EnrollmentReports = () => {
             [e.target.name]: e.target.value
         });
     }
+
     const classes = useStyles();
     return (
         <Box>
-            <Grid className={classes.root} spacing={2} component="div" container alignItems="center">
+            <Grid className={classes.root} spacing={1} component="div" container alignItems="center">
                 <Grid item xs={12}>
                     <SelectField id="year" name="year" labelId="yearLabel" label="Select Year" options={enrollmentPeriods} selectedValue={selectedDate.year} onChange={handleChange} />
                     <Box mx={2} display="inline">
@@ -102,16 +109,20 @@ const EnrollmentReports = () => {
                             minDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].minDate : null}
                             maxDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].maxDate : null}
                         />
+                        <ExportPDF className={classes.exportBtn} />
                     </Box>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={2}>
                     <EligibleHousehold enrollmentPeriod={selectedDate.year} />
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={2}>
                     <TotalHousehold enrollmentPeriod={selectedDate.year} />
                 </Grid>
                 <Grid item xs={4}>
-                    <TotalBeneficiary enrollmentPeriod={selectedDate.year} />
+                    <TotalEnrollmentByStatus enrollmentPeriod={selectedDate.year} />
+                </Grid>
+                <Grid item xs={4}>
+                    <TotalAdditionalBeneficiaries enrollmentPeriod={selectedDate.year} />
                 </Grid>
                 <Grid item xs={12}>
                     <ReportDivider title="Enrollment Stats" />
@@ -128,10 +139,10 @@ const EnrollmentReports = () => {
                         <ReportDivider title="" />
                     </Grid>
                     <Grid item xs={4}>
-                        <TotalEnrollmentByStatus enrollmentPeriod={selectedDate.year} />
+                        <HouseholdByGender enrollmentPeriod={selectedDate.year} />
                     </Grid>
                     <Grid item xs={4}>
-                        <HouseholdByGender enrollmentPeriod={selectedDate.year} />
+                        <TotalBeneficiary enrollmentPeriod={selectedDate.year} />
                     </Grid>
                     <Grid item xs={2}>
                         <EnrollmentRate enrollmentPeriod={selectedDate.year} />
