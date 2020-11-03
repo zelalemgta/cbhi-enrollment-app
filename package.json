@@ -13,7 +13,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
-    "electron-updater": "^4.3.1",
+    "electron-updater": "^4.3.5",
     "ethiopian-date": "0.0.6",
     "fontsource-roboto": "^2.1.4",
     "jquery": "^1.12.4",
@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "electron": "^9.0.5",
-    "electron-builder": "^22.7.0",
+    "electron-builder": "^22.9.1",
     "sequelize-cli": "^6.0.0"
   },
   "build": {
@@ -75,11 +75,11 @@
     "win": {
       "target": [
         "nsis-web"
-      ]
+      ]      
     },
     "nsis": {
-      "oneClick": false,
-      "perMachine": true
+      "oneClick": true,
+      "perMachine": false
     },
     "publish": {
       "provider": "github",
