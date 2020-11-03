@@ -20,7 +20,8 @@ const Kebele = (props) => {
 
     useEffect(() => {
         ipcRenderer.on(channels.LOAD_KEBELE, (event, result) => {
-            setData(result);
+            const validatedResult = result.map(kebele => ({ ...kebele, code: kebele.code ? kebele.code : "" }));
+            setData(validatedResult);
         });
         return () => {
             ipcRenderer.removeAllListeners(channels.LOAD_KEBELE);
@@ -50,11 +51,15 @@ const Kebele = (props) => {
                 editable={{
                     onRowAdd: newData =>
                         new Promise((resolve, reject) => {
+                            if (!newData.name) return reject();
+                            newData.name = newData.name.trim();
                             ipcRenderer.send(channels.CREATE_KEBELE, newData);
                             resolve();
                         }),
                     onRowUpdate: (newData, oldData) =>
                         new Promise((resolve, reject) => {
+                            if (!newData.name) return reject();
+                            newData.name = newData.name.trim();
                             ipcRenderer.send(channels.UPDATE_KEBELE, newData);
                             resolve();
                         })

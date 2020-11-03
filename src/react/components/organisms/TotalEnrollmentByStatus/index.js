@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
 const StatsRenderer = (props) => {
     const classes = useStyles();
     return (
-        <Grid className={classes.root} container spacing={2}>
+        <Grid className={classes.root} container spacing={1}>
             <Grid item xs={5}>
                 <Typography variant="caption">Paying</Typography>
                 <Typography variant="h4">{props.paying}</Typography>

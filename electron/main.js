@@ -3,6 +3,7 @@ const path = require("path");
 const url = require("url");
 const { channels } = require("../src/shared/constants");
 const initDatabase = require("./db/initDatabase");
+const db = require("./db/models");
 const { autoUpdater } = require("electron-updater");
 const Profile = require("./businessLogic/Profile");
 const AdministrativeDivision = require("./businessLogic/AdministrativeDivision");
@@ -13,8 +14,9 @@ const EnrollmentRecord = require("./businessLogic/EnrollmentRecord");
 const Report = require("./businessLogic/Report");
 const writeFile = require("fs").writeFile;
 const copyFile = require("fs").copyFile;
-const rename = require("fs").rename;
+const removeFile = require("fs").unlink;
 const { Parser } = require("json2csv");
+const XLSX = require("xlsx");
 const { toEthiopian } = require("ethiopian-date");
 
 let mainWindow;
@@ -82,7 +84,6 @@ const exportEnrollmentData = async () => {
         const etDate = toEthiopian(...rowData["Members.dateOfBirth"].split("-").map(Number));
         return etDate.join("-");
       },
-
     },
     { label: "Gender", value: "Members.gender" },
     {
@@ -422,6 +423,14 @@ ipcMain.on(channels.LOAD_MEMBERS, (event, query) => {
     .catch((err) => console.log(err));
 });
 
+ipcMain.on(channels.LOAD_BENEFICIARIES, (event, householdId) => {
+  Member.getBeneficiaries(householdId)
+    .then((result) => {
+      mainWindow.webContents.send(channels.LOAD_BENEFICIARIES, result);
+    })
+    .catch((err) => console.log(err));
+});
+
 ipcMain.on(channels.CREATE_MEMBER, (event, memberObj) => {
   Member.addMember(memberObj)
     .then((response) => {
@@ -452,31 +461,69 @@ ipcMain.on(channels.REMOVE_MEMBER, (event, memberId) => {
     .catch((err) => console.log(err));
 });
 
+ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
+  EnrollmentRecord.loadHouseholdPayment(householdId)
+    .then((result) => {
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "Loading Previous Payments...",
+        progressValue: 99
+      })
+      mainWindow.webContents.send(channels.LOAD_HOUSEHOLD_PAYMENTS, result);
+    })
+    .catch((err) => console.log(err));
+});
+
 //*********** - MEMBER RENEWAL METHODS - ****************//
 
 ipcMain.on(channels.CHECK_ACTIVE_PERIOD, (event) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Member Renewal...",
+    progressValue: 0
+  })
   EnrollmentRecord.checkActiveEnrollmentPeriod().then((result) => {
-    if (!result) {
+    if (result.type !== "Success") {
       const response = {
         type: "Warning",
-        message: "No Active Enrollment Period! Please make sure you have created a new Enrollment Period in settings page",
+        message: result.message,
       };
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "",
+        progressValue: 0
+      })
       mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
     }
-    mainWindow.webContents.send(channels.CHECK_ACTIVE_PERIOD, result);
+    mainWindow.webContents.send(channels.CHECK_ACTIVE_PERIOD, result.type === "Success");
   });
 });
 
 ipcMain.on(channels.LOAD_MEMBER_RENEWAL, (event, householdId) => {
   EnrollmentRecord.loadNewEnrollmentRecord(householdId).then((result) => {
     mainWindow.webContents.send(channels.LOAD_MEMBER_RENEWAL, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Member Renewal...",
+      progressValue: 99
+    })
   });
 });
 
 ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Saving...",
+    progressValue: 0
+  })
   EnrollmentRecord.addEnrollmentRecord(enrollmentRecordObj)
     .then((response) => {
       mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "Saving...",
+        progressValue: 0
+      })
       if (response.type === "Success")
         mainWindow.webContents.send(channels.MEMBER_RENEWAL_SUCCESS);
     })
@@ -520,6 +567,11 @@ ipcMain.on(channels.EXPORT_ENROLLMENT, (event) => {
 //*********** - REPORT METHODS - ****************//
 
 ipcMain.on(channels.REPORT_ELIGIBLE_HOUSEHOLDS, (event, enrollmentPeriodId) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Enrollment Report...",
+    progressValue: 1
+  })
   Report.getEligibleHouseholds(enrollmentPeriodId).then((result) => {
     mainWindow.webContents.send(channels.REPORT_ELIGIBLE_HOUSEHOLDS, result);
   });
@@ -531,15 +583,25 @@ ipcMain.on(channels.REPORT_TOTAL_HOUSEHOLD_ENROLLED, (event, enrollmentPeriodId)
   });
 })
 
-ipcMain.on(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, (event, enrollmentPeriodId) => {
-  Report.getBeneficiariesEnrolled(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, result);
+ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, (event, enrollmentPeriodId) => {
+  Report.getTotalEnrollmentByStatus(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, result);
   });
 })
 
 ipcMain.on(channels.REPORT_MONTHLY_ENROLLMENT_STATS, (event, args) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Enrollment Report...",
+    progressValue: 0
+  })
   Report.getMonthlyEnrollmentStats(args).then((result) => {
     mainWindow.webContents.send(channels.REPORT_MONTHLY_ENROLLMENT_STATS, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Enrollment Report...",
+      progressValue: 99
+    })
   });
 })
 
@@ -549,21 +611,9 @@ ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_STATS, (event, args) => {
   });
 })
 
-ipcMain.on(channels.REPORT_ENROLLMENT_RATE, (event, enrollmentPeriodId) => {
-  Report.getEnrollmentRate(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_ENROLLMENT_RATE, result);
-  });
-})
-
-ipcMain.on(channels.REPORT_RENEWAL_RATE, (event, enrollmentPeriodId) => {
-  Report.getRenewalRate(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_RENEWAL_RATE, result);
-  });
-})
-
-ipcMain.on(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, (event, enrollmentPeriodId) => {
-  Report.getTotalEnrollmentByStatus(enrollmentPeriodId).then((result) => {
-    mainWindow.webContents.send(channels.REPORT_TOTAL_ENROLLMENT_BY_STATUS, result);
+ipcMain.on(channels.REPORT_TOTAL_ADDITIONAL_BENEFICIARIES, (event, enrollmentPeriodId) => {
+  Report.getTotalAdditionalBeneficiariesByStatus(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_ADDITIONAL_BENEFICIARIES, result);
   });
 })
 
@@ -573,15 +623,58 @@ ipcMain.on(channels.REPORT_HOUSEHOLDS_BY_GENDER, (event, enrollmentPeriodId) => 
   });
 })
 
+ipcMain.on(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, (event, enrollmentPeriodId) => {
+  Report.getBeneficiariesEnrolled(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_TOTAL_BENEFICIARY_ENROLLED, result);
+  });
+})
+
+ipcMain.on(channels.REPORT_ENROLLMENT_RATE, (event, enrollmentPeriodId) => {
+  Report.getEnrollmentRate(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_ENROLLMENT_RATE, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: true,
+      progressTitle: "Loading Enrollment Report...",
+      progressValue: 50
+    })
+  });
+})
+
+ipcMain.on(channels.REPORT_RENEWAL_RATE, (event, enrollmentPeriodId) => {
+  Report.getRenewalRate(enrollmentPeriodId).then((result) => {
+    mainWindow.webContents.send(channels.REPORT_RENEWAL_RATE, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Enrollment Report...",
+      progressValue: 99
+    })
+  });
+})
+
 ipcMain.on(channels.REPORT_SUBSIDIES, (event, enrollmentPeriodId) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Contribution Report...",
+    progressValue: 1
+  })
   Report.getSubsidies(enrollmentPeriodId).then((result) => {
     mainWindow.webContents.send(channels.REPORT_SUBSIDIES, result);
   });
 })
 
 ipcMain.on(channels.REPORT_MONTHLY_CONTRIBUTION_STATS, (event, args) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Loading Contribution Report...",
+    progressValue: 1
+  })
   Report.getMonthlyContributionStats(args).then((result) => {
     mainWindow.webContents.send(channels.REPORT_MONTHLY_CONTRIBUTION_STATS, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Contribution Report...",
+      progressValue: 99
+    })
   });
 })
 
@@ -606,8 +699,156 @@ ipcMain.on(channels.REPORT_TOTAL_SUBSIDY, (event, enrollmentPeriodId) => {
 ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeriodId) => {
   Report.getTotalContributionCollected(enrollmentPeriodId).then((result) => {
     mainWindow.webContents.send(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, result);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Loading Contribution Report...",
+      progressValue: 99
+    })
   });
 })
+
+ipcMain.on(channels.EXPORT_TO_PDF, (event) => {
+  const options = {
+    title: "Export to PDF",
+    filters: [{ name: "All files", extensions: ["pdf"] }],
+  };
+  dialog
+    .showSaveDialog(options)
+    .then((result) => {
+      if (result.filePath)
+        mainWindow.webContents.printToPDF({
+          marginsType: 1,
+          printBackground: true,
+          printSelectionOnly: false,
+          landscape: true,
+          pageSize: 'A4',
+          scaleFactor: 95
+        }).then(data => {
+          writeFile(result.filePath, data, (error) => {
+            if (error) console.log(error)
+            const response = {
+              type: "Success",
+              message: "Saved PDF successfully to '" + result.filePath + "'",
+            };
+            //Delayed notification trigger to exclude it from the screen snapshot
+            setTimeout(() => mainWindow.webContents.send(channels.SEND_NOTIFICATION, response), 500);
+          })
+        }).catch(error => {
+          const response = {
+            type: "Success",
+            message: "Failed to export PDF to '" + result.filePath + "'",
+          }
+          mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+        })
+      mainWindow.webContents.send(channels.EXPORT_TO_PDF);
+    })
+    .catch((error) => {
+      console.log(error)
+      mainWindow.webContents.send(channels.EXPORT_TO_PDF);
+    });
+})
+
+//*********** -  Import Enrollment Data  METHODS - ****************//
+
+ipcMain.on(channels.DOWNLOAD_ENROLLMENT_TEMPLATE, (event) => {
+  const workbook = XLSX.utils.book_new();
+  const template_name = "CBHI Sheet";
+
+  /* make worksheet */
+  const template_data = [
+    {
+      "Full Name": "",
+      "Date Of Birth(YYYY-MM-DD)": "",
+      "Gender(Male/Female)": "",
+      "Household CBHI Id": "",
+      "Beneficiary CBHI Id": "",
+      "Kebele/Gote": "",
+      "Relationship": "",
+      "Profession": "",
+      "Enrollment Date (YYYY-MM-DD)": "",
+      "is Household Head (1/0)": ""
+    }
+  ];
+  const ws = XLSX.utils.json_to_sheet(template_data);
+  XLSX.utils.book_append_sheet(workbook, ws, template_name);
+  const options = {
+    title: "Save Enrollment Template",
+    filters: [{ name: "All files", extensions: ["xlsx"] }],
+  };
+  dialog
+    .showSaveDialog(options)
+    .then((result) => {
+      if (result.filePath) {
+        XLSX.writeFile(workbook, result.filePath);
+        const response = {
+          type: "Success",
+          message: "Enrollment template saved successfully to '" + result.filePath + "'",
+        };
+
+        mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      }
+    })
+    .catch((error) => console.log(error));
+});
+
+ipcMain.on(channels.IMPORT_ENROLLMENT, (event) => {
+  const options = {
+    title: "Upload Enrollment Excel Data",
+    filters: [{ name: "All files", extensions: ["xlsx", "csv"] }],
+    properties: ['openFile']
+  };
+  dialog.showOpenDialog(options).then((file) => {
+    if (!file.canceled) {
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "Analyzing Enrollment Data...",
+        progressValue: 1
+      })
+      const workbook = XLSX.readFile(file.filePaths[0]);
+      const firstSheetName = workbook.SheetNames[0];
+      const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {
+        header: ["fullName", "dateOfBirth", "gender", "cbhiId", "beneficiaryCBHIId", "administrativeDivision", "relationship", "profession", "enrolledDate", "isHouseholdHead"],
+        range: 1,
+      });
+      setTimeout(() => {
+        Member.excelDataParser(excelData).then((response) => {
+          if (response.type === "Error") {
+            mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+              open: false,
+              progressTitle: "",
+              progressValue: 0
+            })
+            mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+          }
+          else {
+            mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+              open: true,
+              progressTitle: "Importing Enrollment Data...",
+              progressValue: 50
+            })
+            Member.importEnrollmentData(response.data).then((response) => {
+              if (response.type === "Success") {
+                mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                  open: false,
+                  progressTitle: "Importing Enrollment Data Complete",
+                  progressValue: 100
+                })
+                mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+              }
+            }).catch((err) => {
+              mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                open: false,
+                progressTitle: "Importing Enrollment Data Failed",
+                progressValue: 75
+              })
+            });
+          }
+        })
+      }, 3000);
+    }
+  })
+    .catch((error) => console.log(error));
+});
 
 //*********** -  SYSTEM RESTORE & BACKUP METHODS - ****************//
 
@@ -647,13 +888,16 @@ ipcMain.on(channels.SYSTEM_RESTORE, (event) => {
     .showOpenDialog(options)
     .then((file) => {
       if (!file.canceled) {
+        mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+          open: true,
+          progressTitle: "System Restore in Progress...",
+          progressValue: 0
+        });
         //Backup previous database to avoid overwrite
-        rename(currentDb, backUp, (err) => {
-          if (err)
-            console.log(err);
+        copyFile(currentDb, backUp, (err) => {
+          if (err) console.log(err);
           copyFile(file.filePaths[0], currentDb, (err) => {
-            if (err)
-              console.log(err);
+            if (err) console.log(err);
             const response = {
               type: "Success",
               message: "System restored successfully. Application will restart in 5 seconds to apply changes.",
@@ -661,12 +905,74 @@ ipcMain.on(channels.SYSTEM_RESTORE, (event) => {
             mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
             app.relaunch();
             setTimeout(() => {
+              mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                open: false,
+                progressTitle: "System Restore Complete!",
+                progressValue: 100
+              });
               app.exit();
             }, 5000);
           });
         })
       }
     })
+    .catch((error) => console.log(error));
+});
+
+ipcMain.on(channels.SYSTEM_RESET, (event) => {
+  const currentDb = path.join(app.getPath("userData"), "cbhi_db.sqlite3");
+  const options = {
+    title: "Save Backup",
+    filters: [{ name: "All files", extensions: ["sqlite3"] }],
+  };
+  dialog.showSaveDialog(options).then((result) => {
+    let timer = 5;
+    if (result.filePath) {
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "System Resetting in Progress...",
+        progressValue: 0
+      });
+      copyFile(currentDb, result.filePath, (err) => {
+        if (err) console.log(err)
+        else {
+          db.sequelize.close().then(() => {
+            removeFile(currentDb, (err) => {
+              if (err) {
+                mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                  open: false,
+                  progressTitle: "System Resetting in Progress...",
+                  progressValue: 0
+                });
+                const response = {
+                  type: "Error",
+                  message: "System reset failed! Please try again or contact System Administrators",
+                };
+                mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+              } else {
+                const response = {
+                  type: "Success",
+                  message: "All data have been cleaned form the system successfully. A backup of previous database is saved to '" + result.filePath + "'",
+                };
+                mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+                app.relaunch();
+                setInterval(() => {
+                  if (timer >= 0) {
+                    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+                      open: true,
+                      progressTitle: "System Restarting in " + timer + " Seconds.",
+                      progressValue: 99
+                    });
+                    timer -= 1;
+                  } else app.exit();
+                }, 1000)
+              }
+            })
+          })
+        }
+      });
+    }
+  })
     .catch((error) => console.log(error));
 });
 

@@ -17,7 +17,7 @@ const TotalHousehold = (props) => {
         return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_HOUSEHOLD_ENROLLED) }
     }, [props.enrollmentPeriod])
     return (
-        <ReportCard title="Total Households Enrolled" value={totalHouseholds.toLocaleString()} />
+        <ReportCard title="Households Enrolled" value={totalHouseholds.toLocaleString()} />
     )
 }
 

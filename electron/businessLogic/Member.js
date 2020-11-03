@@ -1,5 +1,7 @@
 const Sequelize = require("sequelize");
 const models = require("../db/models");
+const AdministrativeDivision = require("./AdministrativeDivision");
+const { relationshipOptions } = require("../../src/shared/constants");
 const { toEthiopian, toGregorian } = require("ethiopian-date");
 
 //Initialize squelize operartor
@@ -22,6 +24,15 @@ const convertDate = (date, calendar) => {
 const calculateAge = (dateOfBirth) => {
     var diff = new Date().getTime() - new Date(dateOfBirth).getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+}
+
+const validateDate = (dateValue) => {
+    try {
+        convertDate(dateValue, 'GR');
+        return true;
+    } catch (err) {
+        return false
+    }
 }
 
 class Member {
@@ -47,7 +58,8 @@ class Member {
         } else {
             const result = models.Household.create({
                 cbhiId: memberObj["Household.cbhiId"],
-                AdministrativeDivisionId: memberObj.AdministrativeDivisionId,
+                AdministrativeDivisionId: memberObj["Household.AdministrativeDivisionId"],//memberObj.AdministrativeDivisionId,
+                address: memberObj["Household.address"],
                 enrolledDate: memberObj.enrolledDate,
                 Members: [{
                     fullName: memberObj.fullName,
@@ -56,7 +68,7 @@ class Member {
                     cbhiId: memberObj.cbhiId,
                     relationship: memberObj.relationship,
                     profession: memberObj.profession,
-                    parentId: memberObj.parentId,
+                    isHouseholdHead: memberObj.isHouseholdHead,
                     enrolledDate: memberObj.enrolledDate,
                 }]
             }, {
@@ -84,12 +96,31 @@ class Member {
             where: {
                 id: memberObj.id
             }
-        }).then(async () => {
-            memberObj.parentId || await models.Household.update({
+        }).then(() => {
+            memberObj.isHouseholdHead && models.Household.update({
                 cbhiId: memberObj["Household.cbhiId"],
+                AdministrativeDivisionId: memberObj["Household.AdministrativeDivisionId"],
+                address: memberObj["Household.address"],
                 enrolledDate: memberObj.enrolledDate,
-                AdministrativeDivisionId: memberObj.AdministrativeDivisionId
-            }, { where: { id: memberObj["Household.id"] } });
+            }, { where: { id: memberObj["Household.id"] } }).then(async () => {
+                const activeEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+                    where: {
+                        coverageEndDate: { [Op.gte]: Date.now() }
+                    },
+                    raw: true,
+                    order: [['coverageEndDate', 'DESC']]
+                });
+                await models.EnrollmentRecord.update({
+                    cbhiId: memberObj["Household.cbhiId"]
+                }, {
+                    where: {
+                        [Op.and]: [
+                            { EnrollmentPeriodId: activeEnrollmentPeriod.id },
+                            { HouseholdId: memberObj["Household.id"] }
+                        ]
+                    }
+                })
+            });
             return {
                 type: "Success",
                 message: "Member updated successfully"
@@ -143,26 +174,55 @@ class Member {
     }
 
     static getMembers = async (query) => {
-        const { orderBy, orderDirection, page, pageSize, search } = query;
+        const { filters, orderBy, orderDirection, page, pageSize, search } = query;
         const activeYear = await models.EnrollmentPeriod.findOne({
             where: {
                 coverageEndDate: { [Op.gte]: Date.now() }
             }
         });
         let filiteredMembersList = models.Household.findAndCountAll({
+            //(Removed for Better Performance)
+            //***This adds significant time on the total query. 
+            //**** */ Household size will be calculated for each individual record
+            //
+            // attributes: {
+            //     include: [[Sequelize.literal(`(
+            //         SELECT COUNT(*)
+            //         FROM Members AS member
+            //         WHERE
+            //             member.HouseholdId = Household.id
+            //             AND
+            //             member.isDeleted IS NOT 1
+            //     )`), "householdSize"]]
+            // },
             include: [
                 {
                     model: models.AdministrativeDivision,
-                    required: false,
+                    where: {
+                        id: filters.administrativeDivisionId ? { [Op.is]: filters.administrativeDivisionId }
+                            : { [Op.not]: filters.administrativeDivisionId }
+                    },
+                    required: true,
                 },
                 {
                     model: models.Member,
+                    where: {
+                        [Op.and]: [
+                            { isHouseholdHead: search !== "" ? { [Op.or]: [{ [Op.is]: true }, { [Op.not]: true }] } : { [Op.is]: true } },
+                            { gender: filters.gender ? { [Op.is]: filters.gender } : { [Op.not]: null } }
+                        ]
+                    },
                     required: true
                 },
                 {
                     model: models.EnrollmentRecord,
                     where: {
-                        EnrollmentPeriodId: activeYear ? activeYear.id : 0
+                        [Op.and]: [
+                            { EnrollmentPeriodId: activeYear ? activeYear.id : 0 },
+                            //This will filter the first household payment only since we might have multiple payments for 
+                            //a single household. 
+                            { contributionAmount: { [Op.not]: null } }
+                        ]
                     },
                     required: false
                 }
@@ -172,18 +232,40 @@ class Member {
             offset: page * pageSize,
             limit: pageSize,
             where: {
-                [Op.or]: [
-                    { '$Members.fullName$': { [Op.substring]: search } },
-                    { cbhiId: { [Op.substring]: search } },
-                    { '$AdministrativeDivision.name$': { [Op.substring]: search } }
-                ]
+                [Op.and]: [{
+                    [Op.or]: [
+                        { '$Members.fullName$': { [Op.substring]: search } },
+                        Sequelize.where(Sequelize.literal("Household.cbhiId || '/' || Members.cbhiId"), { [Op.substring]: search })
+                    ]
+                }, {
+                    '$EnrollmentRecords.id$': filters.membershipStatus !== "" ?
+                        filters.membershipStatus === 1 ? { [Op.not]: null } : { [Op.is]: null } :
+                        { [Op.or]: [{ [Op.is]: null }, { [Op.not]: null }] }
+                }, {
+                    '$EnrollmentRecords.isPaying$': filters.membershipType !== "" ?
+                        { [Op.is]: filters.membershipType } : { [Op.or]: [{ [Op.is]: null }, { [Op.not]: null }] }
+                }]
             },
-            order: orderBy ? [[orderBy.field, orderDirection]] : []
+            order: orderBy ? [[Sequelize.literal(orderBy.field + " " + orderDirection)]] : []
         }).then(result => {
             result.page = page;
             return result;
         });
         return filiteredMembersList;
+    };
+
+    static getBeneficiaries = async (householdId) => {
+        const beneficiaries = await models.Member.findAll({
+            where: {
+                [Op.and]: [
+                    { HouseholdId: { [Op.is]: householdId } },
+                    { isHouseholdHead: { [Op.not]: true } }
+                ]
+            },
+            order: [["enrolledDate", "ASC"]],
+            raw: true
+        })
+        return beneficiaries;
     };
 
     static getAllMembers = async () => {
@@ -205,16 +287,139 @@ class Member {
                 {
                     model: models.EnrollmentRecord,
                     where: {
-                        EnrollmentPeriodId: activeYear ? activeYear.id : 0
+                        [Op.and]: [
+                            { EnrollmentPeriodId: activeYear ? activeYear.id : 0 },
+                            { contributionAmount: { [Op.not]: null } }
+                        ]
                     },
                     required: false
                 }
             ],
             subQuery: false,
             raw: true,
-            order: [["createdAt", "ASC"], [models.Member, 'enrolledDate', 'ASC']]
+            order: [["createdAt", "ASC"], [models.Member, 'createdAt', 'ASC'], [models.Member, 'enrolledDate', 'ASC']]
         });
         return allMembersList;
+    }
+
+    static excelDataParser = async (enrollmentData) => {
+        let response = {}
+        let parsedData = [];
+        const administrativeDivisions = await AdministrativeDivision.getAllAdministrativeDivisions();
+        for (let i = 0; i < enrollmentData.length; i++) {
+            //Check if first record is household head
+            if (i === 0 && enrollmentData[i].isHouseholdHead !== 1) {
+                response = {
+                    type: "Error",
+                    message: "The first member should be a household head"
+                }
+                parsedData = []
+                break;
+            }
+            if (!enrollmentData[i].fullName || !enrollmentData[i].fullName.trim() || !enrollmentData[i].gender || !enrollmentData[i].gender.trim()
+                || (enrollmentData[i].isHouseholdHead === 1 && (!enrollmentData[i].cbhiId || !enrollmentData[i].cbhiId.trim()))) {
+                response = {
+                    type: "Error",
+                    message: "Missing data at Row " + (i + 2) + "."
+                }
+                parsedData = []
+                break;
+            }
+            if (!validateDate(enrollmentData[i].dateOfBirth)) {
+                response = {
+                    type: "Error",
+                    message: "Invalid birth date at Row " + (i + 2) + "."
+                }
+                parsedData = []
+                break;
+            }
+
+            if (!validateDate(enrollmentData[i].enrolledDate)) {
+                response = {
+                    type: "Error",
+                    message: "Invalid enrollment date at Row " + (i + 2) + "."
+                }
+                parsedData = []
+                break;
+            }
+
+            if (enrollmentData[i].isHouseholdHead === 1 && (!enrollmentData[i].administrativeDivision || !enrollmentData[i].administrativeDivision.trim())) {
+                response = {
+                    type: "Error",
+                    message: "Administrative Division (Kebele/Gote) not provided at Row " + (i + 2) + "."
+                }
+                parsedData = []
+                break;
+            } else if (enrollmentData[i].isHouseholdHead === 1) {
+                const administrativeDivisionObj = await administrativeDivisions.filter(obj => obj.name === enrollmentData[i].administrativeDivision.trim());
+                if (!administrativeDivisionObj[0]) {
+                    response = {
+                        type: "Error",
+                        message: "Invalid Administrative Division at Row " + (i + 2) + ". Please make sure you have defined all Administrative divisions in the system"
+                    }
+                    parsedData = []
+                    break;
+                }
+            }
+            //if passed all above validations, start building object for persisting to database
+            const memberObj = {
+                fullName: enrollmentData[i].fullName.trim(),
+                dateOfBirth: convertDate(enrollmentData[i].dateOfBirth.trim(), 'GR'),
+                gender: enrollmentData[i].gender.trim(),
+                cbhiId: enrollmentData[i].isHouseholdHead ? enrollmentData[i].cbhiId : "",
+                beneficiaryCBHIId: enrollmentData[i].beneficiaryCBHIId ? enrollmentData[i].beneficiaryCBHIId.trim() : "",
+                administrativeDivisionId: enrollmentData[i].isHouseholdHead ? administrativeDivisions.filter(obj => obj.name === enrollmentData[i].administrativeDivision.trim())[0].id : "",
+                relationship: enrollmentData[i].relationship ? enrollmentData[i].relationship.trim() : "",
+                profession: enrollmentData[i].profession ? enrollmentData[i].profession.trim() : "",
+                enrolledDate: convertDate(enrollmentData[i].enrolledDate.trim(), 'GR'),
+                isHouseholdHead: enrollmentData[i].isHouseholdHead === 1
+            }
+            parsedData.push(memberObj);
+        }
+        if (parsedData.length) {
+            response = {
+                type: "Success",
+                message: "Analyzing Excel data completed",
+                data: parsedData
+            }
+        }
+        return response;
+    }
+
+    static importEnrollmentData = async (parsedMemberData) => {
+        let householdId; let response = {}; let householdCount = 0;
+        for (let i = 0; i < parsedMemberData.length; i++) {
+            if (parsedMemberData[i].isHouseholdHead) {
+                const householdObj = await models.Household.create({
+                    cbhiId: parsedMemberData[i].cbhiId,
+                    AdministrativeDivisionId: parsedMemberData[i].administrativeDivisionId,
+                    enrolledDate: parsedMemberData[i].enrolledDate,
+                    Members: [{
+                        fullName: parsedMemberData[i].fullName,
+                        dateOfBirth: parsedMemberData[i].dateOfBirth,
+                        gender: parsedMemberData[i].gender,
+                        cbhiId: parsedMemberData[i].beneficiaryCBHIId,
+                        relationship: relationshipOptions[0],
+                        profession: parsedMemberData[i].profession,
+                        isHouseholdHead: true,
+                        enrolledDate: parsedMemberData[i].enrolledDate,
+                    }]
+                }, {
+                    include: [models.Member]
+                });
+                householdId = householdObj.id;
+                householdCount += 1;
+            } else {
+                parsedMemberData[i].HouseholdId = householdId;
+                parsedMemberData[i].isHouseholdHead = false;
+                await models.Member.create(parsedMemberData[i]);
+            }
+        }
+        response = {
+            type: "Success",
+            message: householdCount + " Households imported to the system successfully."
+        }
+        return response;
     }
 }
 

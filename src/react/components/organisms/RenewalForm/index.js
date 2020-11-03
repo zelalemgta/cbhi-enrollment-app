@@ -101,24 +101,33 @@ const RenewalForm = React.forwardRef((props, ref) => {
     const handleStatusChange = (event) => {
         setMemberRenewal({
             ...memberRenewal,
-            contributionAmount: event.target.checked && 0,
-            registrationFee: event.target.checked && 0,
-            additionalBeneficiaryFee: event.target.checked && 0,
-            otherFees: event.target.checked && 0,
-            receiptNo: event.target.checked && "",
-            [event.target.name]: event.target.checked
+            contributionAmount: "",
+            registrationFee: "",
+            additionalBeneficiaryFee: "",
+            otherFees: "",
+            receiptNo: "",
+            receiptDate: "",
+            [event.target.name]: event.target.checked,
+            isSubmitted: false
         })
+
     }
 
     const handleChange = (e) => {
-        setMemberRenewal({
-            ...memberRenewal,
-            [e.target.name]: e.target.value
-        });
+        e.target.value.startsWith("-") ||
+            setMemberRenewal({
+                ...memberRenewal,
+                [e.target.name]: e.target.value
+            });
     }
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (memberRenewal.isSubmitted) return;
+        setMemberRenewal({
+            ...memberRenewal,
+            isSubmitted: true
+        })
         ipcRenderer.send(channels.CREATE_MEMBER_RENEWAL, memberRenewal);
     }
 
@@ -179,7 +188,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
                         <Grid item>Paying</Grid>
                     </Grid>
 
-                    <Box hidden={!memberRenewal.isPaying}>
+                    <Box>
                         <TextField className={classes.fullWidth} required={memberRenewal.isPaying} id="receiptNo" name="receiptNo" onChange={handleChange} value={memberRenewal.receiptNo} label="Reciept Number" />
                         <TextField className={classes.TextField} id="registrationFee" name="registrationFee" onChange={handleChange} value={memberRenewal.registrationFee} type="number" label="Registration Fee (ETB)" />
                         <TextField className={classes.TextField} required={memberRenewal.isPaying} id="contributionAmount" name="contributionAmount" onChange={handleChange} value={memberRenewal.contributionAmount} type="number" label="Contribution Amount (ETB)" />
@@ -188,7 +197,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
                     </Box>
                     <DatePicker required id="receiptDate" name="receiptDate"
                         placeholder="YYYY-MM-DD"
-                        label="Renewed Date"
+                        label="Renewed Date *"
                         materialUi
                         onChange={handleChange}
                         value={memberRenewal.receiptDate}

@@ -26,10 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     cbhiId: DataTypes.STRING,
     relationship: DataTypes.STRING,
     profession: DataTypes.STRING,
-    parentId: {
-      type: DataTypes.UUID,
-      allowNull: true
-    },
+    isHouseholdHead: DataTypes.BOOLEAN,
     enrolledDate: DataTypes.DATEONLY,
     isDeleted: DataTypes.BOOLEAN
   }, {

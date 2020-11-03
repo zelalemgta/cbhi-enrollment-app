@@ -12,6 +12,7 @@ import TotalContributionCollected from '../../organisms/TotalContributionCollect
 import TotalContributionStats from '../../organisms/TotalContributionStats';
 import MonthlyContributionStats from '../../organisms/MonthlyContributionStats';
 import DatePicker from '../../atoms/DatePicker';
+import ExportPDF from '../../organisms/ExportPDF';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -29,6 +30,11 @@ const useStyles = makeStyles((theme) => ({
     },
     inputDivider: {
         margin: '30px 7px 0 7px'
+    },
+    exportBtn: {
+        verticalAlign: "top",
+        marginTop: "8px",
+        float: "right"
     },
     footer: {
         width: `calc(100% - 200px)`,
@@ -60,7 +66,7 @@ const ContributionReports = () => {
                 text: period.enrollmentYear,
                 value: period.id,
                 minDate: convertDate(period.enrollmentStartDate),
-                maxDate: convertDate(period.enrollmentEndDate)
+                maxDate: convertDate(period.coverageEndDate)
             }));
             setEnrollmentPeriods(periods);
         });
@@ -99,6 +105,7 @@ const ContributionReports = () => {
                             minDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].minDate : null}
                             maxDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].maxDate : null}
                         />
+                        <ExportPDF className={classes.exportBtn} />
                     </Box>
                 </Grid>
                 <Grid item xs={12}>
