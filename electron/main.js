@@ -85,63 +85,6 @@ app.on("activate", function () {
   }
 });
 
-//*********** - Export To CSV Functions - ***************/
-
-// const exportEnrollmentData = async () => {
-//   const fields = [
-//     { label: "Full Name", value: "Members.fullName" },
-//     {
-//       label: "Date of Birth",
-//       value: (rowData) => {
-//         const etDate = toEthiopian(...rowData["Members.dateOfBirth"].split("-").map(Number));
-//         return etDate.join("-");
-//       },
-//     },
-//     { label: "Gender", value: "Members.gender" },
-//     {
-//       label: "CBHI ID",
-//       value: (rowData) =>
-//         rowData.cbhiId + "/" + rowData["Members.cbhiId"],
-//     },
-//     {
-//       label: "Kebele/Gote",
-//       value: (rowData) =>
-//         rowData["AdministrativeDivision.name"] +
-//         " (" +
-//         rowData["AdministrativeDivision.level"] +
-//         ")",
-//     },
-//     { label: "Relationship", value: "Members.relationship" },
-//     { label: "Profession", value: "Members.profession" },
-//     {
-//       label: "Enrollment Date",
-//       value: (rowData) => {
-//         const etDate = toEthiopian(...rowData["Members.enrolledDate"].split("-").map(Number));
-//         return etDate.join("-");
-//       },
-//     },
-//     {
-//       label: "Membership Status",
-//       value: (rowData) =>
-//         rowData["EnrollmentRecords.id"] ? "Active" : "Expired",
-//     },
-//     {
-//       label: "Membership Type",
-//       value: (rowData) =>
-//         rowData["EnrollmentRecords.id"] ? rowData["EnrollmentRecords.isPaying"] ? "Paying" : "Indigent" : "",
-//     },
-//   ];
-
-//   try {
-//     const allMembersData = await Member.getAllMembers();
-//     const json2csvParser = new Parser({ fields });
-//     const csvData = json2csvParser.parse(allMembersData);
-//     return csvData;
-//   } catch (err) {
-//     console.error(err);
-//   }
-// };
-
 //*********** - APPLICATION METHODS - ********************//
 ipcMain.on(channels.APP_INFO, (event) => {
   mainWindow.webContents.send(channels.APP_INFO, app.getVersion());
