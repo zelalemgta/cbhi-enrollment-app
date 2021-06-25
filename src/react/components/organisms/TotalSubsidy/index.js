@@ -17,7 +17,7 @@ const TotalSubsidy = (props) => {
         return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_SUBSIDY) }
     }, [props.enrollmentPeriod])
     return (
-        <ReportCard title="Total Subsidy Amount" value={totalSubsidy.toLocaleString()} />
+        <ReportCard title="Total Subsidy Amount (ETB)" value={totalSubsidy.toLocaleString()} />
     )
 }
 
