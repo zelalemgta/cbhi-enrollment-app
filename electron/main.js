@@ -15,11 +15,23 @@ const Report = require("./businessLogic/Report");
 const writeFile = require("fs").writeFile;
 const copyFile = require("fs").copyFile;
 const removeFile = require("fs").unlink;
-const { Parser } = require("json2csv");
 const XLSX = require("xlsx");
 const { toEthiopian } = require("ethiopian-date");
 
 let mainWindow;
+
+const convertToEthiopianDate = (dateObj) => {
+  if (dateObj) {
+    try {
+      const ethiopianDate = toEthiopian(...dateObj.split("-").map(Number)).join("-")
+      return ethiopianDate
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  else
+    return ""
+}
 
 function createWindow() {
   const startUrl =
@@ -72,63 +84,6 @@ app.on("activate", function () {
     createWindow();
   }
 });
-
-//*********** - Export To CSV Functions - ***************/
-
-const exportEnrollmentData = async () => {
-  const fields = [
-    { label: "Full Name", value: "Members.fullName" },
-    {
-      label: "Date of Birth",
-      value: (rowData) => {
-        const etDate = toEthiopian(...rowData["Members.dateOfBirth"].split("-").map(Number));
-        return etDate.join("-");
-      },
-    },
-    { label: "Gender", value: "Members.gender" },
-    {
-      label: "CBHI ID",
-      value: (rowData) =>
-        rowData.cbhiId + "/" + rowData["Members.cbhiId"],
-    },
-    {
-      label: "Kebele/Gote",
-      value: (rowData) =>
-        rowData["AdministrativeDivision.name"] +
-        " (" +
-        rowData["AdministrativeDivision.level"] +
-        ")",
-    },
-    { label: "Relationship", value: "Members.relationship" },
-    { label: "Profession", value: "Members.profession" },
-    {
-      label: "Enrollment Date",
-      value: (rowData) => {
-        const etDate = toEthiopian(...rowData["Members.enrolledDate"].split("-").map(Number));
-        return etDate.join("-");
-      },
-    },
-    {
-      label: "Membership Status",
-      value: (rowData) =>
-        rowData["EnrollmentRecords.id"] ? "Active" : "Expired",
-    },
-    {
-      label: "Membership Type",
-      value: (rowData) =>
-        rowData["EnrollmentRecords.id"] ? rowData["EnrollmentRecords.isPaying"] ? "Paying" : "Indigent" : "",
-    },
-  ];
-
-  try {
-    const allMembersData = await Member.getAllMembers();
-    const json2csvParser = new Parser({ fields });
-    const csvData = json2csvParser.parse(allMembersData);
-    return csvData;
-  } catch (err) {
-    console.error(err);
-  }
-};
 
 //*********** - APPLICATION METHODS - ********************//
 ipcMain.on(channels.APP_INFO, (event) => {
@@ -532,36 +487,53 @@ ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
 
 //*********** - EXPORT ENROLLMENT DATA METHODS - ****************//
 
-ipcMain.on(channels.EXPORT_ENROLLMENT, (event) => {
-  exportEnrollmentData()
-    .then((dataset) => {
-      const options = {
-        title: "Save Enrollment Data",
-        filters: [{ name: "All files", extensions: ["csv"] }],
-      };
-      dialog
-        .showSaveDialog(options)
-        .then((result) => {
-          if (result.canceled)
-            mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
-          else if (result.filePath)
-            writeFile(result.filePath, dataset, (err) => {
-              if (err) {
-                console.log(err);
-              }
-              const response = {
-                type: "Success",
-                message: "Enrollment data exported successfully",
-              };
-              mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
-              mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
-            });
-        })
-        .catch((error) => console.log(error));
+ipcMain.on(channels.EXPORT_ENROLLMENT, async (event) => {
+  const workbook = XLSX.utils.book_new();
+  const template_name = "CBHI Enrollment Data";
+  let allMembersData = await Member.getAllMembers();
+  allMembersData = allMembersData.map((memberObj) => ({
+    "Full Name": memberObj['Members.fullName'],
+    "Date Of Birth(YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.dateOfBirth']),
+    "Gender(Male/Female)": memberObj['Members.gender'],
+    "Household CBHI Id": memberObj['cbhiId'],
+    "Beneficiary CBHI Id": memberObj['Members.cbhiId'],
+    "Kebele/Gote": memberObj['AdministrativeDivision.name'],
+    "Relationship": memberObj['Members.relationship'],
+    "Profession": memberObj['Members.profession'],
+    "Enrollment Date (YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.enrolledDate']),
+    "is Household Head (1/0)": memberObj['Members.isHouseholdHead'],
+    "Contribution Amount": memberObj['Members.isHouseholdHead'] ? memberObj['contributionAmount'] : "",
+    "Registration Fee": memberObj['Members.isHouseholdHead'] ? memberObj['registrationFee'] : "",
+    "Additional Beneficiary Fee": memberObj['Members.isHouseholdHead'] ? memberObj['additionalBeneficiaryFee'] : "",
+    "Other Fees": memberObj['Members.isHouseholdHead'] ? memberObj['otherFees'] : "",
+    "Receipt No": memberObj['Members.isHouseholdHead'] ? memberObj['receiptNo'] : "",
+    "Receipt Date": memberObj['Members.isHouseholdHead'] ? memberObj['receiptDate'] ? memberObj['receiptDate'].split(",").map(r => convertToEthiopianDate(r)).join(",") : "" : "",
+    "Membership Type": memberObj['Members.isHouseholdHead'] ? memberObj['isPaying'] === null ? "" : memberObj['EnrollmentRecords.isPaying'] ? "Paying" : "Indigent" : "",
+  }))
+
+  const ws = XLSX.utils.json_to_sheet(allMembersData);
+  XLSX.utils.book_append_sheet(workbook, ws, template_name);
+  const options = {
+    title: "Save Enrollment Template",
+    filters: [{ name: "All files", extensions: ["xlsx"] }],
+  };
+  dialog
+    .showSaveDialog(options)
+    .then((result) => {
+      if (result.canceled)
+        mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
+      else if (result.filePath) {
+        XLSX.writeFile(workbook, result.filePath);
+        const response = {
+          type: "Success",
+          message: "Enrollment data exported successfully to '" + result.filePath + "'",
+        };
+
+        mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+        mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
+      }
     })
-    .catch((error) => {
-      console.log(error);
-    });
+    .catch((error) => console.log(error));
 });
 
 //*********** - REPORT METHODS - ****************//

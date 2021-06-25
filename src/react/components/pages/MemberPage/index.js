@@ -272,6 +272,11 @@ const Members = () => {
                 tableRef={tableRef}
                 icons={TableIcons}
                 isLoading={gridState.isLoading}
+                localization={{
+                    toolbar: {
+                        exportName: "Export to Excel"
+                    }
+                }}
                 detailPanel=
                 {[
                     rowData => ({
@@ -304,7 +309,6 @@ const Members = () => {
                     debounceInterval: 500,
                     searchAutoFocus: true,
                     columnsButton: true,
-                    exportAllData: true,
                     loadingType: "overlay",
                     toolbarButtonAlignment: "left",
                     rowStyle: rowData => ({
