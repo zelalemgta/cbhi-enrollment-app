@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "electron": "^9.0.5",
-    "electron-builder": "^22.9.1",
+    "electron-builder": "^22.11.7",
     "sequelize-cli": "^6.0.0"
   },
   "build": {
