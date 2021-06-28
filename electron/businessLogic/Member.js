@@ -248,7 +248,7 @@ class Member {
             },
             order: orderBy ? [[Sequelize.literal(orderBy.field + " " + orderDirection)]] : []
         }).then(result => {
-            result.page = page;
+            result.page = result.count > (page * pageSize) ? page : 0;
             return result;
         });
         return filiteredMembersList;
@@ -275,26 +275,44 @@ class Member {
             }
         });
         const allMembersList = await models.Household.findAll({
+            attributes: {
+                include: [
+                    [Sequelize.fn('SUM', Sequelize.col('EnrollmentRecords.registrationFee')), 'registrationFee'],
+                    [Sequelize.fn('SUM', Sequelize.col('EnrollmentRecords.contributionAmount')), 'contributionAmount'],
+                    [Sequelize.fn('SUM', Sequelize.col('EnrollmentRecords.additionalBeneficiaryFee')), 'additionalBeneficiaryFee'],
+                    [Sequelize.fn('SUM', Sequelize.col('EnrollmentRecords.otherFees')), 'otherFees'],
+                    [Sequelize.fn('GROUP_CONCAT', Sequelize.col('EnrollmentRecords.receiptNo')), 'receiptNo'],
+                    [Sequelize.fn('GROUP_CONCAT', Sequelize.col('EnrollmentRecords.receiptDate')), 'receiptDate'],
+                    [Sequelize.fn('MAX', Sequelize.col('EnrollmentRecords.isPaying')), 'isPaying'],
+                ],
+                exclude: ['id', 'address', 'enrolledDate', 'createdAt', 'updatedAt', 'isDeleted', 'AdministrativeDivisionId']
+            },
             include: [
                 {
                     model: models.AdministrativeDivision,
                     required: false,
+                    attributes: { exclude: ['id', 'parent', 'code', 'level', 'createdAt', 'updatedAt', 'isDeleted', 'EnrollmentPeriodId', 'HouseholdId'] }
                 },
                 {
                     model: models.Member,
-                    required: true
+                    required: true,
+                    attributes: { exclude: ['id', 'createdAt', 'updatedAt', 'isDeleted', 'EnrollmentPeriodId', 'HouseholdId'] }
                 },
                 {
                     model: models.EnrollmentRecord,
+                    attributes: {
+                        exclude: ['id', 'additionalBeneficiaryFee', 'otherFees', 'receiptNo', 'createdAt', 'updatedAt', 'EnrollmentPeriodId', 'HouseholdId', 'cbhiId']
+                    },
                     where: {
                         [Op.and]: [
                             { EnrollmentPeriodId: activeYear ? activeYear.id : 0 },
-                            { contributionAmount: { [Op.not]: null } }
+                            { receiptNo: { [Op.not]: null } }
                         ]
                     },
                     required: false
                 }
             ],
+            group: 'Members.id',
             subQuery: false,
             raw: true,
             order: [["createdAt", "ASC"], [models.Member, 'createdAt', 'ASC'], [models.Member, 'enrolledDate', 'ASC']]
@@ -343,7 +361,7 @@ class Member {
                 break;
             }
 
-            if (enrollmentData[i].isHouseholdHead === 1 && (!enrollmentData[i].administrativeDivision || !enrollmentData[i].administrativeDivision.trim())) {
+            if (enrollmentData[i].isHouseholdHead === 1 && (!enrollmentData[i].administrativeDivision || !String(enrollmentData[i].administrativeDivision).trim())) {
                 response = {
                     type: "Error",
                     message: "Administrative Division (Kebele/Gote) not provided at Row " + (i + 2) + "."
@@ -351,7 +369,7 @@ class Member {
                 parsedData = []
                 break;
             } else if (enrollmentData[i].isHouseholdHead === 1) {
-                const administrativeDivisionObj = await administrativeDivisions.filter(obj => obj.name === enrollmentData[i].administrativeDivision.trim());
+                const administrativeDivisionObj = await administrativeDivisions.filter(obj => obj.name === String(enrollmentData[i].administrativeDivision).trim());
                 if (!administrativeDivisionObj[0]) {
                     response = {
                         type: "Error",
@@ -368,7 +386,7 @@ class Member {
                 gender: enrollmentData[i].gender.trim(),
                 cbhiId: enrollmentData[i].isHouseholdHead ? enrollmentData[i].cbhiId : "",
                 beneficiaryCBHIId: enrollmentData[i].beneficiaryCBHIId ? enrollmentData[i].beneficiaryCBHIId.trim() : "",
-                administrativeDivisionId: enrollmentData[i].isHouseholdHead ? administrativeDivisions.filter(obj => obj.name === enrollmentData[i].administrativeDivision.trim())[0].id : "",
+                administrativeDivisionId: enrollmentData[i].isHouseholdHead ? administrativeDivisions.filter(obj => obj.name === String(enrollmentData[i].administrativeDivision).trim())[0].id : "",
                 relationship: enrollmentData[i].relationship ? enrollmentData[i].relationship.trim() : "",
                 profession: enrollmentData[i].profession ? enrollmentData[i].profession.trim() : "",
                 enrolledDate: convertDate(enrollmentData[i].enrolledDate.trim(), 'GR'),
@@ -412,6 +430,7 @@ class Member {
             } else {
                 parsedMemberData[i].HouseholdId = householdId;
                 parsedMemberData[i].isHouseholdHead = false;
+                parsedMemberData[i].cbhiId = parsedMemberData[i].beneficiaryCBHIId;
                 await models.Member.create(parsedMemberData[i]);
             }
         }

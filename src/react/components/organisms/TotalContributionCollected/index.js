@@ -16,7 +16,7 @@ const TotalContributionCollected = (props) => {
         return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED) }
     }, [props.enrollmentPeriod])
     return (
-        <ReportCard title="Total Amount" value={totalContributionCollected.toLocaleString()} />
+        <ReportCard title="Total Amount (ETB)" value={totalContributionCollected.toLocaleString()} />
     )
 }
 
