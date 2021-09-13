@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) => ({
         marginRight: "3px",
         marginLeft: "3px",
         width: "22ch",
-        display: "inline-block"
+        display: "inline-block",
     },
     fullWidth: {
         width: "100%",

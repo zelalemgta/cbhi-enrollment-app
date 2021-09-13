@@ -48,7 +48,7 @@ const Settings = () => {
                     id="panel1bh-header"
                 >
                     <Typography className={classes.heading}>General settings</Typography>
-                    <Typography className={classes.secondaryHeading}>Set Woreda profile</Typography>
+                    <Typography className={classes.secondaryHeading}>Set CBHI scheme profile</Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>
                     <GeneralSettings />
@@ -62,7 +62,7 @@ const Settings = () => {
                 >
                     <Typography className={classes.heading}>Kebele/Gote Settings</Typography>
                     <Typography className={classes.secondaryHeading}>
-                        Define Kebeles/Ketena and Gotes/Block under the woreda
+                        Define Kebeles/Ketena and Gotes/Block under CBHI scheme
                     </Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>

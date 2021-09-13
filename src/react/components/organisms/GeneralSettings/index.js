@@ -66,14 +66,14 @@ const GeneralSettings = () => {
     }
 
     return (
-        <form className={classes.root} noValidate autoComplete="off" onSubmit={handleSubmit}>
+        <form className={classes.root} autoComplete="off" onSubmit={handleSubmit}>
             <Typography variant="h6">Basic Information</Typography>
-            <TextField required id="zoneName" label="Zone Name" onChange={handleChange} value={profile.zoneName} />
-            <TextField required id="woredaName" label="Woreda Name" onChange={handleChange} value={profile.woredaName} />
+            <TextField id="zoneName" label="Zone Name" onChange={handleChange} value={profile.zoneName} />
+            <TextField required id="woredaName" label="Scheme Name" onChange={handleChange} value={profile.woredaName} />
             <Typography variant="h6">Woreda Member Contribution</Typography>
-            <TextField required type="number" id="contributionAmount" label="Contribution Amount (ETB)" onChange={handleChange} value={profile.contributionAmount} />
-            <TextField required type="number" id="registrationFee" label="Registration Fee (ETB)" onChange={handleChange} value={profile.registrationFee} />
-            <TextField required type="number" id="additionalBeneficiaryFee" label="Additional Beneficiary Fee (ETB)" onChange={handleChange} value={profile.additionalBeneficiaryFee} />
+            <TextField type="number" id="contributionAmount" label="Contribution Amount (ETB)" onChange={handleChange} value={profile.contributionAmount} />
+            <TextField type="number" id="registrationFee" label="Registration Fee (ETB)" onChange={handleChange} value={profile.registrationFee} />
+            <TextField type="number" id="additionalBeneficiaryFee" label="Additional Beneficiary Fee (ETB)" onChange={handleChange} value={profile.additionalBeneficiaryFee} />
             <br />
             <Button
                 type="submit"

@@ -17,7 +17,7 @@ const useStyle = makeStyles((theme) => ({
 
 const Navigation = () => {
 
-    const [woredaName, setWoredaName] = useState("[Woreda Name]");
+    const [woredaName, setWoredaName] = useState("[Scheme Name]");
 
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_PROFILE);

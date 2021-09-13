@@ -201,6 +201,8 @@ class Member {
   };
 
   static getMembers = async (query) => {
+    //Load Administrative Divisions
+    const administrativeDivisions = await models.AdministrativeDivision.findAll({raw: true})
     const { filters, orderBy, orderDirection, page, pageSize, search } = query;
     const activeYear = await models.EnrollmentPeriod.findOne({
       where: {
@@ -309,6 +311,7 @@ class Member {
         : [],
     }).then((result) => {
       result.page = result.count > page * pageSize ? page : 0;
+      result.administrativeDivisions = administrativeDivisions
       return result;
     });
     return filiteredMembersList;

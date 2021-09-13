@@ -47,7 +47,8 @@ class AdministrativeDivision {
 
     static getAdministrativeDivisions = () => {
         const administrativeDivisions = models.AdministrativeDivision.findAll({
-            raw: true
+            raw: true,
+            order: [['level', 'desc']]
         }).then(result => {
             return result;
         });

@@ -63,7 +63,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
         minRegDate: null,
         maxRegDate: null,
         contributionAmount: "",
-        registrationFee: "",
+        registrationFee: 0,
         additionalBeneficiaryFee: "",
         otherFees: "",
         receiptNo: "",
@@ -102,7 +102,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
         setMemberRenewal({
             ...memberRenewal,
             contributionAmount: "",
-            registrationFee: "",
+            registrationFee: 0,
             additionalBeneficiaryFee: "",
             otherFees: "",
             receiptNo: "",
@@ -190,7 +190,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
 
                     <Box>
                         <TextField className={classes.fullWidth} required={memberRenewal.isPaying} id="receiptNo" name="receiptNo" onChange={handleChange} value={memberRenewal.receiptNo} label="Reciept Number" />
-                        <TextField className={classes.TextField} id="registrationFee" name="registrationFee" onChange={handleChange} value={memberRenewal.registrationFee} type="number" label="Registration Fee (ETB)" />
+                        <TextField className={classes.TextField} required={memberRenewal.isPaying} id="registrationFee" name="registrationFee" onChange={handleChange} value={memberRenewal.registrationFee} type="number" label="Registration Fee (ETB)" />
                         <TextField className={classes.TextField} required={memberRenewal.isPaying} id="contributionAmount" name="contributionAmount" onChange={handleChange} value={memberRenewal.contributionAmount} type="number" label="Contribution Amount (ETB)" />
                         <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={memberRenewal.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
                         <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={memberRenewal.otherFees} type="number" label="Other Fees (ETB)" />

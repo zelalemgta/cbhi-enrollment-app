@@ -122,7 +122,7 @@ const Members = () => {
         {
             title: 'Kebele/Gote',
             field: 'AdministrativeDivision',
-            render: rowData => rowData.AdministrativeDivisionId && `${rowData['AdministrativeDivision.name']} (${rowData['AdministrativeDivision.level']})`,
+            render: rowData => rowData.AdministrativeDivisionId && `${rowData['AdministrativeDivision.name']} (${rowData['AdministrativeDivision.level']}) - ${rowData['AdministrativeDivision.parentName']}`,
             hidden: true,
             sorting: false
         },
@@ -334,11 +334,21 @@ const Members = () => {
                         query.filters = queryFilter;
                         query.page = queryFilter.page === 0 ? 0 : query.page
                         ipcRenderer.send(channels.LOAD_MEMBERS, query);
-                        ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {
-                            setQueryFilter({
-                                ...queryFilter,
-                                page: null
+                        ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {   
+                            result.rows.map(household => {
+                                if (household['AdministrativeDivision.parent']) {
+                                    const parentAdministrativeDivision = result.administrativeDivisions.filter(ad => ad.id === household['AdministrativeDivision.parent'])[0]
+                                    household['AdministrativeDivision.parentName'] = parentAdministrativeDivision.name                                   
+                                  return household;
+                                } else {
+                                  household["AdministrativeDivision.parentName"] = "";                                 
+                                  return household;
+                                }                                
                             })
+                            setQueryFilter({
+                              ...queryFilter,
+                              page: null,
+                            });
                             ipcRenderer.removeAllListeners(channels.LOAD_MEMBERS);
                             resolve({
                                 data: result.rows,
