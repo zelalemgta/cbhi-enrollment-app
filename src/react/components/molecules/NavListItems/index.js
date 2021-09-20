@@ -43,7 +43,9 @@ const useStyles = makeStyles((theme) => ({
         maxHeight: '48px'
     },
     expanded: {
-        margin: '0px'
+        '& .MuiCollapse-container': {
+            marginLeft: "16px"
+        }
     },
 }));
 

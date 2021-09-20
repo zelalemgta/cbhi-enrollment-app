@@ -70,7 +70,7 @@ const GeneralSettings = () => {
             <Typography variant="h6">Basic Information</Typography>
             <TextField id="zoneName" label="Zone Name" onChange={handleChange} value={profile.zoneName} />
             <TextField required id="woredaName" label="Scheme Name" onChange={handleChange} value={profile.woredaName} />
-            <Typography variant="h6">Woreda Member Contribution</Typography>
+            <Typography variant="h6">Scheme Member Contribution</Typography>
             <TextField type="number" id="contributionAmount" label="Contribution Amount (ETB)" onChange={handleChange} value={profile.contributionAmount} />
             <TextField type="number" id="registrationFee" label="Registration Fee (ETB)" onChange={handleChange} value={profile.registrationFee} />
             <TextField type="number" id="additionalBeneficiaryFee" label="Additional Beneficiary Fee (ETB)" onChange={handleChange} value={profile.additionalBeneficiaryFee} />

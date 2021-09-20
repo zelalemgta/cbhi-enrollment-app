@@ -7,6 +7,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
     figures: {
+        fontSize: "1.5vw",
         marginTop: '15px'
     }
 }))
@@ -14,7 +15,7 @@ const useStyles = makeStyles((theme) => ({
 const ReportCard = (props) => {
     const classes = useStyles();
     return (
-        <Paper elevation={3}>
+        <Paper elevation={3} className={props.className}>
             <Typography variant="subtitle2">
                 {props.title}
             </Typography>

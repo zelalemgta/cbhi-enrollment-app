@@ -8,6 +8,8 @@ import Divider from '@material-ui/core/Divider';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import DatePicker from '../../atoms/DatePicker';
@@ -100,6 +102,7 @@ const MemberForm = React.forwardRef((props, ref) => {
         profession: "",
         isHouseholdHead: false,
         enrolledDate: "",
+        'Household.idCardIssued': false, 
         isSubmitted: false
     })
     const [selectedOption, setSelectedOption] = useState(null);
@@ -129,13 +132,15 @@ const MemberForm = React.forwardRef((props, ref) => {
                     ...member,
                     "Household.id": result['Household.id'],
                     "Household.cbhiId": result['Household.cbhiId'],
-                    "Household.address": result['Household.address'] || ""
+                    "Household.address": result['Household.address'] || "",
+                    //Add idCardIssued Here
                 })
             }
             else
                 setMember({
                     ...result,
-                    "Household.address": result['Household.address'] || ""
+                    "Household.address": result['Household.address'] || "",
+                     //Add idCardIssued Here
                 });
             if (result['Household.AdministrativeDivisionId'])
                 setSelectedOption({
@@ -180,6 +185,13 @@ const MemberForm = React.forwardRef((props, ref) => {
             "Household.AdministrativeDivisionId": newSelectedOption ? newSelectedOption.id : null
         })
         setSelectedOption(newSelectedOption);
+    }
+
+    const handleIDCardStatusChange = (e) => {
+        setMember({
+            ...member,
+            [e.target.name]: e.target.checked
+        })
     }
 
     const handleSubmit = (e) => {
@@ -318,6 +330,10 @@ const MemberForm = React.forwardRef((props, ref) => {
                         label="Household Address"
                         value={member['Household.address']}
                     />
+                    <FormControlLabel
+                    control={<Checkbox id="Household.idCardIssued" checked={member['Household.idCardIssued']} onChange={handleIDCardStatusChange} name="Household.idCardIssued" />}
+                    label="CBHI ID Card Issued?"
+                  />
                     <Divider />
                     <Box flexDirection="row-reverse" mt={2}>
                         <Button type="submit" variant="contained">Save</Button>

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Grid from '@material-ui/core/Grid';
 import MaterialTable from 'material-table';
 import { makeStyles } from '@material-ui/core/styles';
+import TableHead from '@material-ui/core/TableHead'
+import TableRow from '@material-ui/core/TableRow'
+import TableCell from '@material-ui/core/TableCell'
 import TableIcons from '../../molecules/TableIcons';
 import { channels } from '../../../../shared/constants';
 
@@ -19,6 +22,26 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
+const SubsidyColumns = () => {
+    return (
+        <TableHead>
+        <TableRow>
+            <TableCell rowSpan={2} align="center">Actions</TableCell>
+            <TableCell rowSpan={2}>Enrollment Year</TableCell>
+            <TableCell rowSpan={2} align="center">General Subsidy (ETB)</TableCell>
+            <TableCell colSpan={3} align="center">Targeted Subsidies (ETB)</TableCell>
+            <TableCell rowSpan={2} align="center">Other (ETB)</TableCell>
+           
+        </TableRow>
+        <TableRow>
+            <TableCell align="center">Region</TableCell>
+            <TableCell align="center">Zone</TableCell>
+            <TableCell align="center">Woreda</TableCell>
+        </TableRow>
+    </TableHead>
+    )
+}
+
 const Subsidy = () => {
 
     const classes = useStyles();
@@ -30,12 +53,13 @@ const Subsidy = () => {
         {
             title: 'Enrollment Year',
             field: 'EnrollmentPeriodId',
-            lookup: enrollmentPeriods,
-            cellStyle: { width: '25%' }
+            lookup: enrollmentPeriods,            
         },
-        { title: 'General Subsidy', field: 'generalSubsidy', type: 'numeric' },
-        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric' },
-        { title: 'Other', field: 'other', type: 'numeric' },
+        { title: 'General Subsidy', field: 'generalSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.generalSubsidy.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.targetedSubsidy.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.targetedSubsidy.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.targetedSubsidy.toLocaleString() },
+        { title: 'Other', field: 'other', type: 'numeric', align: 'center', render: rowData => rowData.other.toLocaleString() },
     ];
 
     useEffect(() => {
@@ -77,6 +101,11 @@ const Subsidy = () => {
                     }}
                     columns={columns}
                     data={data}
+                    components={{
+                        Header: props => (
+                           <SubsidyColumns />
+                        )
+                    }}
                     editable={{
                         onRowAdd: newData =>
                             new Promise((resolve, reject) => {

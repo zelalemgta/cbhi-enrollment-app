@@ -1,9 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
 import ReportCard from '../../molecules/ReportCard';
 import { channels } from '../../../../shared/constants';
+import { makeStyles } from '@material-ui/core/styles';
 
 const { ipcRenderer } = window;
+
+const useStyles = makeStyles((theme) => ({
+    root: {
+        marginTop: "0px"
+    },
+    divider: {
+        margin: "0px auto"
+    },
+    targetedSubsidyValue: {
+      fontSize: "1.5vw"
+    }
+}))
+
+
+const TargetedSubsidiesStatsRenderer = (props) => {
+  const classes = useStyles();
+  return (
+    <Grid className={classes.root} container spacing={1}>
+      <Grid item xs={3}>
+        <Typography variant="caption">Region</Typography>
+        <Typography className={classes.targetedSubsidyValue} variant="h4">{props.region}</Typography>
+      </Grid>
+      <Grid item xs={1}>
+        <Divider className={classes.divider} orientation="vertical" />
+      </Grid>
+      <Grid item xs={3}>
+        <Typography variant="caption">Zone</Typography>
+        <Typography className={classes.targetedSubsidyValue} variant="h4">{props.zone}</Typography>
+      </Grid>
+      <Grid item xs={1}>
+        <Divider className={classes.divider} orientation="vertical" />
+      </Grid>
+      <Grid item xs={3}>
+        <Typography variant="caption">Woreda</Typography>
+        <Typography className={classes.targetedSubsidyValue} variant="h4">{props.woreda}</Typography>
+      </Grid>
+    </Grid>
+  );
+}
 
 const Subsidies = (props) => {
     const [subsidies, setSubsidies] = useState({
@@ -21,18 +63,28 @@ const Subsidies = (props) => {
         return () => { ipcRenderer.removeAllListeners(channels.REPORT_SUBSIDIES) }
     }, [props.enrollmentPeriod])
     return (
-        <Grid container spacing={2}>
-            <Grid item xs={4}>
-                <ReportCard title="General Subsidy (ETB)" value={subsidies ? subsidies.generalSubsidy.toLocaleString() : 0} />
-            </Grid>
-            <Grid item xs={4}>
-                <ReportCard title="Targeted Subsidy (ETB)" value={subsidies ? subsidies.targetedSubsidy.toLocaleString() : 0} />
-            </Grid>
-            <Grid item xs={4}>
-                <ReportCard title="Other (ETB)" value={subsidies ? subsidies.other.toLocaleString() : 0} />
-            </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={3}>
+          <ReportCard
+            title="General Subsidy (ETB)"
+            value={subsidies ? subsidies.generalSubsidy.toLocaleString() : 0}
+          />
         </Grid>
-    )
+        
+        <Grid item xs={6}>
+        <ReportCard title="Targeted Subsidies (ETB)">
+            <TargetedSubsidiesStatsRenderer region={subsidies.targetedSubsidy.toLocaleString()} zone={subsidies.targetedSubsidy.toLocaleString()} woreda={subsidies.targetedSubsidy.toLocaleString()} />
+        </ReportCard>
+        </Grid>
+
+        <Grid item xs={3}>
+          <ReportCard
+            title="Other (ETB)"
+            value={subsidies ? subsidies.other.toLocaleString() : 0}
+          />
+        </Grid>
+      </Grid>
+    );
 }
 
 export default Subsidies;
