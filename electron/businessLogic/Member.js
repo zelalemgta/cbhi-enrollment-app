@@ -550,7 +550,7 @@ class Member {
           ? enrollmentData[i].cbhiId
           : "",
         beneficiaryCBHIId: enrollmentData[i].beneficiaryCBHIId
-          ? enrollmentData[i].beneficiaryCBHIId.trim()
+          ? String(enrollmentData[i].beneficiaryCBHIId).trim()
           : "",
         administrativeDivisionId: enrollmentData[i].isHouseholdHead
           ? administrativeDivisions.filter(
