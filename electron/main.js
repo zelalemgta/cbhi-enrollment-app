@@ -902,7 +902,7 @@ ipcMain.on(channels.SYSTEM_RESET, (event) => {
     if (result.filePath) {
       mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
         open: true,
-        progressTitle: "System Resetting in Progress...",
+        progressTitle: "System Reset in Progress...",
         progressValue: 0
       });
       copyFile(currentDb, result.filePath, (err) => {
@@ -913,7 +913,7 @@ ipcMain.on(channels.SYSTEM_RESET, (event) => {
               if (err) {
                 mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
                   open: false,
-                  progressTitle: "System Resetting in Progress...",
+                  progressTitle: "System Reset in Progress...",
                   progressValue: 0
                 });
                 const response = {
@@ -924,7 +924,7 @@ ipcMain.on(channels.SYSTEM_RESET, (event) => {
               } else {
                 const response = {
                   type: "Success",
-                  message: "All data have been cleaned form the system successfully. A backup of previous database is saved to '" + result.filePath + "'",
+                  message: "All data have been cleaned from the system successfully. A backup of previous database is saved to '" + result.filePath + "'",
                 };
                 mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
                 app.relaunch();

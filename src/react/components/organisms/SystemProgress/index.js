@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => (
 const SystemProgress = () => {
 
     const [progressState, setProgressState] = useState({
-        open: false,
+        open: true,
         progressTitle: "",
         progressValue: 0
     });

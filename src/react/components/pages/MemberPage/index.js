@@ -330,10 +330,10 @@ const Members = () => {
                     ),
                 }}
                 data={query =>
-                    new Promise((resolve, reject) => {
+                    new Promise(async (resolve, reject) => {
                         query.filters = queryFilter;
                         query.page = queryFilter.page === 0 ? 0 : query.page
-                        ipcRenderer.send(channels.LOAD_MEMBERS, query);
+                        await ipcRenderer.send(channels.LOAD_MEMBERS, query);
                         ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {   
                             result.rows.map(household => {
                                 if (household['AdministrativeDivision.parent']) {

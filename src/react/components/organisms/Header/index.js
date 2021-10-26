@@ -24,6 +24,7 @@ const useStyles = makeStyles((theme) => ({
         '& button': {
             WebkitAppRegion: 'no-drag',
         },
+        zIndex: theme.zIndex.drawer + 2,
         position: "fixed"
     },
     menuButton: {
