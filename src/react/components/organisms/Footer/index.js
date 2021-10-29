@@ -34,7 +34,7 @@ const Footer = () => {
         <Box className={classes.root} display="flex" bgcolor="primary.footer" p={1}>
             <Box flexGrow={1} pl={2}>
                 <Typography component="span" variant="caption">
-                    Copyright © 2020 Ethiopian Health Insurance Agency. All rights reserved.
+                    Copyright © 2021 Ethiopian Health Insurance Agency. All rights reserved.
                 </Typography>
             </Box>
             <Box pr={3}>

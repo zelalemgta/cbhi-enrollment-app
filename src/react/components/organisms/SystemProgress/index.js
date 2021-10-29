@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import Box from '@material-ui/core/Box';
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-import { channels } from '../../../../shared/constants';
+import { channels } from '../../../../shared/constants'
+import { SystemProgressContext } from '../../../contexts/SystemProgressContext'
 
 const { ipcRenderer } = window;
 
@@ -35,18 +36,14 @@ const useStyles = makeStyles((theme) => (
 
 const SystemProgress = () => {
 
-    const [progressState, setProgressState] = useState({
-        open: true,
-        progressTitle: "",
-        progressValue: 0
-    });
+    const { progressState, setProgressState } = useContext(SystemProgressContext)
 
     useEffect(() => {
         ipcRenderer.on(channels.SYSTEM_PROGRESS, (event, result) => {
             setProgressState(result)
         })
         return (() => ipcRenderer.removeAllListeners(channels.SYSTEM_PROGRESS))
-    }, [progressState])
+    }, [progressState, setProgressState])
 
     const classes = useStyles();
     return (

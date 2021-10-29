@@ -75,5 +75,6 @@ module.exports = {
     administrativeLevelOptions: ['Kebele', 'Gote'],
     MembershipStatusOptions: ['Expired', 'Active'],
     MembershipTypeOptions: ['Indigent', 'Paying'],
+    memberIDCardStatus: ['Not Issued', 'Issued']
     //EthiopianMonths: ['Meskerem', 'Tikemt', 'Hidar', 'Tahesas', 'Tir', 'Yekatit', 'Megabit', 'Miyazia', 'Ginbot', 'Sene', 'Hamle', 'Nehase'],
 };

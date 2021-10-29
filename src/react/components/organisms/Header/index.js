@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -11,6 +11,7 @@ import PeopleIcon from '@material-ui/icons/PeopleOutlineRounded';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import { channels } from '../../../../shared/constants';
+import { SystemProgressContext } from '../../../contexts/SystemProgressContext'
 
 const { ipcRenderer } = window;
 
@@ -41,6 +42,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Header = () => {
+    const { progressState } = useContext(SystemProgressContext)
 
     const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -92,7 +94,7 @@ const Header = () => {
                 <IconButton className={!isFullscreen ? classes.hidden : null} color="inherit" onClick={unmaximizeWindow}>
                     <FullscreenExitIcon />
                 </IconButton>
-                <IconButton color="inherit" onClick={closeApplication}><CloseIcon /></IconButton>
+                <IconButton disabled={progressState.open} color="inherit" onClick={closeApplication}><CloseIcon /></IconButton>
             </Toolbar>
         </AppBar>
     );

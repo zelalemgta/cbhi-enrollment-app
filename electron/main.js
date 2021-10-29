@@ -487,10 +487,10 @@ ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
 
 //*********** - EXPORT ENROLLMENT DATA METHODS - ****************//
 
-ipcMain.on(channels.EXPORT_ENROLLMENT, async (event) => {
+ipcMain.on(channels.EXPORT_ENROLLMENT, async (event, query) => {
   const workbook = XLSX.utils.book_new();
   const template_name = "CBHI Enrollment Data";
-  let allMembersData = await Member.getAllMembers();
+  let allMembersData = await Member.getAllMembers(query);
   allMembersData = allMembersData.map((memberObj) => ({
     "Full Name": memberObj['Members.fullName'],
     "Date Of Birth(YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.dateOfBirth']),

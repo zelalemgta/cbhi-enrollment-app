@@ -202,7 +202,7 @@ class Member {
 
   static getMembers = async (query) => {
     //Load Administrative Divisions
-    const administrativeDivisions = await models.AdministrativeDivision.findAll({raw: true})
+    const administrativeDivisions = await models.AdministrativeDivision.findAll({ raw: true })
     const { filters, orderBy, orderDirection, page, pageSize, search } = query;
     const activeYear = await models.EnrollmentPeriod.findOne({
       where: {
@@ -331,7 +331,8 @@ class Member {
     return beneficiaries;
   };
 
-  static getAllMembers = async () => {
+  static getAllMembers = async (query) => {
+    const { filters } = query;
     const activeYear = await models.EnrollmentPeriod.findOne({
       where: {
         coverageEndDate: { [Op.gte]: Date.now() },
@@ -397,7 +398,21 @@ class Member {
       include: [
         {
           model: models.AdministrativeDivision,
-          required: false,
+          where: {
+            [Op.or]: [
+              {
+                id: filters.administrativeDivisionId
+                  ? { [Op.is]: filters.administrativeDivisionId }
+                  : { [Op.not]: filters.administrativeDivisionId },
+              },
+              {
+                parent: filters.administrativeDivisionId
+                  ? { [Op.is]: filters.administrativeDivisionId }
+                  : { [Op.not]: -1 },
+              },
+            ],
+          },
+          required: true,
           attributes: {
             exclude: [
               "id",
@@ -414,6 +429,11 @@ class Member {
         },
         {
           model: models.Member,
+          where: {
+            gender: filters.gender
+              ? { [Op.is]: filters.gender }
+              : { [Op.not]: null },
+          },
           required: true,
           attributes: {
             exclude: [
@@ -453,6 +473,24 @@ class Member {
       group: "Members.id",
       subQuery: false,
       raw: true,
+      where: {
+        [Op.and]: [
+          {
+            "$EnrollmentRecords.id$":
+              filters.membershipStatus !== ""
+                ? filters.membershipStatus === 1
+                  ? { [Op.not]: null }
+                  : { [Op.is]: null }
+                : { [Op.or]: [{ [Op.is]: null }, { [Op.not]: null }] },
+          },
+          {
+            "$EnrollmentRecords.isPaying$":
+              filters.membershipType !== ""
+                ? { [Op.is]: filters.membershipType }
+                : { [Op.or]: [{ [Op.is]: null }, { [Op.not]: null }] },
+          },
+        ],
+      },
       order: [
         ["createdAt", "ASC"],
         [models.Member, "createdAt", "ASC"],
@@ -549,15 +587,15 @@ class Member {
         cbhiId: enrollmentData[i].isHouseholdHead
           ? enrollmentData[i].cbhiId
           : "",
-        beneficiaryCBHIId: enrollmentData[i].beneficiaryCBHIId
-          ? String(enrollmentData[i].beneficiaryCBHIId).trim()
+        beneficiaryCBHIId: typeof enrollmentData[i].beneficiaryCBHIId !== 'undefined' ?
+          String(enrollmentData[i].beneficiaryCBHIId) ? String(enrollmentData[i].beneficiaryCBHIId).trim() : ""
           : "",
         administrativeDivisionId: enrollmentData[i].isHouseholdHead
           ? administrativeDivisions.filter(
-              (obj) =>
-                obj.name ===
-                String(enrollmentData[i].administrativeDivision).trim()
-            )[0].id
+            (obj) =>
+              obj.name ===
+              String(enrollmentData[i].administrativeDivision).trim()
+          )[0].id
           : "",
         relationship: enrollmentData[i].relationship
           ? enrollmentData[i].relationship.trim()

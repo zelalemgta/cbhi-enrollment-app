@@ -10,6 +10,7 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import DatePicker from '../../atoms/DatePicker';
 import HouseholdPaymentDetail from '../../molecules/HouseholdPaymentDetail';
+import DialogWindow from '../../molecules/DialogWindow';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -76,6 +77,12 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
         isSubmitted: false
     })
 
+    const [dialogState, setDialogState] = useState({
+        open: false,
+        title: "",
+        message: ""
+    });
+
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_HOUSEHOLD_PAYMENTS, props.householdId);
     }, [props.householdId])
@@ -110,8 +117,7 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
             });
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         if (additionalPayment.isSubmitted) return;
         setAdditionalPayment({
             ...additionalPayment,
@@ -126,9 +132,35 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
         props.closeModal();
     }
 
+    const handleAdditionalPaymentConfirmation = (e) => {
+        e.preventDefault();
+        setDialogState({
+            open: true,
+            title: "Are you sure you want to add this payment for the selected household?",
+            message: "Attention! Please verify the data against the household payment receipt. This action cannot be reversed!"
+        })
+    }
+
+    const handleDialogClose = () => {
+        setDialogState({
+            open: false,
+            title: "",
+            message: "",
+        });
+    }
+
+
     const classes = useStyles();
     return (
         <Box className={classes.root}>
+            <DialogWindow
+                open={dialogState.open}
+                title={dialogState.title}
+                message={dialogState.message}
+                recordId={dialogState.memberId}
+                handleClose={handleDialogClose}
+                handleAction={handleSubmit}
+            />
             <Box display="flex">
                 <Box flexGrow={1}>
                     <Typography component="h6" variant="h6">
@@ -171,7 +203,7 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
                     </Grid>
                     <Grid item xs={4}>
                         <Box display="flex" p={2}>
-                            <form className={classes.fullWidth} onSubmit={handleSubmit} autoComplete="off">
+                            <form className={classes.fullWidth} onSubmit={handleAdditionalPaymentConfirmation} autoComplete="off">
                                 <Box>
                                     <TextField className={classes.fullWidth} required={true} id="receiptNo" name="receiptNo" onChange={handleChange} value={additionalPayment.receiptNo} label="Reciept Number" />
                                     <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={additionalPayment.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />

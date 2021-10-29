@@ -75,6 +75,7 @@ const Members = () => {
         gender: "",
         membershipType: "",
         membershipStatus: "",
+        idCard: "",
         selectedOption: null,
         page: null
     })
@@ -161,8 +162,10 @@ const Members = () => {
 
     const handleDialogClose = () => {
         setDialogState({
-            ...dialogState,
-            open: false
+            open: false,
+            title: "",
+            message: "",
+            memberId: 0,
         });
     }
 
@@ -298,7 +301,7 @@ const Members = () => {
                     pageSizeOptions: [],
                     exportButton: true,
                     exportCsv: (columns, data) => {
-                        ipcRenderer.send(channels.EXPORT_ENROLLMENT);
+                        ipcRenderer.send(channels.EXPORT_ENROLLMENT, { filters: queryFilter });
                         setGridState({
                             ...gridState,
                             isLoading: true
@@ -334,20 +337,20 @@ const Members = () => {
                         query.filters = queryFilter;
                         query.page = queryFilter.page === 0 ? 0 : query.page
                         await ipcRenderer.send(channels.LOAD_MEMBERS, query);
-                        ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {   
+                        ipcRenderer.on(channels.LOAD_MEMBERS, (event, result) => {
                             result.rows.map(household => {
                                 if (household['AdministrativeDivision.parent']) {
                                     const parentAdministrativeDivision = result.administrativeDivisions.filter(ad => ad.id === household['AdministrativeDivision.parent'])[0]
-                                    household['AdministrativeDivision.parentName'] = parentAdministrativeDivision.name                                   
-                                  return household;
+                                    household['AdministrativeDivision.parentName'] = parentAdministrativeDivision.name
+                                    return household;
                                 } else {
-                                  household["AdministrativeDivision.parentName"] = "";                                 
-                                  return household;
-                                }                                
+                                    household["AdministrativeDivision.parentName"] = "";
+                                    return household;
+                                }
                             })
                             setQueryFilter({
-                              ...queryFilter,
-                              page: null,
+                                ...queryFilter,
+                                page: null,
                             });
                             ipcRenderer.removeAllListeners(channels.LOAD_MEMBERS);
                             resolve({

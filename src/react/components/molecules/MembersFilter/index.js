@@ -6,17 +6,23 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import AutocompleteFormControl from '../../organisms/AutocompleteFormControl';
-import { genderOptions, MembershipStatusOptions, MembershipTypeOptions } from '../../../../shared/constants';
+import { genderOptions, MembershipStatusOptions, MembershipTypeOptions, memberIDCardStatus } from '../../../../shared/constants';
 import FilterListIcon from '@material-ui/icons/FilterList';
+import RotateLeftIcon from '@material-ui/icons/RotateLeft';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
     root: {
         paddingLeft: "24px",
     },
-    actionButton: {
+    filterButton: {
         marginTop: "16px",
-        marginLeft: "10px"
+        padding: "4px 8px",
+    },
+    resetButton: {
+        margin: "16px 0px 0px 0.75rem",
+        padding: "4px 0px",
+        minWidth: "36px"
     },
     inputField: {
         width: "100%",
@@ -102,13 +108,30 @@ const MembersFilter = (props) => {
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid item xs={3}>
+                <Grid item xs={2}>
+                    <FormControl className={classes.inputField}>
+                        <InputLabel id="idCardLabel">Household ID Card</InputLabel>
+                        <Select
+                            labelId="idCardLabel"
+                            id="idCard"
+                            name="idCard"
+                            value={props.filterData.idCard}
+                            placeholder="Male/Female"
+                            onChange={props.handleFilterChange}
+                        >
+                            {memberIDCardStatus.map((status, index) => (
+                                <MenuItem key={index} value={index}>{status}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid item xs={2}>
                     <Button
                         type="submit"
                         variant="contained"
                         color="secondary"
                         size="small"
-                        className={classes.actionButton}
+                        className={classes.filterButton}
                         startIcon={<FilterListIcon />}
                     >
                         Filter
@@ -116,10 +139,10 @@ const MembersFilter = (props) => {
                     <Button
                         variant="contained"
                         size="small"
-                        className={classes.actionButton}
+                        className={classes.resetButton}
                         onClick={props.handleFilterReset}
                     >
-                        Reset
+                        <RotateLeftIcon />
                     </Button>
                 </Grid>
             </Grid>

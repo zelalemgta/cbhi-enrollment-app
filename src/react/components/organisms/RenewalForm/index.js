@@ -10,6 +10,7 @@ import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import DatePicker from '../../atoms/DatePicker';
+import DialogWindow from '../../molecules/DialogWindow';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -72,6 +73,12 @@ const RenewalForm = React.forwardRef((props, ref) => {
         cbhiId: ""
     });
 
+    const [dialogState, setDialogState] = useState({
+        open: false,
+        title: "",
+        message: ""
+    });
+
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_MEMBER_RENEWAL, props.householdId);
     }, [props.householdId])
@@ -121,8 +128,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
             });
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         if (memberRenewal.isSubmitted) return;
         setMemberRenewal({
             ...memberRenewal,
@@ -137,9 +143,34 @@ const RenewalForm = React.forwardRef((props, ref) => {
         props.closeModal();
     }
 
+    const handleRenewalConfirmation = (e) => {
+        e.preventDefault();
+        setDialogState({
+            open: true,
+            title: "Are you sure you want to renew membership for the selected household?",
+            message: "Attention! Please verify the data against the household payment receipt. This action cannot be reversed!"
+        })
+    }
+
+    const handleDialogClose = () => {
+        setDialogState({
+            open: false,
+            title: "",
+            message: "",
+        });
+    }
+
     const classes = useStyles();
     return (
         <Box className={classes.root}>
+            <DialogWindow
+                open={dialogState.open}
+                title={dialogState.title}
+                message={dialogState.message}
+                recordId={dialogState.memberId}
+                handleClose={handleDialogClose}
+                handleAction={handleSubmit}
+            />
             <Box display="flex">
                 <Box flexGrow={1}>
                     <Typography component="h6" variant="h6">
@@ -154,7 +185,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
             </Box>
             <Divider />
             <Box display="flex" p={2}>
-                <form className={classes.fullWidth} onSubmit={handleSubmit} autoComplete="off">
+                <form className={classes.fullWidth} onSubmit={handleRenewalConfirmation} autoComplete="off">
                     <TextField className={classes.fullWidth}
                         id="householdHead"
                         name="householdHead"
