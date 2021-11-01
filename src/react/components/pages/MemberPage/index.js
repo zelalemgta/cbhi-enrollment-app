@@ -26,7 +26,7 @@ const { ipcRenderer } = window;
 const useStyles = makeStyles((theme) => ({
     root: {
         paddingTop: "55px",
-        marginLeft: 200,
+        marginLeft: "180px",
         fontSize: 13
     },
     badge: {

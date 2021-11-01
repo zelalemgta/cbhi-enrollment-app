@@ -60,6 +60,8 @@ module.exports = {
         REPORT_TOTAL_CONTRIBUTIONS: 'report_total_contributions',
         REPORT_TOTAL_SUBSIDY: 'report_total_subsidy',
         REPORT_TOTAL_CONTRIBUTIONS_COLLECTED: 'report_total_contributions_collected',
+        EXPORT_ENROLLMENT_REPORT: 'export_enrollment_report',
+        EXPORT_CONTRIBUTION_REPORT: 'export_contribution_report',
         EXPORT_TO_PDF: 'export_to_pdf',
         SYSTEM_BACKUP: 'system_backup',
         SYSTEM_RESTORE: 'system_restore',

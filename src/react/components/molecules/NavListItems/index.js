@@ -2,7 +2,7 @@ import React from 'react';
 import { useHistory } from "react-router-dom";
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
+import Typography from '@material-ui/core/Typography';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
@@ -12,16 +12,19 @@ import AssessmentIcon from '@material-ui/icons/Assessment';
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 import MonetizationOnIcon from '@material-ui/icons/MonetizationOn';
 import SettingsIcon from '@material-ui/icons/Settings';
-import { makeStyles } from '@material-ui/core';
+import makeStyles from '@material-ui/core/styles/makeStyles';
 
 const useStyles = makeStyles((theme) => ({
-    listItem: {
+    listItem: { 
         color: "#fff",
         minHeight: 48,
         '& div': {
             color: '#fff',
             minWidth: 40
         }
+    },
+    listItemText: {
+        fontSize: "0.95rem"
     },
     expansionPanel: {
         background: "none",
@@ -61,7 +64,7 @@ const NavListItems = (props) => {
                 <ListItemIcon>
                     <PeopleIcon />
                 </ListItemIcon>
-                <ListItemText primary="Members" />
+                <Typography className={classes.listItemText} variant="body2">Members</Typography>                
             </ListItem>
             <ExpansionPanel classes={{ root: classes.expansionPanel, expanded: classes.expanded }}>
                 <ExpansionPanelSummary classes={{ root: classes.expansionSummary }} expandIcon={<ExpandMoreIcon />}>
@@ -69,7 +72,7 @@ const NavListItems = (props) => {
                         <ListItemIcon>
                             <AssessmentIcon />
                         </ListItemIcon>
-                        <ListItemText primary="Reports" />
+                        <Typography className={classes.listItemText} variant="body2">Reports</Typography>                        
                     </ListItem>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>
@@ -77,13 +80,13 @@ const NavListItems = (props) => {
                         <ListItemIcon>
                             <PeopleOutlineIcon />
                         </ListItemIcon>
-                        <ListItemText primary="Enrollment" />
+                        <Typography className={classes.listItemText} variant="body2">Enrollment</Typography>                        
                     </ListItem>
                     <ListItem className={classes.listItem} button onClick={() => history.push("/reports/contribution")}>
                         <ListItemIcon>
                             <MonetizationOnIcon />
                         </ListItemIcon>
-                        <ListItemText primary="Contribution" />
+                        <Typography className={classes.listItemText} variant="body2">Contribution</Typography>                        
                     </ListItem>
                 </ExpansionPanelDetails>
             </ExpansionPanel>
@@ -91,7 +94,7 @@ const NavListItems = (props) => {
                 <ListItemIcon>
                     <SettingsIcon />
                 </ListItemIcon>
-                <ListItemText primary="Settings" />
+                <Typography className={classes.listItemText} variant="body2">Settings</Typography>                
             </ListItem>
         </>
     )

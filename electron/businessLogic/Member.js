@@ -32,7 +32,8 @@ const calculateAge = (dateOfBirth) => {
 
 const validateDate = (dateValue) => {
   try {
-    convertDate(dateValue, "GR");
+    const result = convertDate(dateValue, "GR");
+    if(result.split("-").includes('undefined')) return false
     return true;
   } catch (err) {
     return false;

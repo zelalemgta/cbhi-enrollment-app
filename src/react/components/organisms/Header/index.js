@@ -17,8 +17,8 @@ const { ipcRenderer } = window;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        width: `calc(100% - 200px)`,
-        marginLeft: 200,
+        width: `calc(100% - 180px)`,
+        marginLeft: "180px",
         backgroundColor: theme.palette.primary.main,
         borderLeft: '3px solid #1a2226',
         WebkitAppRegion: 'drag',

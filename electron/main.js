@@ -679,6 +679,57 @@ ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeri
   });
 })
 
+ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event) => {
+  const workbook = XLSX.utils.book_new();
+  const template_name = "CBHI Enrollment Data";
+  let allMembersData = await Member.getAllMembers();
+  allMembersData = allMembersData.map((memberObj) => ({
+    "Full Name": memberObj['Members.fullName'],
+    "Date Of Birth(YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.dateOfBirth']),
+    "Gender(Male/Female)": memberObj['Members.gender'],
+    "Household CBHI Id": memberObj['cbhiId'],
+    "Beneficiary CBHI Id": memberObj['Members.cbhiId'],
+    "Kebele/Gote": memberObj['AdministrativeDivision.name'],
+    "Relationship": memberObj['Members.relationship'],
+    "Profession": memberObj['Members.profession'],
+    "Enrollment Date (YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.enrolledDate']),
+    "is Household Head (1/0)": memberObj['Members.isHouseholdHead'],
+    "Contribution Amount": memberObj['Members.isHouseholdHead'] ? memberObj['contributionAmount'] : "",
+    "Registration Fee": memberObj['Members.isHouseholdHead'] ? memberObj['registrationFee'] : "",
+    "Additional Beneficiary Fee": memberObj['Members.isHouseholdHead'] ? memberObj['additionalBeneficiaryFee'] : "",
+    "Other Fees": memberObj['Members.isHouseholdHead'] ? memberObj['otherFees'] : "",
+    "Receipt No": memberObj['Members.isHouseholdHead'] ? memberObj['receiptNo'] : "",
+    "Receipt Date": memberObj['Members.isHouseholdHead'] ? memberObj['receiptDate'] ? memberObj['receiptDate'].split(",").map(r => convertToEthiopianDate(r)).join(",") : "" : "",
+    "Membership Type": memberObj['Members.isHouseholdHead'] ? memberObj['isPaying'] === null ? "" : memberObj['EnrollmentRecords.isPaying'] ? "Paying" : "Indigent" : "",
+  }))
+
+  const ws = XLSX.utils.json_to_sheet(allMembersData);
+  XLSX.utils.book_append_sheet(workbook, ws, template_name);
+  const options = {
+    title: "Save Enrollment Template",
+    filters: [{ name: "All files", extensions: ["xlsx"] }],
+  };
+  dialog
+    .showSaveDialog(options)
+    .then((result) => {
+      if (result.canceled)
+        mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
+      else if (result.filePath) {
+        XLSX.writeFile(workbook, result.filePath);
+        const response = {
+          type: "Success",
+          message: "Enrollment data exported successfully to '" + result.filePath + "'",
+        };
+
+        mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+        mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
+      }
+    })
+    .catch((error) => console.log(error));
+});
+
+// New Method EXPORT_CONTRIBUTION_REPORT
+
 ipcMain.on(channels.EXPORT_TO_PDF, (event) => {
   const options = {
     title: "Export to PDF",

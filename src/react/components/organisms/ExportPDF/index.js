@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import IconButton from '@material-ui/core/IconButton';
-import SaveAltIcon from '@material-ui/icons/SaveAlt';
+import { ReactComponent as PDFIcon} from '../../../assets/icons/file-pdf-solid.svg'
 import Tooltip from '@material-ui/core/Tooltip';
 import { makeStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -36,7 +36,7 @@ const ExportPDF = (props) => {
     return (
         <Tooltip title="Export to PDF">
             <IconButton onClick={handleExport} disabled={exportLoading} {...props}>
-                <SaveAltIcon />
+                <PDFIcon color="#d32f2f" width={25} height={25} />
                 {exportLoading && <CircularProgress className={classes.progress} />}
             </IconButton>
         </Tooltip>

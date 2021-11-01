@@ -16,6 +16,7 @@ import TotalAdditionalBeneficiaries from '../../organisms/TotalAdditionalBenefic
 import HouseholdByGender from '../../organisms/TotalHouseholdsByGender';
 import DatePicker from '../../atoms/DatePicker';
 import RemoveIcon from '@material-ui/icons/Remove';
+import ExportEnrollmentExcel from '../../organisms/ExportEnrollmentExcel';
 import ExportPDF from '../../organisms/ExportPDF';
 import { channels } from '../../../../shared/constants';
 
@@ -23,11 +24,11 @@ const { ipcRenderer } = window;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        width: `calc(100% - 200px)`,
+        width: `calc(100% - 180px)`,
         padding: '1em',
         paddingTop: "50px",
         backgroundColor: '#ecf0f5',
-        marginLeft: 200,
+        marginLeft: "180px",
         '& .MuiPaper-root': {
             padding: '1em'
         }
@@ -108,8 +109,9 @@ const EnrollmentReports = () => {
                             value={selectedDate.dateTo}
                             minDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].minDate : null}
                             maxDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].maxDate : null}
-                        />
+                        />                        
                         <ExportPDF className={classes.exportBtn} />
+                        <ExportEnrollmentExcel className={classes.exportBtn} />
                     </Box>
                 </Grid>
                 <Grid item xs={2}>

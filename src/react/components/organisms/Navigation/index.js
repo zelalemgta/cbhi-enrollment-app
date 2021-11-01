@@ -9,7 +9,7 @@ const { ipcRenderer } = window;
 
 const useStyle = makeStyles((theme) => ({
     root: {
-        width: 200,
+        width: 180,
         backgroundColor: '#222d32',
         color: theme.palette.text.altColor
     }

@@ -19,11 +19,11 @@ const { ipcRenderer } = window;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        width: `calc(100% - 200px)`,
+        width: `calc(100% - 180px)`,
         padding: '1em',
         paddingTop: "50px",
         backgroundColor: '#ecf0f5',
-        marginLeft: 200,
+        marginLeft: "180px",
         '& .MuiPaper-root': {
             padding: '1em'
         }

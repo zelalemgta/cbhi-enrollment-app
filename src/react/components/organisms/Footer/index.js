@@ -10,8 +10,8 @@ const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
         position: 'fixed',
-        width: `calc(100% - 200px)`,
-        marginLeft: 200,
+        width: `calc(100% - 180px)`,
+        marginLeft: "180px",
         bottom: 0,
         color: theme.palette.text.altColor,
         WebkitAppRegion: 'drag'
