@@ -681,32 +681,61 @@ ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeri
 
 ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event) => {
   const workbook = XLSX.utils.book_new();
-  const template_name = "CBHI Enrollment Data";
-  let allMembersData = await Member.getAllMembers();
-  allMembersData = allMembersData.map((memberObj) => ({
-    "Full Name": memberObj['Members.fullName'],
-    "Date Of Birth(YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.dateOfBirth']),
-    "Gender(Male/Female)": memberObj['Members.gender'],
-    "Household CBHI Id": memberObj['cbhiId'],
-    "Beneficiary CBHI Id": memberObj['Members.cbhiId'],
-    "Kebele/Gote": memberObj['AdministrativeDivision.name'],
-    "Relationship": memberObj['Members.relationship'],
-    "Profession": memberObj['Members.profession'],
-    "Enrollment Date (YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.enrolledDate']),
-    "is Household Head (1/0)": memberObj['Members.isHouseholdHead'],
-    "Contribution Amount": memberObj['Members.isHouseholdHead'] ? memberObj['contributionAmount'] : "",
-    "Registration Fee": memberObj['Members.isHouseholdHead'] ? memberObj['registrationFee'] : "",
-    "Additional Beneficiary Fee": memberObj['Members.isHouseholdHead'] ? memberObj['additionalBeneficiaryFee'] : "",
-    "Other Fees": memberObj['Members.isHouseholdHead'] ? memberObj['otherFees'] : "",
-    "Receipt No": memberObj['Members.isHouseholdHead'] ? memberObj['receiptNo'] : "",
-    "Receipt Date": memberObj['Members.isHouseholdHead'] ? memberObj['receiptDate'] ? memberObj['receiptDate'].split(",").map(r => convertToEthiopianDate(r)).join(",") : "" : "",
-    "Membership Type": memberObj['Members.isHouseholdHead'] ? memberObj['isPaying'] === null ? "" : memberObj['EnrollmentRecords.isPaying'] ? "Paying" : "Indigent" : "",
-  }))
+  const template_name = "CBHI Enrollment Report";
+  // let allMembersData = await Member.getAllMembers();
+  // allMembersData = allMembersData.map((memberObj) => ({
+  //   "Full Name": memberObj['Members.fullName'],
+  //   "Date Of Birth(YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.dateOfBirth']),
+  //   "Gender(Male/Female)": memberObj['Members.gender'],
+  //   "Household CBHI Id": memberObj['cbhiId'],
+  //   "Beneficiary CBHI Id": memberObj['Members.cbhiId'],
+  //   "Kebele/Gote": memberObj['AdministrativeDivision.name'],
+  //   "Relationship": memberObj['Members.relationship'],
+  //   "Profession": memberObj['Members.profession'],
+  //   "Enrollment Date (YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.enrolledDate']),
+  //   "is Household Head (1/0)": memberObj['Members.isHouseholdHead'],
+  //   "Contribution Amount": memberObj['Members.isHouseholdHead'] ? memberObj['contributionAmount'] : "",
+  //   "Registration Fee": memberObj['Members.isHouseholdHead'] ? memberObj['registrationFee'] : "",
+  //   "Additional Beneficiary Fee": memberObj['Members.isHouseholdHead'] ? memberObj['additionalBeneficiaryFee'] : "",
+  //   "Other Fees": memberObj['Members.isHouseholdHead'] ? memberObj['otherFees'] : "",
+  //   "Receipt No": memberObj['Members.isHouseholdHead'] ? memberObj['receiptNo'] : "",
+  //   "Receipt Date": memberObj['Members.isHouseholdHead'] ? memberObj['receiptDate'] ? memberObj['receiptDate'].split(",").map(r => convertToEthiopianDate(r)).join(",") : "" : "",
+  //   "Membership Type": memberObj['Members.isHouseholdHead'] ? memberObj['isPaying'] === null ? "" : memberObj['EnrollmentRecords.isPaying'] ? "Paying" : "Indigent" : "",
+  // }))
 
-  const ws = XLSX.utils.json_to_sheet(allMembersData);
+
+  // const subheader = 
+  //   [1,2,3,4,5]
+  //   ['Reporting Period', 'Tahesas - Yekatit', 'Year', '2014'],
+  //   ['CBHI Members available in the previous year', '17654'],
+  //   ['Status', 'Number of CBHI members newly enrolled in this  month', 'Number of CBHI members newly enrolled  up to  month']
+  // ]
+
+  const ws = XLSX.utils.aoa_to_sheet([['Scheme Name] CBHI Scheme Enrollment Report']], {origin: {r: 1, c: 4}});
+  
+  // [Main Header]
+  //XLSX.utils.sheet_add_aoa(ws, [['Scheme Name] CBHI Scheme Enrollment Report']], {origin: {r: 2, c: 5}})
+  
+  // [Subheader] - Reporting Period'
+  XLSX.utils.sheet_add_aoa(ws, [['Reporting Period', '', 'Tahesas - Yekatit']], {origin: {r: 3, c: 0}})
+  XLSX.utils.sheet_add_aoa(ws, [['Reporting Year', '', '2014']], {origin: {r: 3, c: 12}})
+
+  //[Subheader] - Previous year Total Households
+  XLSX.utils.sheet_add_aoa(ws, [['CBHI Members available in the previous year', '', '', '', '17654']], {origin: {r: 4, c: 0}})
+  
+  const mergedCells = [
+    { s: {r: 1, c: 4}, e: {r: 1, c: 14}},
+    { s: {r: 3, c: 0}, e: {r: 3, c: 1}},
+    { s: {r: 3, c: 2}, e: {r: 3, c: 4}},
+    { s: {r: 3, c: 12}, e: {r: 3, c: 13}},
+    { s: {r: 4, c: 0}, e: {r: 4, c: 3}},
+  ]
+  ws["!merges"] = mergedCells
+  ws['A4'].s = {color: "red"}
+
   XLSX.utils.book_append_sheet(workbook, ws, template_name);
   const options = {
-    title: "Save Enrollment Template",
+    title: "Save Enrollment Report",
     filters: [{ name: "All files", extensions: ["xlsx"] }],
   };
   dialog
@@ -718,7 +747,7 @@ ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event) => {
         XLSX.writeFile(workbook, result.filePath);
         const response = {
           type: "Success",
-          message: "Enrollment data exported successfully to '" + result.filePath + "'",
+          message: "Enrollment Report exported successfully to '" + result.filePath + "'",
         };
 
         mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
@@ -728,7 +757,7 @@ ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event) => {
     .catch((error) => console.log(error));
 });
 
-// New Method EXPORT_CONTRIBUTION_REPORT
+//TODO - New Method EXPORT_CONTRIBUTION_REPORT
 
 ipcMain.on(channels.EXPORT_TO_PDF, (event) => {
   const options = {

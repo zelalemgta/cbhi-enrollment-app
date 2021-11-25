@@ -21,15 +21,15 @@ const ExportEnrollmentExcel = (props) => {
     const [exportLoading, setExportLoading] = useState(false);
 
     useEffect(() => {
-        ipcRenderer.on(channels.EXPORT_TO_PDF, (event) => {
+        ipcRenderer.on(channels.EXPORT_ENROLLMENT_REPORT, (event) => {
             setExportLoading(false);
         })
-        return () => ipcRenderer.removeAllListeners(channels.EXPORT_TO_PDF)
+        return () => ipcRenderer.removeAllListeners(channels.EXPORT_ENROLLMENT_REPORT)
     })
 
     const handleExport = () => {
         setExportLoading(true)
-        ipcRenderer.send(channels.EXPORT_TO_PDF)
+        ipcRenderer.send(channels.EXPORT_ENROLLMENT_REPORT)
     }
 
     const classes = useStyles();
