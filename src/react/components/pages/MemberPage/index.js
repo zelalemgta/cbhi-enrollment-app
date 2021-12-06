@@ -16,6 +16,7 @@ import RenewalForm from '../../organisms/RenewalForm';
 import DialogWindow from '../../molecules/DialogWindow';
 import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
+import AssignmentIndIcon from '@material-ui/icons/AssignmentInd';
 import MembersFilter from '../../molecules/MembersFilter';
 import { channels } from '../../../../shared/constants';
 import { toEthiopian } from 'ethiopian-date';
@@ -98,7 +99,12 @@ const Members = () => {
     const classes = useStyles();
 
     const columns = [
-        { title: 'Full Name', field: 'Members.fullName', cellStyle: { width: '30%' }, sorting: false },
+        {
+            title: 'Full Name',
+            field: 'Members.fullName',
+            cellStyle: { width: '30%' },
+            sorting: false
+        },
         {
             title: 'Age',
             field: 'Members.dateOfBirth',
@@ -110,7 +116,17 @@ const Members = () => {
             title: 'CBHI ID',
             field: 'Members.cbhiId',
             cellStyle: { width: '25%' },
-            render: rowData => `${rowData.cbhiId}/${rowData['Members.cbhiId']}`,
+            render: rowData =>
+                <>
+                    <Box width={20} display="inline-block" mr={1}>
+                        {rowData['EnrollmentRecords.id'] &&
+                            <Tooltip placement="top" title="ID Card Issued">
+                                <AssignmentIndIcon fontSize="small" style={{ verticalAlign: "middle", color: "#007bb2" }} />
+                            </Tooltip>
+                        }
+                    </Box>
+                    {rowData.cbhiId}/{rowData['Members.cbhiId']}
+                </>,
             sorting: false
         },
         // {
@@ -142,10 +158,10 @@ const Members = () => {
             sorting: false,
             render: rowData => rowData['EnrollmentRecords.id'] ?
                 rowData['EnrollmentRecords.isPaying'] ?
-                    <Tooltip title="Paying">
+                    <Tooltip placement="top" title="Paying">
                         <Badge className={classes.badge} badgeContent="P" color="secondary">Active</Badge>
                     </Tooltip> :
-                    <Tooltip title="Indigent">
+                    <Tooltip placement="top" title="Indigent">
                         <Badge className={classes.warningBadge} badgeContent="I">Active</Badge>
                     </Tooltip> :
                 'Expired'

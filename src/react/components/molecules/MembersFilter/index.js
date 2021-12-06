@@ -110,7 +110,7 @@ const MembersFilter = (props) => {
                 </Grid>
                 <Grid item xs={2}>
                     <FormControl className={classes.inputField}>
-                        <InputLabel id="idCardLabel">Household ID Card</InputLabel>
+                        <InputLabel id="idCardLabel">CBHI ID Card</InputLabel>
                         <Select
                             labelId="idCardLabel"
                             id="idCard"

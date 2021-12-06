@@ -11,7 +11,7 @@ import PeopleIcon from '@material-ui/icons/PeopleOutlineRounded';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import { channels } from '../../../../shared/constants';
-import { SystemProgressContext } from '../../../contexts/SystemProgressContext'
+import { SystemProgressContext } from '../../../contexts'
 
 const { ipcRenderer } = window;
 

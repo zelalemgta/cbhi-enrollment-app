@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SystemProgressContext } from '../contexts/SystemProgressContext'
+import { SystemProgressContext } from '../contexts'
 
 const SystemProgressProvider = ({ children }) => {
     const [progressState, setProgressState] = useState({

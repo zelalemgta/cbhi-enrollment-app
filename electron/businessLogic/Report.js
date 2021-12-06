@@ -14,6 +14,8 @@ const calculateDateOfBirth = (age) => {
 
 class Report {
 
+    /********************* - Enrollment Dashboard Reports - ***************************/
+
     static getEligibleHouseholds = async (enrollmentPeriodId) => {
         const enrollmentPeriod = await models.EnrollmentPeriod.findByPk(enrollmentPeriodId, { raw: true });
         return enrollmentPeriod.eligibleHouseholds;
@@ -389,7 +391,7 @@ class Report {
         return additionalBeneficiariesByStatus;
     }
 
-    /********************* - Contribution Reports - ***************************/
+    /********************* - Contribution Dashboard Reports - ***************************/
 
     static getSubsidies = async (enrollmentPeriodId) => {
         const subsidies = await models.Subsidy.findOne({
@@ -591,6 +593,55 @@ class Report {
         const totalContribution = await this.getTotalContribution(enrollmentPeriodId);
         return totalContribution + (subsidies ? (subsidies.generalSubsidy + subsidies.targetedSubsidy + subsidies.other) : 0);
     };
+
+    /********************* - Enrollment Excel Reports - ***************************/
+
+    static getTotalNewlyRegisteredMembers = async (args) => {
+        const enrollmentPeriod = await models.EnrollmentPeriod.findByPk(args.enrollmentPeriodId, { raw: true });
+        const previousEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+            where: {
+                coverageEndDate: { [Op.lt]: enrollmentPeriod.coverageEndDate }
+            },
+            order: [['coverageEndDate', 'DESC']],
+            raw: true
+        });
+
+        const previousYearMembersEnrolled = previousEnrollmentPeriod ? await models.EnrollmentRecord.findAll(
+            {
+                where: {
+                    [Op.and]: [
+                        { enrollmentPeriodId: previousEnrollmentPeriod.id },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
+                },
+                raw: true
+            }
+        ) : [];
+
+        const totalNewlyRegisteredMembers = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { enrollmentPeriodId: args.enrollmentPeriodId },
+                    { contributionAmount: { [Op.not]: null } }
+                ]
+            },
+            include: [
+                {
+                    model: models.Household,
+                    required: true,
+                    where: {
+                        id: { [Op.notIn]: previousYearMembersEnrolled }
+                    },
+                    include: [models.Member]
+                },
+            ],
+            //raw: true
+        })
+
+        return totalNewlyRegisteredMembers
+    }
+
+    /********************* - Contribution Excel Reports - ***************************/
 }
 
 module.exports = Report;

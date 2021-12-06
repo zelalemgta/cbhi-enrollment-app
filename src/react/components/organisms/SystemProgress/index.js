@@ -5,7 +5,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { channels } from '../../../../shared/constants'
-import { SystemProgressContext } from '../../../contexts/SystemProgressContext'
+import { SystemProgressContext } from '../../../contexts'
 
 const { ipcRenderer } = window;
 

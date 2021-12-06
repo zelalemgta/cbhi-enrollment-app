@@ -12,10 +12,12 @@ const Subsidy = require("./businessLogic/Subsidy");
 const Member = require("./businessLogic/Member");
 const EnrollmentRecord = require("./businessLogic/EnrollmentRecord");
 const Report = require("./businessLogic/Report");
+const readFile = require("fs").readFile;
 const writeFile = require("fs").writeFile;
 const copyFile = require("fs").copyFile;
 const removeFile = require("fs").unlink;
 const XLSX = require("xlsx");
+const XlsxTemplate = require('xlsx-template');
 const { toEthiopian } = require("ethiopian-date");
 
 let mainWindow;
@@ -679,126 +681,121 @@ ipcMain.on(channels.REPORT_TOTAL_CONTRIBUTIONS_COLLECTED, (event, enrollmentPeri
   });
 })
 
-ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event) => {
-  const workbook = XLSX.utils.book_new();
-  const template_name = "CBHI Enrollment Report";
-  // let allMembersData = await Member.getAllMembers();
-  // allMembersData = allMembersData.map((memberObj) => ({
-  //   "Full Name": memberObj['Members.fullName'],
-  //   "Date Of Birth(YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.dateOfBirth']),
-  //   "Gender(Male/Female)": memberObj['Members.gender'],
-  //   "Household CBHI Id": memberObj['cbhiId'],
-  //   "Beneficiary CBHI Id": memberObj['Members.cbhiId'],
-  //   "Kebele/Gote": memberObj['AdministrativeDivision.name'],
-  //   "Relationship": memberObj['Members.relationship'],
-  //   "Profession": memberObj['Members.profession'],
-  //   "Enrollment Date (YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.enrolledDate']),
-  //   "is Household Head (1/0)": memberObj['Members.isHouseholdHead'],
-  //   "Contribution Amount": memberObj['Members.isHouseholdHead'] ? memberObj['contributionAmount'] : "",
-  //   "Registration Fee": memberObj['Members.isHouseholdHead'] ? memberObj['registrationFee'] : "",
-  //   "Additional Beneficiary Fee": memberObj['Members.isHouseholdHead'] ? memberObj['additionalBeneficiaryFee'] : "",
-  //   "Other Fees": memberObj['Members.isHouseholdHead'] ? memberObj['otherFees'] : "",
-  //   "Receipt No": memberObj['Members.isHouseholdHead'] ? memberObj['receiptNo'] : "",
-  //   "Receipt Date": memberObj['Members.isHouseholdHead'] ? memberObj['receiptDate'] ? memberObj['receiptDate'].split(",").map(r => convertToEthiopianDate(r)).join(",") : "" : "",
-  //   "Membership Type": memberObj['Members.isHouseholdHead'] ? memberObj['isPaying'] === null ? "" : memberObj['EnrollmentRecords.isPaying'] ? "Paying" : "Indigent" : "",
-  // }))
+ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event, args) => {
+  const reportTemplateEnvPath = process.env.ELECTRON_START_URL ? '../public/reportTemplates/' : '../reportTemplates/'
+  try {
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: true,
+      progressTitle: "Generating Enrollment Report...",
+      progressValue: 0
+    });
+    readFile(path.join(__dirname, reportTemplateEnvPath, 'EnrollmentReportTemplate.xlsx'), async function (err, data) {
+      // Create a template
+      var template = new XlsxTemplate(data)
 
+      // Replacements take place on first sheet
+      var sheetNumber = 1;
 
-  // const subheader = 
-  //   [1,2,3,4,5]
-  //   ['Reporting Period', 'Tahesas - Yekatit', 'Year', '2014'],
-  //   ['CBHI Members available in the previous year', '17654'],
-  //   ['Status', 'Number of CBHI members newly enrolled in this  month', 'Number of CBHI members newly enrolled  up to  month']
-  // ]
+      // ******** Report Query Methods ********
+      const totalNewlyRegisteredMembers = await Report.getTotalNewlyRegisteredMembers(args)
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "Generating Enrollment Report...",
+        progressValue: 30
+      });
+      const totalNewPayingHouseholds = totalNewlyRegisteredMembers.filter(enrollmentRecord => enrollmentRecord.isPaying).map(enrollmentRecord => enrollmentRecord.Household)
+      const totalNewIndigentHouseholds = totalNewlyRegisteredMembers.filter(enrollmentRecord => !enrollmentRecord.isPaying).map(enrollmentRecord => enrollmentRecord.Household)
+      const newPayingMembers = totalNewPayingHouseholds.flatMap(household => household.Members)
+      const newIndigentMembers = totalNewIndigentHouseholds.flatMap(household => household.Members)
+      const totalNewlyRegisteredMalePayingHouseholds = newPayingMembers.filter(member => member.isHouseholdHead && member.gender === 'Male')
+      const totalNewlyRegisteredFemalePayingHouseholds = newPayingMembers.filter(member => member.isHouseholdHead && member.gender === 'Female')
+      const totalNewlyRegisteredMaleIndigentHouseholds = newIndigentMembers.filter(member => member.isHouseholdHead && member.gender === 'Male')
+      const totalNewlyRegisteredFemaleIndigentHouseholds = newIndigentMembers.filter(member => member.isHouseholdHead && member.gender === 'Female')
 
-  const ws = XLSX.utils.aoa_to_sheet([['Scheme Name] CBHI Scheme Enrollment Report']], {origin: {r: 1, c: 4}});
-  
-  // [Main Header]
-  //XLSX.utils.sheet_add_aoa(ws, [['Scheme Name] CBHI Scheme Enrollment Report']], {origin: {r: 2, c: 5}})
-  
-  // [Subheader] - Reporting Period'
-  XLSX.utils.sheet_add_aoa(ws, [['Reporting Period', '', 'Tahesas - Yekatit']], {origin: {r: 3, c: 0}})
-  XLSX.utils.sheet_add_aoa(ws, [['Reporting Year', '', '2014']], {origin: {r: 3, c: 12}})
+      // ******** EOF Report Query Methods ********
 
-  //[Subheader] - Previous year Total Households
-  XLSX.utils.sheet_add_aoa(ws, [['CBHI Members available in the previous year', '', '', '', '17654']], {origin: {r: 4, c: 0}})
-  
-  const mergedCells = [
-    { s: {r: 1, c: 4}, e: {r: 1, c: 14}},
-    { s: {r: 3, c: 0}, e: {r: 3, c: 1}},
-    { s: {r: 3, c: 2}, e: {r: 3, c: 4}},
-    { s: {r: 3, c: 12}, e: {r: 3, c: 13}},
-    { s: {r: 4, c: 0}, e: {r: 4, c: 3}},
-  ]
-  ws["!merges"] = mergedCells
-  ws['A4'].s = {color: "red"}
+      // Set up some placeholder values matching the placeholders in the template
+      const values = {
+        schemeName: args.schemeName,
+        eligibleHouseholds: 22000,
+        totalMembersLastYear: 17000,
+        enrollmentYear: args.enrollmentYearId,
+        reportingPeriod: args.reportingPeriod,
+        totalNewlyRegisteredMalePayingHouseholds: totalNewlyRegisteredMalePayingHouseholds.length,
+        totalNewlyRegisteredFemalePayingHouseholds: totalNewlyRegisteredFemalePayingHouseholds.length,
+        totalNewlyRegisteredMaleIndigentHouseholds: totalNewlyRegisteredMaleIndigentHouseholds.length,
+        totalNewlyRegisteredFemaleIndigentHouseholds: totalNewlyRegisteredFemaleIndigentHouseholds.length
+      };
 
-  XLSX.utils.book_append_sheet(workbook, ws, template_name);
-  const options = {
-    title: "Save Enrollment Report",
-    filters: [{ name: "All files", extensions: ["xlsx"] }],
-  };
-  dialog
-    .showSaveDialog(options)
-    .then((result) => {
-      if (result.canceled)
-        mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
-      else if (result.filePath) {
-        XLSX.writeFile(workbook, result.filePath);
-        const response = {
-          type: "Success",
-          message: "Enrollment Report exported successfully to '" + result.filePath + "'",
-        };
+      // Perform substitution
+      template.substitute(sheetNumber, values);
 
-        mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
-        mainWindow.webContents.send(channels.EXPORT_ENROLLMENT);
-      }
-    })
-    .catch((error) => console.log(error));
+      //Show progress completion
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "Generating Enrollment Report...",
+        progressValue: 100
+      });
+
+      // Get binary data
+      const excelData = template.generate({ type: 'nodebuffer' });
+
+      //Show progress completion
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "Generating Enrollment Report...",
+        progressValue: 100
+      });
+
+      const options = {
+        title: "Save Enrollment Report",
+        filters: [{ name: "All files", extensions: ["xlsx"] }],
+      };
+      dialog
+        .showSaveDialog(options)
+        .then((result) => {
+          if (!result.canceled) {
+            writeFile(result.filePath, excelData, 'binary', function (err) {
+              const response = {
+                type: "Success",
+                message: "Enrollment Report exported successfully to '" + result.filePath + "'",
+              };
+              mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+            })
+          }
+          //Hide progress status
+          mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+            open: false,
+            progressTitle: "Generating Enrollment Report...",
+            progressValue: 100
+          });
+        })
+        .catch((error) => {
+          //Hide progress status
+          mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+            open: false,
+            progressTitle: "Generating Enrollment Report...",
+            progressValue: 100
+          });
+          console.log(error)
+        });
+    });
+  } catch (error) {
+    const response = {
+      type: "Error",
+      message: error
+    };
+    mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Generating Enrollment Report...",
+      progressValue: 0
+    });
+  }
 });
 
 //TODO - New Method EXPORT_CONTRIBUTION_REPORT
 
-ipcMain.on(channels.EXPORT_TO_PDF, (event) => {
-  const options = {
-    title: "Export to PDF",
-    filters: [{ name: "All files", extensions: ["pdf"] }],
-  };
-  dialog
-    .showSaveDialog(options)
-    .then((result) => {
-      if (result.filePath)
-        mainWindow.webContents.printToPDF({
-          marginsType: 1,
-          printBackground: true,
-          printSelectionOnly: false,
-          landscape: true,
-          pageSize: 'A4',
-          scaleFactor: 95
-        }).then(data => {
-          writeFile(result.filePath, data, (error) => {
-            if (error) console.log(error)
-            const response = {
-              type: "Success",
-              message: "Saved PDF successfully to '" + result.filePath + "'",
-            };
-            //Delayed notification trigger to exclude it from the screen snapshot
-            setTimeout(() => mainWindow.webContents.send(channels.SEND_NOTIFICATION, response), 500);
-          })
-        }).catch(error => {
-          const response = {
-            type: "Success",
-            message: "Failed to export PDF to '" + result.filePath + "'",
-          }
-          mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
-        })
-      mainWindow.webContents.send(channels.EXPORT_TO_PDF);
-    })
-    .catch((error) => {
-      console.log(error)
-      mainWindow.webContents.send(channels.EXPORT_TO_PDF);
-    });
-})
 
 //*********** -  Import Enrollment Data  METHODS - ****************//
 

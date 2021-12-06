@@ -12,6 +12,7 @@ import SystemProgress from './components/organisms/SystemProgress';
 import Notification from './components/organisms/Notification';
 import { channels } from '../shared/constants';
 import SystemProgressProvider from './providers/SystemProgressProvider'
+import SchemeNameProvider from './providers/SchemeNameProvider'
 
 const { ipcRenderer } = window;
 
@@ -19,7 +20,7 @@ const theme = createMuiTheme({
   palette: {
     primary: {
       main: '#222d32',
-      footer: '#0288d1'
+      footer: '#007bb2'
     },
     secondary: {
       main: '#43a047',
@@ -66,14 +67,16 @@ function App() {
           <Header />
         </SystemProgressProvider>
         <Notification open={notification.open} type={notification.type} message={notification.message} />
-        <Navigation />
-        <Switch>
-          <Route exact path="/" component={Members} />
-          <Route exact path="/reports/enrollment" component={EnrollmentReport} />
-          <Route exact path="/reports/contribution" component={ContributionReport} />
-          <Route exact path="/settings" component={Settings} />
-          <Route render={() => <Redirect to="/" />} />
-        </Switch>
+        <SchemeNameProvider>
+          <Navigation />
+          <Switch>
+            <Route exact path="/" component={Members} />
+            <Route exact path="/reports/enrollment" component={EnrollmentReport} />
+            <Route exact path="/reports/contribution" component={ContributionReport} />
+            <Route exact path="/settings" component={Settings} />
+            <Route render={() => <Redirect to="/" />} />
+          </Switch>
+        </SchemeNameProvider>
         <Footer />
       </ThemeProvider>
     </Router>

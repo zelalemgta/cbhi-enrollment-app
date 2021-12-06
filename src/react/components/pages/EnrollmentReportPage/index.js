@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
 import SelectField from '../../molecules/SelectField';
@@ -16,9 +16,9 @@ import TotalAdditionalBeneficiaries from '../../organisms/TotalAdditionalBenefic
 import HouseholdByGender from '../../organisms/TotalHouseholdsByGender';
 import DatePicker from '../../atoms/DatePicker';
 import RemoveIcon from '@material-ui/icons/Remove';
-import ExportEnrollmentExcel from '../../organisms/ExportEnrollmentExcel';
-import ExportPDF from '../../organisms/ExportPDF';
+import ExportBtn from '../../atoms/ExportBtn';
 import { channels } from '../../../../shared/constants';
+import { SchemeNameContext } from '../../../contexts'
 
 const { ipcRenderer } = window;
 
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) => ({
     },
     exportBtn: {
         verticalAlign: "top",
-        marginTop: "8px",
+        marginTop: "16px",
         float: "right"
     },
     footer: {
@@ -55,7 +55,7 @@ const convertDate = (date) => {
 }
 
 const EnrollmentReports = () => {
-
+    const { schemeName } = useContext(SchemeNameContext)
     const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
     const [selectedDate, setSelectedDate] = useState({
         year: '',
@@ -84,6 +84,14 @@ const EnrollmentReports = () => {
         });
     }
 
+    const handleExport = () => {
+        ipcRenderer.send(channels.EXPORT_ENROLLMENT_REPORT, {
+            schemeName: schemeName,
+            enrollmentPeriodId: selectedDate.year,
+            reportingPeriod: `${selectedDate.dateFrom} <--> ${selectedDate.dateTo}`
+        })
+    }
+
     const classes = useStyles();
     return (
         <Box>
@@ -109,9 +117,14 @@ const EnrollmentReports = () => {
                             value={selectedDate.dateTo}
                             minDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].minDate : null}
                             maxDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].maxDate : null}
-                        />                        
-                        <ExportPDF className={classes.exportBtn} />
-                        <ExportEnrollmentExcel className={classes.exportBtn} />
+                        />
+                        <ExportBtn
+                            label="Download Report"
+                            isDisabled={selectedDate.year === '' || selectedDate.dateFrom === '' || selectedDate.dateTo === ''}
+                            className={classes.exportBtn}
+                            tooltip="Generates Enrollment Report for the selected period"
+                            action={handleExport}
+                        />
                     </Box>
                 </Grid>
                 <Grid item xs={2}>

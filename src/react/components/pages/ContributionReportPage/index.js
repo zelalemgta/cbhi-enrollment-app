@@ -12,7 +12,7 @@ import TotalContributionCollected from '../../organisms/TotalContributionCollect
 import TotalContributionStats from '../../organisms/TotalContributionStats';
 import MonthlyContributionStats from '../../organisms/MonthlyContributionStats';
 import DatePicker from '../../atoms/DatePicker';
-import ExportPDF from '../../organisms/ExportPDF';
+import ExportBtn from '../../atoms/ExportBtn';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
     },
     exportBtn: {
         verticalAlign: "top",
-        marginTop: "8px",
+        marginTop: "16px",
         float: "right"
     },
     footer: {
@@ -79,6 +79,11 @@ const ContributionReports = () => {
             [e.target.name]: e.target.value
         });
     }
+
+    const handleExport = () => {
+        ipcRenderer.send(channels.EXPORT_ENROLLMENT_REPORT)
+    }
+
     const classes = useStyles();
     return (
         <Box>
@@ -105,7 +110,12 @@ const ContributionReports = () => {
                             minDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].minDate : null}
                             maxDate={enrollmentPeriods.filter(p => p.value === selectedDate.year).length ? enrollmentPeriods.filter(p => p.value === selectedDate.year)[0].maxDate : null}
                         />
-                        <ExportPDF className={classes.exportBtn} />
+                        <ExportBtn
+                            label="Download Report"
+                            className={classes.exportBtn}
+                            tooltip="Generates Contribution Report for the selected period"
+                            action={handleExport}
+                        />
                     </Box>
                 </Grid>
                 <Grid item xs={12}>
