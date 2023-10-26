@@ -10,8 +10,9 @@ const { ipcRenderer } = window;
 
 const useStyle = makeStyles((theme) => ({
     root: {
-        width: 180,
-        backgroundColor: '#222d32',
+        width: 160,
+        backgroundColor: "rgb(51, 87, 125)",
+        background: "radial-gradient(circle, rgba(51, 87, 125, 1) 0%, rgba(5, 17, 20, 1) 100%)",
         color: theme.palette.text.altColor
     }
 }));

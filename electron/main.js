@@ -77,6 +77,8 @@ app.on("ready", function () {
   }, 21000);
 });
 
+//app.on("browser-window-created", function () { checkSecurity() })
+
 app.on("window-all-closed", function () {
   app.quit();
 });
@@ -88,6 +90,30 @@ app.on("activate", function () {
 });
 
 //*********** - APPLICATION METHODS - ********************//
+ipcMain.on(channels.ACCOUNT_LOCK, (event) => {
+  Profile.getProfile()
+    .then((result) => {
+      if (result.password !== "" && result.password !== null) {
+        mainWindow.webContents.send(channels.ACCOUNT_LOCK, true);
+      }
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on(channels.ACCOUNT_LOGIN, (event, accountPassword) => {
+  Profile.login(accountPassword)
+    .then((result) => {
+      if (result.success)
+        mainWindow.webContents.send(channels.ACCOUNT_LOCK, false);
+      else
+        mainWindow.webContents.send(channels.ACCOUNT_LOGIN, result);
+    })
+    .catch((err) => {
+      console.log(err)
+      mainWindow.webContents.send(channels.ACCOUNT_LOGIN, { success: false, errorMessage: err });
+    });
+});
+
 ipcMain.on(channels.APP_INFO, (event) => {
   mainWindow.webContents.send(channels.APP_INFO, app.getVersion());
 });

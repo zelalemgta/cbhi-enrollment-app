@@ -48,7 +48,7 @@ const Settings = () => {
                     id="panel1bh-header"
                 >
                     <Typography className={classes.heading}>General settings</Typography>
-                    <Typography className={classes.secondaryHeading}>Set CBHI scheme profile</Typography>
+                    <Typography className={classes.secondaryHeading}>Set CBHI scheme profile & Account Protection</Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>
                     <GeneralSettings />
@@ -78,7 +78,7 @@ const Settings = () => {
                     <Typography className={classes.heading}>Enrollment Period</Typography>
                     <Typography className={classes.secondaryHeading}>
                         Set enrollment year/month start & end date
-          </Typography>
+                    </Typography>
                 </ExpansionPanelSummary>
                 <ExpansionPanelDetails>
                     <EnrollmentPeriod />

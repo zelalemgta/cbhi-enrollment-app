@@ -33,7 +33,7 @@ const calculateAge = (dateOfBirth) => {
 const validateDate = (dateValue) => {
   try {
     const result = convertDate(dateValue, "GR");
-    if(result.split("-").includes('undefined')) return false
+    if (result.split("-").includes('undefined')) return false
     return true;
   } catch (err) {
     return false;
@@ -65,10 +65,10 @@ class Member {
       const result = models.Household.create(
         {
           cbhiId: memberObj["Household.cbhiId"],
-          AdministrativeDivisionId:
-            memberObj["Household.AdministrativeDivisionId"], //memberObj.AdministrativeDivisionId,
+          AdministrativeDivisionId: memberObj["Household.AdministrativeDivisionId"], //memberObj.AdministrativeDivisionId,
           address: memberObj["Household.address"],
           enrolledDate: memberObj.enrolledDate,
+          idCardIssued: memberObj['Household.idCardIssued'],
           Members: [
             {
               fullName: memberObj.fullName,
@@ -120,6 +120,7 @@ class Member {
                 memberObj["Household.AdministrativeDivisionId"],
               address: memberObj["Household.address"],
               enrolledDate: memberObj.enrolledDate,
+              idCardIssued: memberObj['Household.idCardIssued'],
             },
             { where: { id: memberObj["Household.id"] } }
           ).then(async () => {
@@ -282,6 +283,10 @@ class Member {
       limit: pageSize,
       where: {
         [Op.and]: [
+          filters.idCardIssued !== "" &&
+          {
+            idCardIssued: { [Op.or]: filters.idCardIssued === 0 ? [0, null] : [1] }
+          },
           {
             [Op.or]: [
               { "$Members.fullName$": { [Op.substring]: search } },

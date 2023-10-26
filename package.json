@@ -22,6 +22,7 @@
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.3.3",
     "react-scripts": "^4.0.0",
+    "react-step-wizard": "^5.3.11",
     "sequelize": "^6.21.4",
     "sqlite3": "^4.2.0",
     "umzug": "^2.3.0",

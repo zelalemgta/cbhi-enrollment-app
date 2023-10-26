@@ -10,9 +10,10 @@ const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
         position: 'fixed',
-        width: `calc(100% - 180px)`,
-        marginLeft: "180px",
+        width: `calc(100% - 160px)`,
+        marginLeft: "160px",
         bottom: 0,
+        backgroundColor: '#222d32',
         color: theme.palette.text.altColor,
         WebkitAppRegion: 'drag'
     }
@@ -31,10 +32,10 @@ const Footer = () => {
     }, [])
     const classes = useStyles();
     return (
-        <Box className={classes.root} display="flex" bgcolor="primary.footer" p={1}>
+        <Box className={classes.root} display="flex" p={1}>
             <Box flexGrow={1} pl={2}>
                 <Typography component="span" variant="caption">
-                    Copyright © 2021 Ethiopian Health Insurance Agency. All rights reserved.
+                    Copyright © 2024 Ethiopian Health Insurance Service. All rights reserved.
                 </Typography>
             </Box>
             <Box pr={3}>

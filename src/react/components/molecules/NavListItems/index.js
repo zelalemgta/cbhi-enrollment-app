@@ -24,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
         }
     },
     listItemText: {
-        fontSize: "0.95rem"
+        fontSize: "0.85rem"
     },
     expansionPanel: {
         background: "none",

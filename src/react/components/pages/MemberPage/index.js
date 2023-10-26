@@ -11,7 +11,7 @@ import RotateLeft from '@material-ui/icons/RotateLeft';
 import LocalAtmTwoToneIcon from '@material-ui/icons/LocalAtmTwoTone';
 import Delete from '@material-ui/icons/Delete';
 import Modal from '@material-ui/core/Modal';
-import MemberForm from '../../organisms/MemberForm';
+import MemberForm from '../../organisms/MemberFormWizard';
 import RenewalForm from '../../organisms/RenewalForm';
 import DialogWindow from '../../molecules/DialogWindow';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -27,8 +27,8 @@ const { ipcRenderer } = window;
 const useStyles = makeStyles((theme) => ({
     root: {
         paddingTop: "55px",
-        marginLeft: "180px",
-        fontSize: 13
+        marginLeft: "160px",
+        fontSize: "0.8rem"
     },
     badge: {
         '& span': {
@@ -63,8 +63,6 @@ const calculateAge = (dateOfBirth) => {
 
 const Members = () => {
 
-    const [open, setOpen] = useState(false);
-
     const tableRef = React.createRef();
 
     const [gridState, setGridState] = useState({
@@ -76,12 +74,13 @@ const Members = () => {
         gender: "",
         membershipType: "",
         membershipStatus: "",
-        idCard: "",
+        idCardIssued: "",
         selectedOption: null,
         page: null
     })
 
     const [modalForm, setModalForm] = useState({
+        open: false,
         type: "",
         householdId: null,
         memberId: null,
@@ -119,10 +118,10 @@ const Members = () => {
             render: rowData =>
                 <>
                     <Box width={20} display="inline-block" mr={1}>
-                        {rowData['EnrollmentRecords.id'] &&
+                        {rowData['idCardIssued'] ?
                             <Tooltip placement="top" title="ID Card Issued">
                                 <AssignmentIndIcon fontSize="small" style={{ verticalAlign: "middle", color: "#007bb2" }} />
-                            </Tooltip>
+                            </Tooltip> : <></>
                         }
                     </Box>
                     {rowData.cbhiId}/{rowData['Members.cbhiId']}
@@ -168,12 +167,15 @@ const Members = () => {
         }
     ];
 
-    const handleOpen = () => {
-        setOpen(true);
-    }
-
     const handleClose = () => {
-        setOpen(false);
+        setModalForm({
+            open: false,
+            type: "",
+            householdId: null,
+            memberId: null,
+            isHouseholdHead: false,
+            isNew: false
+        })
     }
 
     const handleDialogClose = () => {
@@ -241,6 +243,7 @@ const Members = () => {
             membershipType: "",
             membershipStatus: "",
             selectedOption: null,
+            idCardIssued: "",
             page: null
         });
         reloadGrid()
@@ -248,10 +251,10 @@ const Members = () => {
 
     const handleEditBeneficiary = (id) => {
         setModalForm({
+            open: true,
             type: "memberForm",
             memberId: id
         });
-        handleOpen();
     }
 
     const handleDeleteBeneficiary = (id) => {
@@ -270,9 +273,8 @@ const Members = () => {
     return (
         <Box className={classes.root} p={1} mb={3}>
             <Modal
-                open={open}
-                onClose={handleClose}
-                disableBackdropClick={true}>
+                open={modalForm.open}
+                onClose={handleClose}>
                 {modalForm.type === "memberForm" ?
                     <MemberForm memberId={modalForm.memberId} isNew={modalForm.isNew} reloadGrid={reloadGrid} closeModal={handleClose} />
                     : modalForm.type === "renewForm" ? <RenewalForm householdId={modalForm.householdId} reloadGrid={reloadGrid} closeModal={handleClose} />
@@ -384,11 +386,11 @@ const Members = () => {
                         isFreeAction: true,
                         onClick: (event) => {
                             setModalForm({
+                                open: true,
                                 type: "memberForm",
                                 memberId: null,
                                 isNew: true
                             });
-                            handleOpen();
                         }
                     },
                     rowData => ({
@@ -397,11 +399,11 @@ const Members = () => {
                         isFreeAction: false,
                         onClick: (event) => {
                             setModalForm({
+                                open: true,
                                 type: "memberForm",
                                 memberId: rowData['Members.id'],
                                 isNew: false
                             });
-                            handleOpen();
                         }
                     }),
                     rowData => ({
@@ -411,11 +413,11 @@ const Members = () => {
                         hidden: !rowData['Members.isHouseholdHead'],
                         onClick: (event) => {
                             setModalForm({
+                                open: true,
                                 type: "memberForm",
                                 memberId: rowData['Members.id'],
                                 isNew: true
                             });
-                            handleOpen();
                         }
                     }),
                     rowData => ({
@@ -428,10 +430,10 @@ const Members = () => {
                             ipcRenderer.on(channels.CHECK_ACTIVE_PERIOD, (event, result) => {
                                 if (result) {
                                     setModalForm({
+                                        open: true,
                                         type: "renewForm",
                                         householdId: rowData.id,
                                     });
-                                    handleOpen();
                                 }
                                 ipcRenderer.removeAllListeners(channels.CHECK_ACTIVE_PERIOD);
                             })
@@ -448,10 +450,10 @@ const Members = () => {
                             ipcRenderer.on(channels.CHECK_ACTIVE_PERIOD, (event, result) => {
                                 if (result) {
                                     setModalForm({
+                                        open: true,
                                         type: "additionalPaymentForm",
                                         householdId: rowData.id,
                                     });
-                                    handleOpen();
                                 }
                                 ipcRenderer.removeAllListeners(channels.CHECK_ACTIVE_PERIOD);
                             })

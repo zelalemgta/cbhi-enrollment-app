@@ -18,7 +18,8 @@ module.exports = (sequelize, DataTypes) => {
     woredaName: DataTypes.STRING,
     contributionAmount: DataTypes.FLOAT,
     registrationFee: DataTypes.FLOAT,
-    additionalBeneficiaryFee: DataTypes.FLOAT
+    additionalBeneficiaryFee: DataTypes.FLOAT,
+    password: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'Profile',

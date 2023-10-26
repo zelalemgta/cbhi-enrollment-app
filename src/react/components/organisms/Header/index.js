@@ -17,9 +17,10 @@ const { ipcRenderer } = window;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        width: `calc(100% - 180px)`,
-        marginLeft: "180px",
-        backgroundColor: theme.palette.primary.main,
+        width: `calc(100% - 160px)`,
+        marginLeft: "160px",
+        backgroundColor: "rgb(51, 87, 125)",
+        background: "radial-gradient(circle, rgba(51, 87, 125, 1) 0%, rgba(5, 17, 20, 1) 100%)",
         borderLeft: '3px solid #1a2226',
         WebkitAppRegion: 'drag',
         '& button': {
@@ -37,7 +38,8 @@ const useStyles = makeStyles((theme) => ({
     },
     title: {
         flexGrow: 1,
-        marginLeft: 10
+        marginLeft: 10,
+        fontSize: "0.9rem"
     }
 }));
 

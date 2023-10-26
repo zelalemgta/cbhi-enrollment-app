@@ -1,6 +1,7 @@
 html {
   height: 100%;
 }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -15,4 +16,22 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.MuiMenuItem-root {
+  font-size: 0.85rem !important;
+  line-height: 1.5;
+  padding-top: 5px;
+}
+
+.MuiInputLabel-outlined.MuiInputLabel-marginDense {
+  font-size: 14px !important;
+}
+
+.MuiAutocomplete-listbox li, .MuiMenu-list li {
+  font-size: 14px;
+}
+
+.MuiListItem-root>.MuiCheckbox-root {
+  padding: 0px 5px !important;
 }

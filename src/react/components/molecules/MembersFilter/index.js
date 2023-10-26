@@ -113,10 +113,9 @@ const MembersFilter = (props) => {
                         <InputLabel id="idCardLabel">CBHI ID Card</InputLabel>
                         <Select
                             labelId="idCardLabel"
-                            id="idCard"
-                            name="idCard"
-                            value={props.filterData.idCard}
-                            placeholder="Male/Female"
+                            id="idCardIssued"
+                            name="idCardIssued"
+                            value={props.filterData.idCardIssued}                            
                             onChange={props.handleFilterChange}
                         >
                             {memberIDCardStatus.map((status, index) => (

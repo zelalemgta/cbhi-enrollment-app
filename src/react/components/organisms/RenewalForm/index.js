@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
         width: 500,
         height: 'auto',
         border: '1px solid #999',
-        backgroundColor: "#ecf0f5",
+        backgroundColor: "#fff",
         borderRadius: "5px",
         '& h6': {
             padding: "12px"

@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
         backgroundColor: "#e9e9e9",
         "& th, td": {
             borderColor: "#d3d3d3"
-        }
+        },        
     },
     header: {
         borderColor: "#c3c3c3"
@@ -108,12 +108,12 @@ const BeneficiariesTableRow = (props) => {
                                     </IconButton>
                                 </Tooltip>
                             </TableCell>
-                            <TableCell >{beneficiary.fullName}</TableCell>
-                            <TableCell>{calculateAge(beneficiary.dateOfBirth)}</TableCell>
-                            <TableCell>{beneficiary.gender}</TableCell>
-                            <TableCell>{`${props.householdCBHI}/${beneficiary.cbhiId}`}</TableCell>
-                            <TableCell>{beneficiary.relationship}</TableCell>
-                            <TableCell>{convertDate(beneficiary.enrolledDate)}</TableCell>
+                            <TableCell style={{fontSize: "0.8rem"}}>{beneficiary.fullName}</TableCell>
+                            <TableCell style={{fontSize: "0.8rem"}}>{calculateAge(beneficiary.dateOfBirth)}</TableCell>
+                            <TableCell style={{fontSize: "0.8rem"}}>{beneficiary.gender}</TableCell>
+                            <TableCell style={{fontSize: "0.8rem"}}>{`${props.householdCBHI}/${beneficiary.cbhiId}`}</TableCell>
+                            <TableCell style={{fontSize: "0.8rem"}}>{beneficiary.relationship}</TableCell>
+                            <TableCell style={{fontSize: "0.8rem"}}>{convertDate(beneficiary.enrolledDate)}</TableCell>
                         </TableRow>
                     )) :
                         <TableRow>

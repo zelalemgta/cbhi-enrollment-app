@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     cbhiId: DataTypes.STRING,
     address: DataTypes.TEXT,
     enrolledDate: DataTypes.DATEONLY,
+    idCardIssued: DataTypes.BOOLEAN,
     isDeleted: DataTypes.BOOLEAN
   }, {
     hooks: {

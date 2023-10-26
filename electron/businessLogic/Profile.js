@@ -1,8 +1,8 @@
-//const Sequelize = require("sequelize");
+const Sequelize = require("sequelize");
 const models = require("../db/models");
 
 //Initialize squelize operartor
-//const Op = Sequelize.Op;
+const Op = Sequelize.Op;
 
 class Profile {
 
@@ -50,6 +50,12 @@ class Profile {
         });
         return profile;
     };
+
+    static login = async (accountPassword) => {
+        const profile = await models.Profile.findOne({ where: { password: { [Op.eq]: accountPassword } } })
+        if (profile) return { success: true }
+        else return { success: false, errorMessage: "Incorrect Password! Please try again" }
+    }
 }
 
 module.exports = Profile;

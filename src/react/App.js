@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-d
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Header from './components/organisms/Header';
 import Navigation from './components/organisms/Navigation';
+import AccountProtection from './components/organisms/AccountProtection';
 import Footer from './components/organisms/Footer';
 import Members from './components/pages/MemberPage';
 import EnrollmentReport from './components/pages/EnrollmentReportPage';
@@ -40,12 +41,16 @@ const theme = createMuiTheme({
 });
 
 function App() {
-
+  const [accountSecurity, setAccountSecurity] = useState(false)
   const [notification, setNotification] = useState({
     open: false,
     type: "",
     message: ""
   });
+
+  useEffect(() => {
+    ipcRenderer.send(channels.ACCOUNT_LOCK);
+  }, [])
 
   useEffect(() => {
     ipcRenderer.on(channels.SEND_NOTIFICATION, (event, result) => {
@@ -59,6 +64,15 @@ function App() {
     }
   }, [notification]);
 
+  useEffect(() => {
+    ipcRenderer.on(channels.ACCOUNT_LOCK, (event, result) => {
+      setAccountSecurity(result);
+    });
+    return () => {
+      ipcRenderer.removeAllListeners(channels.ACCOUNT_LOCK);
+    }
+  }, [accountSecurity]);
+
   return (
     <Router>
       <ThemeProvider theme={theme}>
@@ -66,6 +80,7 @@ function App() {
           <SystemProgress />
           <Header />
         </SystemProgressProvider>
+        <AccountProtection open={accountSecurity} />
         <Notification open={notification.open} type={notification.type} message={notification.message} />
         <SchemeNameProvider>
           <Navigation />
