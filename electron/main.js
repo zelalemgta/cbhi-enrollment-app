@@ -446,7 +446,7 @@ ipcMain.on(channels.REMOVE_MEMBER, (event, memberId) => {
 
 ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
   EnrollmentRecord.loadHouseholdPayment(householdId)
-    .then((result) => {
+    .then((result) => {      
       mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
         open: false,
         progressTitle: "Loading Previous Payments...",
@@ -454,7 +454,9 @@ ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
       })
       mainWindow.webContents.send(channels.LOAD_HOUSEHOLD_PAYMENTS, result);
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {      
+      console.log(err)
+    });
 });
 
 //*********** - MEMBER RENEWAL METHODS - ****************//
@@ -505,6 +507,46 @@ ipcMain.on(channels.CREATE_MEMBER_RENEWAL, (event, enrollmentRecordObj) => {
       mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
         open: false,
         progressTitle: "Saving...",
+        progressValue: 0
+      })
+      if (response.type === "Success")
+        mainWindow.webContents.send(channels.MEMBER_RENEWAL_SUCCESS);
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on(channels.UPDATE_ENROLLMENT_RECORD, (event, enrollmentRecordObj) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Updating...",
+    progressValue: 0
+  })
+  EnrollmentRecord.updateEnrollmentRecord(enrollmentRecordObj)
+    .then((response) => {
+      mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "Updating...",
+        progressValue: 0
+      })
+      if (response.type === "Success")
+        mainWindow.webContents.send(channels.MEMBER_RENEWAL_SUCCESS);
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on(channels.REMOVE_ENROLLMENT_RECORD, (event, enrollmentRecordId) => {
+  mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+    open: true,
+    progressTitle: "Removing...",
+    progressValue: 0
+  })
+  EnrollmentRecord.removeEnrollmentRecord(enrollmentRecordId)
+    .then((response) => {
+      mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: false,
+        progressTitle: "Removing...",
         progressValue: 0
       })
       if (response.type === "Success")

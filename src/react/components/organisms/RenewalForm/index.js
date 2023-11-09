@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme) => ({
     root: {
         position: "absolute",
         top: "7%",
-        left: `calc(50% - 200px)`,
+        left: `calc(50% - 250px)`,
         width: 500,
         height: 'auto',
         border: '1px solid #999',
@@ -236,8 +236,8 @@ const RenewalForm = React.forwardRef((props, ref) => {
                         maxDate={memberRenewal.maxRegDate}
                     />
                     <Divider />
-                    <Box flexDirection="row-reverse" mt={2}>
-                        <Button type="submit" variant="contained">Renew Membership</Button>
+                    <Box display="flex" flexDirection="row-reverse" mt={2}>
+                        <Button type="submit" variant="contained" color="primary">Renew Membership</Button>
                     </Box>
                 </form>
             </Box>

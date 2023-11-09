@@ -35,6 +35,8 @@ module.exports = {
         LOAD_BENEFICIARIES: 'load_beneficiaries',
         REMOVE_MEMBER_RENEWAL: 'remove_member_renewal',
         MEMBER_RENEWAL_SUCCESS: 'member_renewal_success',
+        UPDATE_ENROLLMENT_RECORD: 'update_enrollment_record',
+        REMOVE_ENROLLMENT_RECORD: 'remove_enrollment_record',
         LOAD_HOUSEHOLD_PAYMENTS: 'load_household_payments',
         ADD_NEW_PAYMENT: 'add_new_payment',
         DOWNLOAD_ENROLLMENT_TEMPLATE: 'download_enrollment_template',

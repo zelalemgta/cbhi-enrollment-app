@@ -6,11 +6,7 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Close from '@material-ui/icons/Close';
 import Divider from '@material-ui/core/Divider';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
-import DatePicker from '../../atoms/DatePicker';
-import HouseholdPaymentDetail from '../../molecules/HouseholdPaymentDetail';
-import DialogWindow from '../../molecules/DialogWindow';
+import HouseholdPaymentDetail from '../HouseholdPaymentDetail';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -18,70 +14,46 @@ const { ipcRenderer } = window;
 const useStyles = makeStyles((theme) => ({
     root: {
         position: "absolute",
-        top: "10%",
-        left: `calc(50% - 300px)`,
-        width: 750,
-        height: 'auto',
+        top: "12%",
+        left: `calc(50% - 400px)`,
+        paddingBottom: 10,
+        width: 850,
+        height: "auto",
         border: '1px solid #999',
-        backgroundColor: "#ecf0f5",
+        backgroundColor: "#fff",
         borderRadius: "5px",
         '& h6': {
-            padding: "12px"
-        },
-        '& input': {
-            height: "1em"
-        },
-        '& #isPaying': {
-            height: "1.9em"
-        },
-        '& table': {
-            backgroundColor: "rgb(0,0,0,0.09)"
+            padding: "12px 0px"
         }
     },
-    TextField: {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-        marginRight: "3px",
-        marginLeft: "3px",
-        width: "14rem",
-
-    },
-    fullWidth: {
-        width: "100%",
-        marginBottom: "16px"
-    },
-    label: {
-        color: theme.palette.text.label
+    summary: {
+        '& .MuiTypography-body1': {
+            fontSize: "13px",
+        },
+        '& .MuiTypography-body2': {
+            width: 150,
+            fontSize: "13px",
+            fontWeight: "bold"
+        }
     }
-
 }))
 
 const AdditionalPaymentForm = React.forwardRef((props, ref) => {
 
-    const [additionalPayment, setAdditionalPayment] = useState({
+    const [householdPayment, setHouseholdPayment] = useState({
         HouseholdId: null,
         householdHead: "",
+        cbhiId: "",
+        address: "",
+        idCardIssued: false,
+        enrolledDate: "",
         EnrollmentPeriodId: null,
         enrollmentPeriod: "",
         minPaymentDate: null,
         maxPaymentDate: null,
         isPaying: null,
-        contributionAmount: null,
-        registrationFee: null,
-        additionalBeneficiaryFee: "",
-        otherFees: "",
-        receiptNo: "",
-        receiptDate: "",
-        cbhiId: "",
-        totalPaid: {},
-        isSubmitted: false
+        paymentRecords: []
     })
-
-    const [dialogState, setDialogState] = useState({
-        open: false,
-        title: "",
-        message: ""
-    });
 
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_HOUSEHOLD_PAYMENTS, props.householdId);
@@ -89,82 +61,39 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
 
     useEffect(() => {
         ipcRenderer.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, result) => {
-            setAdditionalPayment({
-                ...additionalPayment,
+            setHouseholdPayment({
+                ...householdPayment,
                 ...result
             });
         })
         return () => {
             ipcRenderer.removeAllListeners(channels.LOAD_HOUSEHOLD_PAYMENTS);
         }
-    }, [additionalPayment]);
+    }, [householdPayment]);
 
     useEffect(() => {
         ipcRenderer.on(channels.MEMBER_RENEWAL_SUCCESS, (event) => {
+            ipcRenderer.send(channels.LOAD_HOUSEHOLD_PAYMENTS, props.householdId);
             props.reloadGrid();
-            props.closeModal();
         })
         return () => {
             ipcRenderer.removeAllListeners(channels.MEMBER_RENEWAL_SUCCESS);
         }
     })
 
-    const handleChange = (e) => {
-        e.target.value.startsWith("-") ||
-            setAdditionalPayment({
-                ...additionalPayment,
-                [e.target.name]: e.target.value
-            });
-    }
-
-    const handleSubmit = () => {
-        if (additionalPayment.isSubmitted) return;
-        setAdditionalPayment({
-            ...additionalPayment,
-            isSubmitted: true
-        })
-        ipcRenderer.send(channels.CREATE_MEMBER_RENEWAL, additionalPayment);
-    }
-
-    const handleClose = (e) => {
-        e.preventDefault();
+    const handleClose = () => {
+        //e.preventDefault();
         ipcRenderer.removeAllListeners(channels.LOAD_HOUSEHOLD_PAYMENTS);
         props.closeModal();
     }
 
-    const handleAdditionalPaymentConfirmation = (e) => {
-        e.preventDefault();
-        setDialogState({
-            open: true,
-            title: "Are you sure you want to add this payment for the selected household?",
-            message: "Attention! Please verify the data against the household payment receipt. This action cannot be reversed!"
-        })
-    }
-
-    const handleDialogClose = () => {
-        setDialogState({
-            open: false,
-            title: "",
-            message: "",
-        });
-    }
-
-
     const classes = useStyles();
     return (
-        <Box className={classes.root}>
-            <DialogWindow
-                open={dialogState.open}
-                title={dialogState.title}
-                message={dialogState.message}
-                recordId={dialogState.memberId}
-                handleClose={handleDialogClose}
-                handleAction={handleSubmit}
-            />
+        <Box px={2} className={classes.root}>
             <Box display="flex">
                 <Box flexGrow={1}>
                     <Typography component="h6" variant="h6">
-                        Add New Payment ({additionalPayment.enrollmentPeriod})
+                        Update Household Payment ({householdPayment.enrollmentPeriod})
                     </Typography>
                 </Box>
                 <Box p={0}>
@@ -174,10 +103,59 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
                 </Box>
             </Box>
             <Divider />
-            <Box p={2}>
-                <Grid container>
-                    <Grid item xs={8}>
-                        <TextField className={classes.fullWidth}
+            <Grid container>
+                <Grid item xs={6}>
+                    <Box p={2}>
+                        <Box className={classes.summary} display="flex">
+                            <Typography variant='body2'>Full Name</Typography>
+                            <Typography>{householdPayment.householdHead}</Typography>
+                        </Box>
+                        <Box mt={1} className={classes.summary} display="flex">
+                            <Typography variant='body2'>CBHI ID</Typography>
+                            <Typography>{householdPayment.cbhiId}</Typography>
+                        </Box>
+                        <Box mt={1} className={classes.summary} display="flex">
+                            <Typography variant='body2'>Address</Typography>
+                            <Typography>{householdPayment.address}</Typography>
+                        </Box>
+                    </Box>
+                </Grid>
+                <Grid item xs={6}>
+                    <Box p={2}>
+                        <Box className={classes.summary} display="flex">
+                            <Typography variant='body2'>Membership Type</Typography>
+                            <Typography>{householdPayment.isPaying ? "Paying" : "Indigent"}</Typography>
+                        </Box>
+                        <Box mt={1} className={classes.summary} display="flex">
+                            <Typography variant='body2'>ID Card Issued</Typography>
+                            <Typography>{householdPayment.idCardIssued ? "Yes" : "No"}</Typography>
+                        </Box>
+                        <Box mt={1} className={classes.summary} display="flex">
+                            <Typography variant='body2'>Enrollment Date</Typography>
+                            <Typography>{householdPayment.enrolledDate}</Typography>
+                        </Box>
+                    </Box>
+                </Grid>
+                <Grid item xs={12}>
+                    <HouseholdPaymentDetail
+                        enrollmentPeriodId={householdPayment.EnrollmentPeriodId}
+                        householdId={householdPayment.HouseholdId}
+                        paymentRecords={householdPayment.paymentRecords}
+                    />
+                </Grid>
+            </Grid>
+        </Box>
+    )
+});
+
+export default AdditionalPaymentForm;
+
+
+
+
+{/* <Grid item xs={12}>
+                        <TextField
+                            className={classes.TextField}
                             id="householdHead"
                             name="householdHead"
                             label="Full Name"
@@ -187,8 +165,8 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
                                 readOnly: true
                             }}
                             variant="filled" />
-                        <TextField className={classes.fullWidth}
-                            required
+                        <TextField
+                            className={classes.TextField}
                             id="cbhiID"
                             name="cbhiId"
                             label="CBHI Id"
@@ -198,37 +176,30 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
                                 readOnly: true
                             }}
                             variant="filled" />
-                        <Divider variant="middle" style={{ marginBottom: 10 }} />
-                        <HouseholdPaymentDetail data={additionalPayment.totalPaid} />
-                    </Grid>
-                    <Grid item xs={4}>
-                        <Box display="flex" p={2}>
-                            <form className={classes.fullWidth} onSubmit={handleAdditionalPaymentConfirmation} autoComplete="off">
-                                <Box>
-                                    <TextField className={classes.fullWidth} required={true} id="receiptNo" name="receiptNo" onChange={handleChange} value={additionalPayment.receiptNo} label="Reciept Number" />
-                                    <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={additionalPayment.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
-                                    <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={additionalPayment.otherFees} type="number" label="Other Fees (ETB)" />
-                                </Box>
-                                <DatePicker required id="receiptDate" name="receiptDate"
-                                    placeholder="YYYY-MM-DD"
-                                    label="Payment Date *"
-                                    materialUi
-                                    onChange={handleChange}
-                                    value={additionalPayment.receiptDate}
-                                    minDate={additionalPayment.minPaymentDate}
-                                    maxDate={additionalPayment.maxPaymentDate}
-                                />
-                                <Divider />
-                                <Box flexDirection="row-reverse" mt={4}>
-                                    <Button type="submit" color="secondary" variant="contained">Add Payment</Button>
-                                </Box>
-                            </form>
-                        </Box>
-                    </Grid>
-                </Grid>
-            </Box>
-        </Box>
-    )
-});
+                    </Grid> */}
 
-export default AdditionalPaymentForm;
+//     <Grid item xs={6}>
+//     <TextField className={classes.TextField} required={true} id="receiptNo" name="receiptNo" onChange={handleChange} value={additionalPayment.receiptNo} label="Reciept Number" />
+//     <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={additionalPayment.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
+//     <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={additionalPayment.otherFees} type="number" label="Other Fees (ETB)" />
+// </Grid>
+// <Grid item xs={6}>
+//     <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={additionalPayment.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
+//     <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={additionalPayment.otherFees} type="number" label="Other Fees (ETB)" />
+//     <DatePicker required id="receiptDate" name="receiptDate"
+//         placeholder="YYYY-MM-DD"
+//         label="Payment Date *"
+//         materialUi
+//         onChange={handleChange}
+//         value={additionalPayment.receiptDate}
+//         minDate={additionalPayment.minPaymentDate}
+//         maxDate={additionalPayment.maxPaymentDate}
+//     />
+// </Grid>
+// <Grid item xs={12}>
+//     <Box display="flex" flexDirection="row-reverse" bgcolor="#e3e3e3">
+//         <Box my={2}>
+//             <Button type="submit" color="secondary" variant="contained">Add Payment</Button>
+//         </Box>
+//     </Box>
+// </Grid>

@@ -139,7 +139,7 @@ const AdditionalInformation = ({ data, handleAdditionalInformation, handleCancel
 
                     <Grid item xs={6}>
                         <FormControlLabel
-                            control={<Checkbox id="Household.idCardIssued" checked={formData['Household.idCardIssued']} onChange={handleIDCardStatusChange} name="Household.idCardIssued" />}
+                            control={<Checkbox id="Household.idCardIssued" checked={formData['Household.idCardIssued']} onChange={handleIDCardStatusChange} name="Household.idCardIssued" disabled={!formData.isHouseholdHead} />}
                             label="CBHI ID Card Issued?"
                         />
                     </Grid>

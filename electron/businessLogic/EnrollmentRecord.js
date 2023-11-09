@@ -10,7 +10,14 @@ const convertDate = (date, calendar) => {
         const etDate = date.split('-').map(Number);
         const convertedDate = toGregorian(...etDate);
         return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`;
-    } else {
+    } else if (calendar === 'ETC') {
+        const dateObj = new Date(date);
+        const [year, month, day] = [dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate()];
+        const convertedDate = toEthiopian(year, month, day);
+        //Returned Date Format DD/MM/YYYY
+        return `${convertedDate[0]}-${convertedDate[1]}-${convertedDate[2]}`
+    }
+    else {
         const dateObj = new Date(date);
         const [year, month, day] = [dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate()];
         const convertedDate = toEthiopian(year, month, day);
@@ -125,24 +132,21 @@ class EnrollmentRecord {
             subQuery: false,
             raw: true,
         });
-        const householdPaymentObj = {
+        const householdPaymentsObj = {
             HouseholdId: householdId,
-            householdHead: householdPayments[0]['Household.Members.fullName'],
-            cbhiId: householdPayments[0].cbhiId,
-            isPaying: householdPayments[0].isPaying,
+            householdHead: householdPayments.length > 0 ? householdPayments[0]['Household.Members.fullName'] : "Unpaid Member",
+            cbhiId: householdPayments.length > 0 ? householdPayments[0].cbhiId : "Undefined",
+            address: householdPayments.length > 0 ? householdPayments[0]['Household.address'] : "Undefined",
+            isPaying: householdPayments.length > 0 ? householdPayments[0].isPaying : "Undefined",
+            idCardIssued: householdPayments.length > 0 ? householdPayments[0]['Household.idCardIssued'] : "Undefined",
+            enrolledDate: householdPayments.length > 0 ? convertDate(householdPayments[0]['Household.enrolledDate'], 'ET') : "Undefined",
             EnrollmentPeriodId: activeEnrollmentPeriod.id,
             enrollmentPeriod: `${convertDate(activeEnrollmentPeriod.coverageStartDate, 'ET')} <--> ${convertDate(activeEnrollmentPeriod.coverageEndDate, 'ET')}`,
             minPaymentDate: convertDate(activeEnrollmentPeriod.coverageStartDate),
             maxPaymentDate: convertDate(activeEnrollmentPeriod.coverageEndDate),
-            totalPaid: {
-                receipts: householdPayments.reduce((a, b) => a !== "" ? a + ", " + b.receiptNo : b.receiptNo, ""),
-                totalContribution: householdPayments.reduce((a, b) => a + (b.contributionAmount ? b.contributionAmount : 0), 0),
-                totalRegistrationFee: householdPayments.reduce((a, b) => a + (b.registrationFee ? b.registrationFee : 0), 0),
-                totalAddBeneficiaryFee: householdPayments.reduce((a, b) => a + (b.additionalBeneficiaryFee ? b.additionalBeneficiaryFee : 0), 0),
-                totalOtherFees: householdPayments.reduce((a, b) => a + (b.otherFees ? b.otherFees : 0), 0)
-            }
+            paymentRecords: householdPayments.map((paymentRecord => { return { ...paymentRecord, receiptDate: convertDate(paymentRecord.receiptDate, 'ETC') } }))
         }
-        return householdPaymentObj;
+        return householdPaymentsObj
     }
 
     static addEnrollmentRecord = enrollmentRecordObj => {
@@ -169,6 +173,46 @@ class EnrollmentRecord {
             }
         })
         return result;
+    };
+
+    static updateEnrollmentRecord = enrollmentRecordObj => {
+        enrollmentRecordObj.receiptDate = convertDate(enrollmentRecordObj.receiptDate, 'GR');
+        const result = models.EnrollmentRecord.update(enrollmentRecordObj, {
+            where: {
+                id: enrollmentRecordObj.id
+            }
+        }).then(() => {
+            return {
+                type: "Success",
+                message: "Household payment updated successfully"
+            };
+        }
+        ).catch((error) => {
+            console.log(error);
+            return {
+                type: "Error",
+                message: "Error updating household payment"
+            }
+        })
+        return result;
+    };
+
+    static removeEnrollmentRecord = enrollmentRecordId => {
+        const result = models.EnrollmentRecord.destroy({ where: { id: enrollmentRecordId } })
+            .then(() => {
+                return {
+                    type: "Success",
+                    message: "Household payment record removed successfully"
+                };
+            }
+            ).catch((error) => {
+                console.log(error);
+                return {
+                    type: "Error",
+                    message: "Error removing household payment record"
+                }
+            })
+        return result
     };
 }
 
