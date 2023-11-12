@@ -16,7 +16,9 @@ module.exports = (sequelize, DataTypes) => {
   };
   Subsidy.init({
     generalSubsidy: DataTypes.FLOAT,
-    targetedSubsidy: DataTypes.FLOAT,
+    regionTargetedSubsidy: DataTypes.FLOAT,
+    zoneTargetedSubsidy: DataTypes.FLOAT,
+    woredaTargetedSubsidy: DataTypes.FLOAT,
     other: DataTypes.FLOAT
   }, {
     sequelize,

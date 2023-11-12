@@ -88,7 +88,9 @@ const EnrollmentReports = () => {
         ipcRenderer.send(channels.EXPORT_ENROLLMENT_REPORT, {
             schemeName: schemeName,
             enrollmentPeriodId: selectedDate.year,
-            reportingPeriod: `${selectedDate.dateFrom} <--> ${selectedDate.dateTo}`
+            //reportingPeriod: `${selectedDate.dateFrom} <--> ${selectedDate.dateTo}`,
+            dateFrom: selectedDate.dateFrom,
+            dateTo: selectedDate.dateTo
         })
     }
 

@@ -141,6 +141,7 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
                         enrollmentPeriodId={householdPayment.EnrollmentPeriodId}
                         householdId={householdPayment.HouseholdId}
                         paymentRecords={householdPayment.paymentRecords}
+                        isPaying={householdPayment.isPaying}
                     />
                 </Grid>
             </Grid>
@@ -149,57 +150,3 @@ const AdditionalPaymentForm = React.forwardRef((props, ref) => {
 });
 
 export default AdditionalPaymentForm;
-
-
-
-
-{/* <Grid item xs={12}>
-                        <TextField
-                            className={classes.TextField}
-                            id="householdHead"
-                            name="householdHead"
-                            label="Full Name"
-                            value={additionalPayment.householdHead}
-                            aria-readonly={true}
-                            inputProps={{
-                                readOnly: true
-                            }}
-                            variant="filled" />
-                        <TextField
-                            className={classes.TextField}
-                            id="cbhiID"
-                            name="cbhiId"
-                            label="CBHI Id"
-                            value={additionalPayment.cbhiId}
-                            aria-readonly={true}
-                            inputProps={{
-                                readOnly: true
-                            }}
-                            variant="filled" />
-                    </Grid> */}
-
-//     <Grid item xs={6}>
-//     <TextField className={classes.TextField} required={true} id="receiptNo" name="receiptNo" onChange={handleChange} value={additionalPayment.receiptNo} label="Reciept Number" />
-//     <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={additionalPayment.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
-//     <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={additionalPayment.otherFees} type="number" label="Other Fees (ETB)" />
-// </Grid>
-// <Grid item xs={6}>
-//     <TextField className={classes.TextField} id="additionalBeneficiaryFee" name="additionalBeneficiaryFee" onChange={handleChange} value={additionalPayment.additionalBeneficiaryFee} type="number" label="Add* Beneficiary Fee (ETB)" />
-//     <TextField className={classes.TextField} id="otherFees" name="otherFees" onChange={handleChange} value={additionalPayment.otherFees} type="number" label="Other Fees (ETB)" />
-//     <DatePicker required id="receiptDate" name="receiptDate"
-//         placeholder="YYYY-MM-DD"
-//         label="Payment Date *"
-//         materialUi
-//         onChange={handleChange}
-//         value={additionalPayment.receiptDate}
-//         minDate={additionalPayment.minPaymentDate}
-//         maxDate={additionalPayment.maxPaymentDate}
-//     />
-// </Grid>
-// <Grid item xs={12}>
-//     <Box display="flex" flexDirection="row-reverse" bgcolor="#e3e3e3">
-//         <Box my={2}>
-//             <Button type="submit" color="secondary" variant="contained">Add Payment</Button>
-//         </Box>
-//     </Box>
-// </Grid>

@@ -72,7 +72,11 @@ const MemberFormWizard = React.forwardRef(({ memberId, isNew, reloadGrid, closeM
                     "Household.id": result['Household.id'],
                     "Household.cbhiId": result['Household.cbhiId'],
                     "Household.address": result['Household.address'] || "",
-                    "Household.idCardIssued": result['Household.idCardIssued'] || false
+                    "Household.idCardIssued": result['Household.idCardIssued'] || false,
+                    "Household.AdministrativeDivisionId": result['Household.AdministrativeDivisionId'],
+                    "Household.AdministrativeDivision.id": result['Household.AdministrativeDivision.id'],
+                    "Household.AdministrativeDivision.name": result['Household.AdministrativeDivision.name'],
+                    "Household.AdministrativeDivision.level": result['Household.AdministrativeDivision.level']
                 })
             }
             else

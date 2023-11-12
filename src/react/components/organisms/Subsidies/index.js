@@ -9,15 +9,15 @@ import { makeStyles } from '@material-ui/core/styles';
 const { ipcRenderer } = window;
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-        marginTop: "0px"
-    },
-    divider: {
-        margin: "0px auto"
-    },
-    targetedSubsidyValue: {
-      fontSize: "1.5vw"
-    }
+  root: {
+    marginTop: "0px"
+  },
+  divider: {
+    margin: "0px auto"
+  },
+  targetedSubsidyValue: {
+    fontSize: "1.5vw"
+  }
 }))
 
 
@@ -48,43 +48,49 @@ const TargetedSubsidiesStatsRenderer = (props) => {
 }
 
 const Subsidies = (props) => {
-    const [subsidies, setSubsidies] = useState({
-        generalSubsidy: 0,
-        targetedSubsidy: 0,
-        other: 0
+  const [subsidies, setSubsidies] = useState({
+    generalSubsidy: 0,
+    regionTargetedSubsidy: 0,
+    zoneTargetedSubsidy: 0,
+    woredaTargetedSubsidy: 0,
+    other: 0
+  });
+
+  useEffect(() => {
+    if (props.enrollmentPeriod)
+      ipcRenderer.send(channels.REPORT_SUBSIDIES, props.enrollmentPeriod);
+    ipcRenderer.on(channels.REPORT_SUBSIDIES, (event, result) => {
+      setSubsidies(result);
     });
-
-    useEffect(() => {
-        if (props.enrollmentPeriod)
-            ipcRenderer.send(channels.REPORT_SUBSIDIES, props.enrollmentPeriod);
-        ipcRenderer.on(channels.REPORT_SUBSIDIES, (event, result) => {
-            setSubsidies(result);
-        });
-        return () => { ipcRenderer.removeAllListeners(channels.REPORT_SUBSIDIES) }
-    }, [props.enrollmentPeriod])
-    return (
-      <Grid container spacing={2}>
-        <Grid item xs={3}>
-          <ReportCard
-            title="General Subsidy (ETB)"
-            value={subsidies ? subsidies.generalSubsidy.toLocaleString() : 0}
-          />
-        </Grid>
-        
-        <Grid item xs={6}>
-        <ReportCard title="Targeted Subsidies (ETB)">
-            <TargetedSubsidiesStatsRenderer region={subsidies.targetedSubsidy.toLocaleString()} zone={subsidies.targetedSubsidy.toLocaleString()} woreda={subsidies.targetedSubsidy.toLocaleString()} />
-        </ReportCard>
-        </Grid>
-
-        <Grid item xs={3}>
-          <ReportCard
-            title="Other (ETB)"
-            value={subsidies ? subsidies.other.toLocaleString() : 0}
-          />
-        </Grid>
+    return () => { ipcRenderer.removeAllListeners(channels.REPORT_SUBSIDIES) }
+  }, [props.enrollmentPeriod])
+  return (
+    <Grid container spacing={2}>
+      <Grid item xs={3}>
+        <ReportCard
+          title="General Subsidy (ETB)"
+          value={subsidies?.generalSubsidy.toLocaleString()}
+        />
       </Grid>
-    );
+
+      <Grid item xs={6}>
+        <ReportCard title="Targeted Subsidies (ETB)">
+          <TargetedSubsidiesStatsRenderer
+            region={subsidies?.regionTargetedSubsidy.toLocaleString()}
+            zone={subsidies?.zoneTargetedSubsidy.toLocaleString()}
+            woreda={subsidies?.woredaTargetedSubsidy.toLocaleString()}
+          />
+        </ReportCard>
+      </Grid>
+
+      <Grid item xs={3}>
+        <ReportCard
+          title="Other (ETB)"
+          value={subsidies?.other.toLocaleString()}
+        />
+      </Grid>
+    </Grid>
+  );
 }
 
 export default Subsidies;

@@ -184,7 +184,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
                 </Box>
             </Box>
             <Divider />
-            <Box display="flex" p={2}>
+            <Box display="flex" mt={1} px={2}>
                 <form className={classes.fullWidth} onSubmit={handleRenewalConfirmation} autoComplete="off">
                     <TextField className={classes.fullWidth}
                         id="householdHead"

@@ -4,7 +4,7 @@ import MaterialTable from 'material-table';
 import DatePicker from '../../atoms/DatePicker';
 import { makeStyles } from '@material-ui/core/styles';
 import TableIcons from '../../molecules/TableIcons';
-
+import { toEthiopian } from 'ethiopian-date';
 import { channels } from '../../../../shared/constants';
 
 const { ipcRenderer } = window;
@@ -20,14 +20,28 @@ const useStyles = makeStyles((theme) => ({
         }
     }
 }));
+
+const getEthiopianYearRange = () => {
+    let ethiopianYearRange = {};
+    const currentDate = new Date()
+    for (let x = 5; x >= 0; x--) {
+        const dateObj = new Date(currentDate.getFullYear() - x, 10)
+        const [year, month, day] = [dateObj.getFullYear(), dateObj.getMonth() + 1, dateObj.getDate()];
+        let convertedDate = toEthiopian(year, month, day);
+        ethiopianYearRange[convertedDate[0]] = `${convertedDate[0]} - ${(convertedDate[0] + 1)}`
+    }
+    return ethiopianYearRange
+}
+
+
+const enrollmentPeriodOptions = getEthiopianYearRange()
+
 const EnrollmentPeriod = () => {
 
     const classes = useStyles();
 
     const columns = [
-        {
-            title: 'Enrollment Year', field: 'enrollmentYear', defaultSort: 'desc'
-        },
+        { title: 'Enrollment Year', field: 'enrollmentYear', lookup: enrollmentPeriodOptions, validate: rowData => rowData.enrollmentYear ? true : false, defaultSort: 'desc' },
         { title: 'Eligible Households', field: 'eligibleHouseholds', type: 'numeric' },
         {
             title: 'Reg. Start Date',
@@ -101,8 +115,17 @@ const EnrollmentPeriod = () => {
                         pageSize: 5,
                         pageSizeOptions: [],
                         toolbarButtonAlignment: "left",
+                        headerStyle: {
+                            textAlign: "center",
+                            backgroundColor: "#ecf0f5",
+                            fontSize: "13px",
+                            padding: "2px",
+                            borderRight: "1px solid #e3e3e3"
+                        },
                         rowStyle: rowData => ({
-                            backgroundColor: rowData.active ? "#a5d6a7" : "inherit"
+                            backgroundColor: rowData.active ? "#a5d6a7" : "inherit",
+                            fontSize: "13px",
+                            textAlign: "center"
                         })
                     }}
                     columns={columns}

@@ -12,7 +12,7 @@ const Kebele = (props) => {
 
     const [selectedKebele, setSelectedKebele] = useState(0);
 
-    const columns = [{ title: 'Kebele / Ketena Name', field: 'name', width: "70%" }, { title: 'Code', field: 'code' }];
+    const columns = [{ title: 'Kebele / Ketena Name', field: 'name', width: "50%" }, { title: 'Code', field: 'code' }];
 
     useEffect(() => {
         ipcRenderer.send(channels.LOAD_KEBELE);
@@ -38,8 +38,17 @@ const Kebele = (props) => {
                     pageSize: 5,
                     pageSizeOptions: [],
                     toolbarButtonAlignment: "left",
+                    headerStyle: {
+                        textAlign: "center",
+                        backgroundColor: "#ecf0f5",
+                        fontSize: "13px",
+                        padding: "2px",
+                        borderRight: "1px solid #e3e3e3"
+                    },
                     rowStyle: rowData => ({
-                        backgroundColor: rowData.id === selectedKebele ? "#c2eafc" : "inherit"
+                        backgroundColor: rowData.id === selectedKebele ? "#c2eafc" : "inherit",
+                        fontSize: "13px",
+                        textAlign: "center"
                     })
                 }}
                 onRowClick={(event, rowData) => {

@@ -40,6 +40,17 @@ const Gote = (props) => {
                     pageSize: 5,
                     pageSizeOptions: [],
                     toolbarButtonAlignment: "left",
+                    headerStyle: {
+                        textAlign: "center",
+                        backgroundColor: "#ecf0f5",
+                        fontSize: "13px",
+                        padding: "2px",
+                        borderRight: "1px solid #e3e3e3"
+                    },
+                    rowStyle: {
+                        fontSize: "13px",
+                        textAlign: "center"
+                    },
                 }}
                 isLoading={loading}
                 columns={columns}

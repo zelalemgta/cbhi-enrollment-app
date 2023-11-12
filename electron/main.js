@@ -446,7 +446,7 @@ ipcMain.on(channels.REMOVE_MEMBER, (event, memberId) => {
 
 ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
   EnrollmentRecord.loadHouseholdPayment(householdId)
-    .then((result) => {      
+    .then((result) => {
       mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
         open: false,
         progressTitle: "Loading Previous Payments...",
@@ -454,7 +454,7 @@ ipcMain.on(channels.LOAD_HOUSEHOLD_PAYMENTS, (event, householdId) => {
       })
       mainWindow.webContents.send(channels.LOAD_HOUSEHOLD_PAYMENTS, result);
     })
-    .catch((err) => {      
+    .catch((err) => {
       console.log(err)
     });
 });
@@ -765,45 +765,160 @@ ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event, args) => {
       var sheetNumber = 1;
 
       // ******** Report Query Methods ********
-      const totalNewlyRegisteredMembers = await Report.getTotalNewlyRegisteredMembers(args)
+      const enrollmentReportData = await Report.generateEnrollmentReport(args)
       mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
         open: true,
         progressTitle: "Generating Enrollment Report...",
-        progressValue: 30
+        progressValue: 75
       });
-      const totalNewPayingHouseholds = totalNewlyRegisteredMembers.filter(enrollmentRecord => enrollmentRecord.isPaying).map(enrollmentRecord => enrollmentRecord.Household)
-      const totalNewIndigentHouseholds = totalNewlyRegisteredMembers.filter(enrollmentRecord => !enrollmentRecord.isPaying).map(enrollmentRecord => enrollmentRecord.Household)
-      const newPayingMembers = totalNewPayingHouseholds.flatMap(household => household.Members)
-      const newIndigentMembers = totalNewIndigentHouseholds.flatMap(household => household.Members)
-      const totalNewlyRegisteredMalePayingHouseholds = newPayingMembers.filter(member => member.isHouseholdHead && member.gender === 'Male')
-      const totalNewlyRegisteredFemalePayingHouseholds = newPayingMembers.filter(member => member.isHouseholdHead && member.gender === 'Female')
-      const totalNewlyRegisteredMaleIndigentHouseholds = newIndigentMembers.filter(member => member.isHouseholdHead && member.gender === 'Male')
-      const totalNewlyRegisteredFemaleIndigentHouseholds = newIndigentMembers.filter(member => member.isHouseholdHead && member.gender === 'Female')
 
-      // ******** EOF Report Query Methods ********
+      // ******** Structuring Report ***********
+      const newlyRegisteredMalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredFemalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredMaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredFemaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredMalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredFemalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredMaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredFemaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+
+      const renewedMalePayingHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const renewedFemalePayingHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const renewedMaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const renewedFemaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedMalePayingHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedFemalePayingHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedMaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedFemaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+
+      const newlyRegisteredMalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredFemalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredMaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredFemaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredMalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredFemalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredMaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const totalNewlyRegisteredFemaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+
+      const renewedMalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const renewedFemalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const renewedMaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const renewedFemaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedMalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedFemalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedMaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
+      const totalRenewedFemaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+
+      const totalMaleHouseholds = (totalNewlyRegisteredMalePayingHouseholds ? totalNewlyRegisteredMalePayingHouseholds : 0) +
+        (totalNewlyRegisteredMaleIndigentHouseholds ? totalNewlyRegisteredMaleIndigentHouseholds : 0) +
+        (totalRenewedMalePayingHouseholds ? totalRenewedMalePayingHouseholds : 0) +
+        (totalRenewedMaleIndigentHouseholds ? totalRenewedMaleIndigentHouseholds : 0)
+      const totalFemaleHouseholds = (totalNewlyRegisteredFemalePayingHouseholds ? totalNewlyRegisteredFemalePayingHouseholds : 0) +
+        (totalNewlyRegisteredFemaleIndigentHouseholds ? totalNewlyRegisteredFemaleIndigentHouseholds : 0) +
+        (totalRenewedFemalePayingHouseholds ? totalRenewedFemalePayingHouseholds : 0) +
+        (totalRenewedFemaleIndigentHouseholds ? totalRenewedFemaleIndigentHouseholds : 0)
+
+      const totalMaleBeneficiaries = (totalNewlyRegisteredMalePayingBeneficiaries ? totalNewlyRegisteredMalePayingBeneficiaries : 0) +
+        (totalNewlyRegisteredMaleIndigentBeneficiaries ? totalNewlyRegisteredMaleIndigentBeneficiaries : 0) +
+        (totalRenewedMalePayingBeneficiaries ? totalRenewedMalePayingBeneficiaries : 0) +
+        (totalRenewedMaleIndigentBeneficiaries ? totalRenewedMaleIndigentBeneficiaries : 0)
+      const totalFemaleBeneficiaries = (totalNewlyRegisteredFemalePayingBeneficiaries ? totalNewlyRegisteredFemalePayingBeneficiaries : 0) +
+        (totalNewlyRegisteredFemaleIndigentBeneficiaries ? totalNewlyRegisteredFemaleIndigentBeneficiaries : 0) +
+        (totalRenewedFemalePayingBeneficiaries ? totalRenewedFemalePayingBeneficiaries : 0) +
+        (totalRenewedFemaleIndigentBeneficiaries ? totalRenewedFemaleIndigentBeneficiaries : 0)
+      // ******** EOF Report Structuring ********
 
       // Set up some placeholder values matching the placeholders in the template
       const values = {
         schemeName: args.schemeName,
-        eligibleHouseholds: 22000,
-        totalMembersLastYear: 17000,
-        enrollmentYear: args.enrollmentYearId,
-        reportingPeriod: args.reportingPeriod,
-        totalNewlyRegisteredMalePayingHouseholds: totalNewlyRegisteredMalePayingHouseholds.length,
-        totalNewlyRegisteredFemalePayingHouseholds: totalNewlyRegisteredFemalePayingHouseholds.length,
-        totalNewlyRegisteredMaleIndigentHouseholds: totalNewlyRegisteredMaleIndigentHouseholds.length,
-        totalNewlyRegisteredFemaleIndigentHouseholds: totalNewlyRegisteredFemaleIndigentHouseholds.length
+        eligibleHouseholds: enrollmentReportData.eligibleHouseholds,
+        totalMembersLastYear: enrollmentReportData.previousYearEnrolledMembers,
+        enrollmentYear: enrollmentReportData.enrollmentYear,
+        reportingPeriod: `${args.dateFrom} <--> ${args.dateTo}`,
+
+        newlyRegisteredMalePayingHouseholds,
+        newlyRegisteredFemalePayingHouseholds,
+        newlyRegisteredMaleIndigentHouseholds,
+        newlyRegisteredFemaleIndigentHouseholds,
+        totalNewlyRegisteredMalePayingHouseholds,
+        totalNewlyRegisteredFemalePayingHouseholds,
+        totalNewlyRegisteredMaleIndigentHouseholds,
+        totalNewlyRegisteredFemaleIndigentHouseholds,
+        renewedMalePayingHouseholds,
+        renewedFemalePayingHouseholds,
+        renewedMaleIndigentHouseholds,
+        renewedFemaleIndigentHouseholds,
+        totalRenewedMalePayingHouseholds,
+        totalRenewedFemalePayingHouseholds,
+        totalRenewedMaleIndigentHouseholds,
+        totalRenewedFemaleIndigentHouseholds,
+
+        newlyRegisteredMalePayingBeneficiaries,
+        newlyRegisteredFemalePayingBeneficiaries,
+        newlyRegisteredMaleIndigentBeneficiaries,
+        newlyRegisteredFemaleIndigentBeneficiaries,
+        totalNewlyRegisteredMalePayingBeneficiaries,
+        totalNewlyRegisteredFemalePayingBeneficiaries,
+        totalNewlyRegisteredMaleIndigentBeneficiaries,
+        totalNewlyRegisteredFemaleIndigentBeneficiaries,
+        renewedMalePayingBeneficiaries,
+        renewedFemalePayingBeneficiaries,
+        renewedMaleIndigentBeneficiaries,
+        renewedFemaleIndigentBeneficiaries,
+        totalRenewedMalePayingBeneficiaries,
+        totalRenewedFemalePayingBeneficiaries,
+        totalRenewedMaleIndigentBeneficiaries,
+        totalRenewedFemaleIndigentBeneficiaries,
+        totalMaleHouseholds,
+        totalFemaleHouseholds,
+        totalMaleBeneficiaries,
+        totalFemaleBeneficiaries,
+
+        totalNewlyRegisteredMalePaying: (newlyRegisteredMalePayingHouseholds ? newlyRegisteredMalePayingHouseholds : 0) +
+          (newlyRegisteredMalePayingBeneficiaries ? newlyRegisteredMalePayingBeneficiaries : 0),
+        totalNewlyRegisteredFemalePaying: (newlyRegisteredFemalePayingHouseholds ? newlyRegisteredFemalePayingHouseholds : 0) +
+          (newlyRegisteredFemalePayingBeneficiaries ? newlyRegisteredFemalePayingBeneficiaries : 0),
+        totalNewlyRegisteredMaleIndigent: (newlyRegisteredMaleIndigentHouseholds ? newlyRegisteredMaleIndigentHouseholds : 0) +
+          (newlyRegisteredMaleIndigentBeneficiaries ? newlyRegisteredMaleIndigentBeneficiaries : 0),
+        totalNewlyRegisteredFemaleIndigent: (newlyRegisteredFemaleIndigentHouseholds ? newlyRegisteredFemaleIndigentHouseholds : 0) +
+          (newlyRegisteredFemaleIndigentBeneficiaries ? newlyRegisteredFemaleIndigentBeneficiaries : 0),
+        totalNewlyRegisteredMalePayingMembers: (totalNewlyRegisteredMalePayingHouseholds ? totalNewlyRegisteredMalePayingHouseholds : 0) +
+          (totalNewlyRegisteredMalePayingBeneficiaries ? totalNewlyRegisteredMalePayingBeneficiaries : 0),
+        totalNewlyRegisteredFemalePayingMembers: (totalNewlyRegisteredFemalePayingHouseholds ? totalNewlyRegisteredFemalePayingHouseholds : 0) +
+          (totalNewlyRegisteredFemalePayingBeneficiaries ? totalNewlyRegisteredFemalePayingBeneficiaries : 0),
+        totalNewlyRegisteredMaleIndigentMembers: (totalNewlyRegisteredMaleIndigentHouseholds ? totalNewlyRegisteredMaleIndigentHouseholds : 0) +
+          (totalNewlyRegisteredMaleIndigentBeneficiaries ? totalNewlyRegisteredMaleIndigentBeneficiaries : 0),
+        totalNewlyRegisteredFemaleIndigentMembers: (totalNewlyRegisteredFemaleIndigentHouseholds ? totalNewlyRegisteredFemaleIndigentHouseholds : 0) +
+          (totalNewlyRegisteredFemaleIndigentBeneficiaries ? totalNewlyRegisteredFemaleIndigentBeneficiaries : 0),
+        totalRenewedMalePaying: (renewedMalePayingHouseholds ? renewedMalePayingHouseholds : 0) +
+          (renewedMalePayingBeneficiaries ? renewedMalePayingBeneficiaries : 0),
+        totalRenewedFemalePaying: (renewedFemalePayingHouseholds ? renewedFemalePayingHouseholds : 0) +
+          (renewedFemalePayingBeneficiaries ? renewedFemalePayingBeneficiaries : 0),
+        totalRenewedMaleIndigent: (renewedMaleIndigentHouseholds ? renewedMaleIndigentHouseholds : 0) +
+          (renewedMaleIndigentBeneficiaries ? renewedMaleIndigentBeneficiaries : 0),
+        totalRenewedFemaleIndigent: (renewedFemaleIndigentHouseholds ? renewedFemaleIndigentHouseholds : 0) +
+          (renewedFemaleIndigentBeneficiaries ? renewedFemaleIndigentBeneficiaries : 0),
+        totalRenewedMalePayingMembers: (totalRenewedMalePayingHouseholds ? totalRenewedMalePayingHouseholds : 0) +
+          (totalRenewedMalePayingBeneficiaries ? totalRenewedMalePayingBeneficiaries : 0),
+        totalRenewedFemalePayingMembers: (totalRenewedFemalePayingHouseholds ? totalRenewedFemalePayingHouseholds : 0) +
+          (totalRenewedFemalePayingBeneficiaries ? totalRenewedFemalePayingBeneficiaries : 0),
+        totalRenewedMaleIndigentMembers: (totalRenewedMaleIndigentHouseholds ? totalRenewedMaleIndigentHouseholds : 0) +
+          (totalRenewedMaleIndigentBeneficiaries ? totalRenewedMaleIndigentBeneficiaries : 0),
+        totalRenewedFemaleIndigentMembers: (totalRenewedFemaleIndigentHouseholds ? totalRenewedFemaleIndigentHouseholds : 0) +
+          (totalRenewedFemaleIndigentBeneficiaries ? totalRenewedFemaleIndigentBeneficiaries : 0),
+        totalMaleMembers: totalMaleHouseholds + totalMaleBeneficiaries,
+        totalFemaleMembers: totalFemaleHouseholds + totalFemaleBeneficiaries,
+        totalHouseholds: totalMaleHouseholds + totalFemaleHouseholds,
+        totalBeneficiaries: totalMaleBeneficiaries + totalFemaleBeneficiaries,
+        totalMembers: totalMaleHouseholds + totalFemaleHouseholds + totalMaleBeneficiaries + totalFemaleBeneficiaries,
+        renewalRate: enrollmentReportData.previousYearEnrolledMembers > 0 ? `${(((totalMaleHouseholds + totalFemaleHouseholds) / enrollmentReportData.previousYearEnrolledMembers) * 100).toFixed(1)} %` : "-",
+        enrollmentRate: enrollmentReportData.eligibleHouseholds > 0 ? `${(((totalMaleHouseholds + totalFemaleHouseholds) / enrollmentReportData.eligibleHouseholds) * 100).toFixed(1)} %` : "-",
+        payingHouseholdsWithIdCard: enrollmentReportData.getTotalMembersWithIdCard.filter((reportObj) => reportObj.isPaying)[0]?.count,
+        indigentHouseholdsWithIdCard: enrollmentReportData.getTotalMembersWithIdCard.filter((reportObj) => !reportObj.isPaying)[0]?.count,
       };
 
       // Perform substitution
       template.substitute(sheetNumber, values);
-
-      //Show progress completion
-      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
-        open: true,
-        progressTitle: "Generating Enrollment Report...",
-        progressValue: 100
-      });
 
       // Get binary data
       const excelData = template.generate({ type: 'nodebuffer' });
@@ -819,25 +934,24 @@ ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event, args) => {
         title: "Save Enrollment Report",
         filters: [{ name: "All files", extensions: ["xlsx"] }],
       };
-      dialog
-        .showSaveDialog(options)
-        .then((result) => {
-          if (!result.canceled) {
-            writeFile(result.filePath, excelData, 'binary', function (err) {
-              const response = {
-                type: "Success",
-                message: "Enrollment Report exported successfully to '" + result.filePath + "'",
-              };
-              mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
-            })
-          }
-          //Hide progress status
-          mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
-            open: false,
-            progressTitle: "Generating Enrollment Report...",
-            progressValue: 100
-          });
-        })
+
+      dialog.showSaveDialog(options).then((result) => {
+        if (!result.canceled) {
+          writeFile(result.filePath, excelData, 'binary', function (err) {
+            const response = {
+              type: "Success",
+              message: "Enrollment Report exported successfully to '" + result.filePath + "'",
+            };
+            mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+          })
+        }
+        //Hide progress status
+        mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+          open: false,
+          progressTitle: "Generating Enrollment Report...",
+          progressValue: 100
+        });
+      })
         .catch((error) => {
           //Hide progress status
           mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {

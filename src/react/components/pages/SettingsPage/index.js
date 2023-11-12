@@ -20,14 +20,15 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: "180px"
     },
     heading: {
-        fontSize: theme.typography.pxToRem(15),
+        fontSize: theme.typography.pxToRem(14.5),
+        fontWeight: "500",
         flexBasis: '33.33%',
         flexShrink: 0,
     },
     secondaryHeading: {
-        fontSize: theme.typography.pxToRem(15),
+        fontSize: theme.typography.pxToRem(13.5),
         color: theme.palette.text.primary,
-    },
+    }
 }));
 
 const Settings = () => {
@@ -40,7 +41,7 @@ const Settings = () => {
     };
 
     return (
-        <Box className={classes.root} p={1}>
+        <Box className={classes.root} mt={2} mr={2}>
             <ExpansionPanel expanded={expanded === 'panel1'} onChange={handleChange('panel1')} TransitionProps={{ unmountOnExit: true }}>
                 <ExpansionPanelSummary
                     expandIcon={<ExpandMoreIcon />}

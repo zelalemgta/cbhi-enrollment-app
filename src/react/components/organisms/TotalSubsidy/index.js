@@ -12,7 +12,7 @@ const TotalSubsidy = (props) => {
             ipcRenderer.send(channels.REPORT_TOTAL_SUBSIDY, props.enrollmentPeriod);
         ipcRenderer.on(channels.REPORT_TOTAL_SUBSIDY, (event, result) => {
             if (result)
-                setTotalSubsidy(result.generalSubsidy + result.targetedSubsidy + result.other);
+                setTotalSubsidy(result.generalSubsidy + result.regionTargetedSubsidy + result.zoneTargetedSubsidy + result.woredaTargetedSubsidy + result.other);
         });
         return () => { ipcRenderer.removeAllListeners(channels.REPORT_TOTAL_SUBSIDY) }
     }, [props.enrollmentPeriod])

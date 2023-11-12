@@ -27,6 +27,40 @@ module.exports = {
         allowNull: true
       }
     )
+
+    await queryInterface.removeColumn(
+      'Subsidies',
+      'targetedSubsidy'
+    )
+
+    await queryInterface.addColumn(
+      'Subsidies',
+      'regionTargetedSubsidy',
+      {
+        type: Sequelize.FLOAT,
+        allowNull: true
+      }
+    )
+
+
+    await queryInterface.addColumn(
+      'Subsidies',
+      'zoneTargetedSubsidy',
+      {
+        type: Sequelize.FLOAT,
+        allowNull: true
+      }
+    )
+
+
+    await queryInterface.addColumn(
+      'Subsidies',
+      'woredaTargetedSubsidy',
+      {
+        type: Sequelize.FLOAT,
+        allowNull: true
+      }
+    )
   },
 
   async down(queryInterface, Sequelize) {
@@ -44,6 +78,30 @@ module.exports = {
     await queryInterface.removeColumn(
       'Households',
       'idCardIssued'
+    )
+
+    await queryInterface.removeColumn(
+      'Subsidies',
+      'regionTargetedSubsidy'
+    )
+
+    await queryInterface.removeColumn(
+      'Subsidies',
+      'zoneTargetedSubsidy'
+    )
+
+    await queryInterface.removeColumn(
+      'Subsidies',
+      'woredaTargetedSubsidy'
+    )
+
+    await queryInterface.addColumn(
+      'Subsidies',
+      'targetedSubsidy',
+      {
+        type: Sequelize.FLOAT,
+        allowNull: true
+      }
     )
   }
 };

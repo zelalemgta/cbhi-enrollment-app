@@ -10,7 +10,7 @@ const { ipcRenderer } = window;
 
 const membershipType = { 0: "Indigent", 1: "Paying" }
 
-const HouseholdPaymentDetail = ({ householdId, enrollmentPeriodId, paymentRecords }) => {
+const HouseholdPaymentDetail = ({ householdId, enrollmentPeriodId, paymentRecords, isPaying }) => {
 
     const columns = [
         { title: 'Receipt No.', field: 'receiptNo', sorting: false, validate: rowData => rowData.receiptNo ? true : false },
@@ -81,6 +81,7 @@ const HouseholdPaymentDetail = ({ householdId, enrollmentPeriodId, paymentRecord
                         new Promise((resolve, reject) => {
                             newData.HouseholdId = householdId
                             newData.EnrollmentPeriodId = enrollmentPeriodId
+                            newData.isPaying = isPaying
                             //TODO - Create new Channel to address payment adding
                             ipcRenderer.send(channels.CREATE_MEMBER_RENEWAL, newData);
                             resolve();

@@ -237,7 +237,7 @@ class Report {
                 raw: true
             }
         );
-        return +((totalHouseholdsEnrolled / enrollmentPeriod.eligibleHouseholds) * 100).toFixed(2);
+        return ((totalHouseholdsEnrolled / enrollmentPeriod.eligibleHouseholds) * 100).toFixed(2);
     };
 
     static getRenewalRate = async (enrollmentPeriodId) => {
@@ -591,37 +591,174 @@ class Report {
     static getTotalContributionCollected = async (enrollmentPeriodId) => {
         const subsidies = await this.getSubsidies(enrollmentPeriodId);
         const totalContribution = await this.getTotalContribution(enrollmentPeriodId);
-        return totalContribution + (subsidies ? (subsidies.generalSubsidy + subsidies.targetedSubsidy + subsidies.other) : 0);
+        return totalContribution + (subsidies ? (subsidies.generalSubsidy + subsidies.regionTargetedSubsidy + subsidies.zoneTargetedSubsidy + subsidies.woredaTargetedSubsidy + subsidies.other) : 0);
     };
 
     /********************* - Enrollment Excel Reports - ***************************/
 
-    static getTotalNewlyRegisteredMembers = async (args) => {
-        const enrollmentPeriod = await models.EnrollmentPeriod.findByPk(args.enrollmentPeriodId, { raw: true });
+    static generateEnrollmentReport = async (args) => {
+        //  *** Get current year enrollment period Id        
+        const currentEnrollmentPeriod = await models.EnrollmentPeriod.findByPk(args.enrollmentPeriodId, { raw: true });
+        //  *** Get previous year enrollment period Id
         const previousEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
             where: {
-                coverageEndDate: { [Op.lt]: enrollmentPeriod.coverageEndDate }
+                coverageEndDate: { [Op.lt]: currentEnrollmentPeriod.coverageEndDate }
             },
-            order: [['coverageEndDate', 'DESC']],
+            order: [['coverageEndDate', 'DESC'], ['coverageStartDate', 'DESC']],
             raw: true
         });
 
-        const previousYearMembersEnrolled = previousEnrollmentPeriod ? await models.EnrollmentRecord.findAll(
-            {
-                where: {
-                    [Op.and]: [
-                        { enrollmentPeriodId: previousEnrollmentPeriod.id },
-                        { contributionAmount: { [Op.not]: null } }
-                    ]
-                },
-                raw: true
-            }
-        ) : [];
+        const filterStartDate = toGregorian(args.dateFrom.split('-').map(Number)).join('-');
+        const filterEndDate = toGregorian(args.dateTo.split('-').map(Number)).join('-');
 
-        const totalNewlyRegisteredMembers = await models.EnrollmentRecord.findAll({
+        // *** Get previous enrolled households ID list 
+        const previousYearEnrolledHouseholdsList = await models.EnrollmentRecord.findAll({
+            attributes: ['HouseholdId'],
             where: {
                 [Op.and]: [
-                    { enrollmentPeriodId: args.enrollmentPeriodId },
+                    { EnrollmentPeriodId: previousEnrollmentPeriod.id },
+                    { contributionAmount: { [Op.not]: null } }
+                ]
+            },
+            raw: true
+        })
+        const previousYearHouseholdIdList = previousYearEnrolledHouseholdsList.map((enrollmentRecordObj) => enrollmentRecordObj.HouseholdId)
+
+        // *********** Get Newly Enrolled CBHI Members ********************
+        const getTotalNewlyEnrolledMembers = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { HouseholdId: { [Op.notIn]: previousYearHouseholdIdList } },
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
+                    { contributionAmount: { [Op.not]: null } }
+                ]
+            },
+            include: [
+                {
+                    model: models.Household,
+                    required: true,
+                    include: [
+                        {
+                            model: models.Member,
+                            required: true,
+                        }
+                    ]
+                }
+            ],
+
+            attributes: [
+                'isPaying',
+                'Household.Members.gender',
+                'Household.Members.isHouseholdHead',
+                [Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']
+            ],
+            group: [['isPaying'], ['Household.Members.isHouseholdHead'], ['Household.Members.gender']],
+            raw: true
+        })
+
+        // *********** Get Newly Enrolled CBHI Members within specified date range ****************
+        const getTotalNewlyEnrolledMembersByDateRange = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { HouseholdId: { [Op.notIn]: previousYearHouseholdIdList } },
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
+                    { contributionAmount: { [Op.not]: null } },
+                    { receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
+                ]
+            },
+            include: [
+                {
+                    model: models.Household,
+                    required: true,
+                    include: [
+                        {
+                            model: models.Member,
+                            required: true,
+                        }
+                    ]
+                }
+            ],
+
+            attributes: [
+                'isPaying',
+                'Household.Members.gender',
+                'Household.Members.isHouseholdHead',
+                [Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']
+            ],
+            group: [['isPaying'], ['Household.Members.isHouseholdHead'], ['Household.Members.gender']],
+            raw: true
+        })
+
+        //  ********** Get Renewing CBHI Members *****************
+        const getTotalRenewingMembers = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { HouseholdId: { [Op.in]: previousYearHouseholdIdList } },
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
+                    { contributionAmount: { [Op.not]: null } }
+                ]
+            },
+            include: [
+                {
+                    model: models.Household,
+                    required: true,
+                    include: [
+                        {
+                            model: models.Member,
+                            required: true,
+                        }
+                    ]
+                }
+            ],
+
+            attributes: [
+                'isPaying',
+                'Household.Members.gender',
+                'Household.Members.isHouseholdHead',
+                [Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']
+            ],
+            group: [['isPaying'], ['Household.Members.isHouseholdHead'], ['Household.Members.gender']],
+            raw: true
+        })
+
+        //  ********** Get Renewing CBHI Members within specified date range *********************************
+        const getTotalRenewingMembersByDateRange = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { HouseholdId: { [Op.in]: previousYearHouseholdIdList } },
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
+                    { contributionAmount: { [Op.not]: null } },
+                    { receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
+                ]
+            },
+            include: [
+                {
+                    model: models.Household,
+                    required: true,
+                    include: [
+                        {
+                            model: models.Member,
+                            required: true,
+                        }
+                    ]
+                }
+            ],
+
+            attributes: [
+                'isPaying',
+                'Household.Members.gender',
+                'Household.Members.isHouseholdHead',
+                [Sequelize.fn('count', Sequelize.col('Household.Members.id')), 'count']
+            ],
+            group: [['isPaying'], ['Household.Members.isHouseholdHead'], ['Household.Members.gender']],
+            raw: true
+        })
+
+        // *********** Get Total CBHI Members by ID card distribution ****************
+        const getTotalMembersWithIdCard = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
                     { contributionAmount: { [Op.not]: null } }
                 ]
             },
@@ -630,15 +767,29 @@ class Report {
                     model: models.Household,
                     required: true,
                     where: {
-                        id: { [Op.notIn]: previousYearMembersEnrolled }
-                    },
-                    include: [models.Member]
-                },
+                        idCardIssued: { [Op.eq]: true }
+                    }
+                }
             ],
-            //raw: true
+
+            attributes: [
+                'isPaying',
+                [Sequelize.fn('count', Sequelize.col('Household.id')), 'count']
+            ],
+            group: [['isPaying']],
+            raw: true
         })
 
-        return totalNewlyRegisteredMembers
+        return {
+            enrollmentYear: currentEnrollmentPeriod.enrollmentYear,
+            eligibleHouseholds: currentEnrollmentPeriod.eligibleHouseholds,
+            previousYearEnrolledMembers: previousYearEnrolledHouseholdsList.length,
+            getTotalNewlyEnrolledMembers,
+            getTotalNewlyEnrolledMembersByDateRange,
+            getTotalRenewingMembers,
+            getTotalRenewingMembersByDateRange,
+            getTotalMembersWithIdCard
+        }
     }
 
     /********************* - Contribution Excel Reports - ***************************/

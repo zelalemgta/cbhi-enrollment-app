@@ -29,7 +29,6 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const AdditionalInformation = ({ data, handleAdditionalInformation, handleCancel, nextStep, goToStep }) => {
-
     const [formData, setFormData] = useState({
         cbhiId: "",
         'Household.id': "",
@@ -72,7 +71,7 @@ const AdditionalInformation = ({ data, handleAdditionalInformation, handleCancel
         setSelectedOption(newSelectedOption);
     }
 
-    const handleIDCardStatusChange = (e) => {        
+    const handleIDCardStatusChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.checked

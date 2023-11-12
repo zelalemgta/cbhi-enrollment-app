@@ -19,26 +19,36 @@ const useStyles = makeStyles((theme) => ({
         '& label': {
             fontSize: "13px"
         }
+    },
+    tableHeader: {
+        backgroundColor: "#ecf0f5",
+        '& th': {
+            textAlign: "center",
+            fontSize: "13px",
+            padding: "6px 2px",
+            borderRight: "1px solid #e3e3e3"
+        }
     }
 }));
 
 const SubsidyColumns = () => {
+    const classes = useStyles()
     return (
-        <TableHead>
-        <TableRow>
-            <TableCell rowSpan={2} align="center">Actions</TableCell>
-            <TableCell rowSpan={2}>Enrollment Year</TableCell>
-            <TableCell rowSpan={2} align="center">General Subsidy (ETB)</TableCell>
-            <TableCell colSpan={3} align="center">Targeted Subsidies (ETB)</TableCell>
-            <TableCell rowSpan={2} align="center">Other (ETB)</TableCell>
-           
-        </TableRow>
-        <TableRow>
-            <TableCell align="center">Region</TableCell>
-            <TableCell align="center">Zone</TableCell>
-            <TableCell align="center">Woreda</TableCell>
-        </TableRow>
-    </TableHead>
+        <TableHead className={classes.tableHeader}>
+            <TableRow>
+                <TableCell rowSpan={2} align="center">Actions</TableCell>
+                <TableCell rowSpan={2}>Enrollment Year</TableCell>
+                <TableCell rowSpan={2} align="center">General Subsidy (ETB)</TableCell>
+                <TableCell colSpan={3} align="center">Targeted Subsidies (ETB)</TableCell>
+                <TableCell rowSpan={2} align="center">Other (ETB)</TableCell>
+
+            </TableRow>
+            <TableRow>
+                <TableCell align="center">Region</TableCell>
+                <TableCell align="center">Zone</TableCell>
+                <TableCell align="center">Woreda</TableCell>
+            </TableRow>
+        </TableHead>
     )
 }
 
@@ -48,17 +58,17 @@ const Subsidy = () => {
 
     const [data, setData] = useState([]);
     const [enrollmentPeriods, setEnrollmentPeriods] = useState({});
-   
+
     const columns = [
         {
             title: 'Enrollment Year',
             field: 'EnrollmentPeriodId',
-            lookup: enrollmentPeriods,            
+            lookup: enrollmentPeriods,
         },
         { title: 'General Subsidy', field: 'generalSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.generalSubsidy.toLocaleString() },
-        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.targetedSubsidy.toLocaleString() },
-        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.targetedSubsidy.toLocaleString() },
-        { title: 'Targeted Subsidy', field: 'targetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.targetedSubsidy.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'regionTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.regionTargetedSubsidy.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'zoneTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.zoneTargetedSubsidy.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'woredaTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.woredaTargetedSubsidy.toLocaleString() },
         { title: 'Other', field: 'other', type: 'numeric', align: 'center', render: rowData => rowData.other.toLocaleString() },
     ];
 
@@ -97,13 +107,17 @@ const Subsidy = () => {
                         padding: "dense",
                         pageSize: 5,
                         pageSizeOptions: [],
-                        toolbarButtonAlignment: "left"
+                        toolbarButtonAlignment: "left",
+                        rowStyle: {
+                            fontSize: "13px",
+                            textAlign: "center"
+                        },
                     }}
                     columns={columns}
                     data={data}
                     components={{
                         Header: props => (
-                           <SubsidyColumns />
+                            <SubsidyColumns />
                         )
                     }}
                     editable={{

@@ -76,7 +76,7 @@ module.exports = {
     genderOptions: ['Male', 'Female'],
     // Maintain the order of Relationship Options as it is used in the business logic to identify members & beneficiaries
     relationshipOptions: ['Household Head', 'Parent', 'Husband', 'Wife', 'Son', 'Daughter', 'Other'],
-    professionOptions: ['Farmer', 'Merchant', 'Job Seeker', 'Housewife', 'Stay at home husband', 'Daily Laborer', 'Student', 'Disabled', 'Other'],
+    professionOptions: ['Farmer', 'Pastoralist', 'Merchant', 'Job Seeker', 'Housewife', 'Stay at home husband', 'Daily Laborer', 'Student', 'Disabled', 'Other'],
     administrativeLevelOptions: ['Kebele', 'Gote'],
     MembershipStatusOptions: ['Expired', 'Active'],
     MembershipTypeOptions: ['Indigent', 'Paying'],
