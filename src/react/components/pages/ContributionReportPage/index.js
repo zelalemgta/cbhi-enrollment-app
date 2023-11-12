@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
 import SelectField from '../../molecules/SelectField';
@@ -14,6 +14,7 @@ import MonthlyContributionStats from '../../organisms/MonthlyContributionStats';
 import DatePicker from '../../atoms/DatePicker';
 import ExportBtn from '../../atoms/ExportBtn';
 import { channels } from '../../../../shared/constants';
+import { SchemeNameContext } from '../../../contexts'
 
 const { ipcRenderer } = window;
 
@@ -50,7 +51,7 @@ const convertDate = (date) => {
 }
 
 const ContributionReports = () => {
-
+    const { schemeName } = useContext(SchemeNameContext)
     const [enrollmentPeriods, setEnrollmentPeriods] = useState([]);
 
     const [selectedDate, setSelectedDate] = useState({
@@ -81,7 +82,12 @@ const ContributionReports = () => {
     }
 
     const handleExport = () => {
-        ipcRenderer.send(channels.EXPORT_ENROLLMENT_REPORT)
+        ipcRenderer.send(channels.EXPORT_CONTRIBUTION_REPORT, {
+            schemeName: schemeName,
+            enrollmentPeriodId: selectedDate.year,
+            dateFrom: selectedDate.dateFrom,
+            dateTo: selectedDate.dateTo
+        })
     }
 
     const classes = useStyles();
@@ -112,6 +118,7 @@ const ContributionReports = () => {
                         />
                         <ExportBtn
                             label="Download Report"
+                            isDisabled={selectedDate.year === '' || selectedDate.dateFrom === '' || selectedDate.dateTo === ''}
                             className={classes.exportBtn}
                             tooltip="Generates Contribution Report for the selected period"
                             action={handleExport}

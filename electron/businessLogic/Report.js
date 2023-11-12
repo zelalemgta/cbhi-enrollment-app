@@ -793,6 +793,64 @@ class Report {
     }
 
     /********************* - Contribution Excel Reports - ***************************/
+
+    static generateContributionReport = async (args) => {
+        //  *** Get current year enrollment period Id        
+        const currentEnrollmentPeriod = await models.EnrollmentPeriod.findByPk(args.enrollmentPeriodId, { raw: true });
+
+        const filterStartDate = toGregorian(args.dateFrom.split('-').map(Number)).join('-');
+        const filterEndDate = toGregorian(args.dateTo.split('-').map(Number)).join('-');
+
+        // *********** Get Newly Enrolled CBHI Members ********************
+        const getTotalContributionCollection = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
+                    { isPaying: { [Op.eq]: true } }
+                    //{ receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
+                ]
+            },
+            attributes: [
+                [Sequelize.fn('sum', Sequelize.col('contributionAmount')), 'totalContributionAmount'],
+                [Sequelize.fn('sum', Sequelize.col('registrationFee')), 'totalRegistrationFee'],
+                [Sequelize.fn('sum', Sequelize.col('additionalBeneficiaryFee')), 'totalAdditionalBeneficiaryFee'],
+                [Sequelize.fn('sum', Sequelize.col('otherFees')), 'totalOtherFees']
+            ],
+            raw: true
+        })
+
+        // *********** Get Contribution report within specified date range ****************
+        const getTotalContributionCollectionByDateRange = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
+                    { isPaying: { [Op.eq]: true } },
+                    { receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
+                ]
+            },
+            attributes: [
+                [Sequelize.fn('sum', Sequelize.col('contributionAmount')), 'totalContributionAmount'],
+                [Sequelize.fn('sum', Sequelize.col('registrationFee')), 'totalRegistrationFee'],
+                [Sequelize.fn('sum', Sequelize.col('additionalBeneficiaryFee')), 'totalAdditionalBeneficiaryFee'],
+                [Sequelize.fn('sum', Sequelize.col('otherFees')), 'totalOtherFees']
+            ],
+            raw: true
+        })
+
+        // *********** Get Subsidies ***************
+        const getSubsidies = await models.Subsidy.findOne({
+            raw: true,
+            where: { EnrollmentPeriodId: currentEnrollmentPeriod.id }
+        });
+
+        return {
+            enrollmentYear: currentEnrollmentPeriod.enrollmentYear,
+            getTotalContributionCollection,
+            getTotalContributionCollectionByDateRange,
+            getSubsidies
+        }
+    }
+
 }
 
 module.exports = Report;

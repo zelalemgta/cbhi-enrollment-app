@@ -976,8 +976,134 @@ ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event, args) => {
   }
 });
 
-//TODO - New Method EXPORT_CONTRIBUTION_REPORT
+ipcMain.on(channels.EXPORT_CONTRIBUTION_REPORT, async (event, args) => {
+  const reportTemplateEnvPath = process.env.ELECTRON_START_URL ? '../public/reportTemplates/' : '../reportTemplates/'
+  try {
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: true,
+      progressTitle: "Generating Contribution Report...",
+      progressValue: 0
+    });
+    readFile(path.join(__dirname, reportTemplateEnvPath, 'ContributionReportTemplate.xlsx'), async function (err, data) {
+      // Create a template
+      var template = new XlsxTemplate(data)
 
+      // Replacements take place on first sheet
+      var sheetNumber = 1;
+
+      // ******** Report Query Methods ********
+      const contributionReportData = await Report.generateContributionReport(args)
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "Generating Contribution Report...",
+        progressValue: 75
+      });
+
+      // ******** Structuring Report ***********
+      const currentContribution = contributionReportData.getTotalContributionCollectionByDateRange[0]?.totalContributionAmount
+      const currentRegistrationFee = contributionReportData.getTotalContributionCollectionByDateRange[0]?.totalRegistrationFee
+      const currentAdditionalBeneficiaryFee = contributionReportData.getTotalContributionCollectionByDateRange[0]?.totalAdditionalBeneficiaryFee
+      const currentOtherFee = contributionReportData.getTotalContributionCollectionByDateRange[0]?.totalOtherFees
+      const currentTotalContributionCollected = (currentContribution ? currentContribution : 0) + (currentRegistrationFee ? currentRegistrationFee : 0) +
+        (currentAdditionalBeneficiaryFee ? currentAdditionalBeneficiaryFee : 0) + (currentOtherFee ? currentOtherFee : 0)
+
+      const totalContribution = contributionReportData.getTotalContributionCollection[0]?.totalContributionAmount
+      const totalRegistrationFee = contributionReportData.getTotalContributionCollection[0]?.totalRegistrationFee
+      const totalAdditionalBeneficiaryFee = contributionReportData.getTotalContributionCollection[0]?.totalAdditionalBeneficiaryFee
+      const totalOtherFee = contributionReportData.getTotalContributionCollection[0]?.totalOtherFees
+      const totalContributionCollected = (totalContribution ? totalContribution : 0) + (totalRegistrationFee ? totalRegistrationFee : 0) +
+        (totalAdditionalBeneficiaryFee ? totalAdditionalBeneficiaryFee : 0) + (totalOtherFee ? totalOtherFee : 0)
+
+      const generalSubsidy = contributionReportData.getSubsidies ? contributionReportData.getSubsidies.generalSubsidy : 0
+      const regionSubsidy = contributionReportData.getSubsidies ? contributionReportData.getSubsidies?.regionTargetedSubsidy : 0
+      const zoneSubsidy = contributionReportData.getSubsidies ? contributionReportData.getSubsidies?.zoneTargetedSubsidy : 0
+      const woredaSubsidy = contributionReportData.getSubsidies ? contributionReportData.getSubsidies?.woredaTargetedSubsidy : 0
+      const otherSubsidy = contributionReportData.getSubsidies ? contributionReportData.getSubsidies?.other : 0
+      const totalSubsidy = generalSubsidy + regionSubsidy + zoneSubsidy + woredaSubsidy + otherSubsidy
+
+      // ******** EOF Report Structuring ********
+
+      // Set up some placeholder values matching the placeholders in the template
+      const values = {
+        schemeName: args.schemeName,
+        enrollmentYear: contributionReportData.enrollmentYear,
+        reportingPeriod: `${args.dateFrom} <--> ${args.dateTo}`,
+        currentContribution,
+        currentRegistrationFee,
+        currentAdditionalBeneficiaryFee,
+        currentOtherFee,
+        currentTotalContributionCollected,
+        totalContribution,
+        totalRegistrationFee,
+        totalAdditionalBeneficiaryFee,
+        totalOtherFee,
+        totalContributionCollected,
+        generalSubsidy,
+        regionSubsidy,
+        zoneSubsidy,
+        woredaSubsidy,
+        otherSubsidy,
+        totalSubsidy
+      };
+
+      // Perform substitution
+      template.substitute(sheetNumber, values);
+
+      // Get binary data
+      const excelData = template.generate({ type: 'nodebuffer' });
+
+      //Show progress completion
+      mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+        open: true,
+        progressTitle: "Generating Contribution Report...",
+        progressValue: 100
+      });
+
+      const options = {
+        title: "Save Contribution Report",
+        filters: [{ name: "All files", extensions: ["xlsx"] }],
+      };
+
+      dialog.showSaveDialog(options).then((result) => {
+        if (!result.canceled) {
+          writeFile(result.filePath, excelData, 'binary', function (err) {
+            const response = {
+              type: "Success",
+              message: "Contribution Report exported successfully to '" + result.filePath + "'",
+            };
+            mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+          })
+        }
+        //Hide progress status
+        mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+          open: false,
+          progressTitle: "Generating Contribution Report...",
+          progressValue: 100
+        });
+      })
+        .catch((error) => {
+          //Hide progress status
+          mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+            open: false,
+            progressTitle: "Generating Contribution Report...",
+            progressValue: 100
+          });
+          console.log(error)
+        });
+    });
+  } catch (error) {
+    const response = {
+      type: "Error",
+      message: error
+    };
+    mainWindow.webContents.send(channels.SEND_NOTIFICATION, response);
+    mainWindow.webContents.send(channels.SYSTEM_PROGRESS, {
+      open: false,
+      progressTitle: "Generating Contribution Report...",
+      progressValue: 0
+    });
+  }
+});
 
 //*********** -  Import Enrollment Data  METHODS - ****************//
 
