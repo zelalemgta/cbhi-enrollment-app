@@ -257,7 +257,7 @@ class Member {
               },
               {
                 gender: filters.gender
-                  ? { [Op.is]: filters.gender }
+                  ? { [Op.like]: filters.gender + '%' }
                   : { [Op.not]: null },
               },
             ],
@@ -481,6 +481,10 @@ class Member {
       raw: true,
       where: {
         [Op.and]: [
+          filters.idCardIssued !== "" &&
+          {
+            idCardIssued: { [Op.or]: filters.idCardIssued === 0 ? [0, null] : [1] }
+          },
           {
             "$EnrollmentRecords.id$":
               filters.membershipStatus !== ""
@@ -611,6 +615,7 @@ class Member {
           : "",
         enrolledDate: convertDate(enrollmentData[i].enrolledDate.trim(), "GR"),
         isHouseholdHead: enrollmentData[i].isHouseholdHead === 1,
+        idCardIssued: enrollmentData[i].idCardIssued === 1.
       };
       parsedData.push(memberObj);
     }
@@ -633,8 +638,8 @@ class Member {
         const householdObj = await models.Household.create(
           {
             cbhiId: parsedMemberData[i].cbhiId,
-            AdministrativeDivisionId:
-              parsedMemberData[i].administrativeDivisionId,
+            AdministrativeDivisionId: parsedMemberData[i].administrativeDivisionId,
+            idCardIssued: parsedMemberData[i].idCardIssued,
             enrolledDate: parsedMemberData[i].enrolledDate,
             Members: [
               {

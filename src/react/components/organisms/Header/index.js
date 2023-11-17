@@ -82,9 +82,9 @@ const Header = () => {
     return (
         <AppBar className={classes.root} position="relative">
             <Toolbar variant="dense">
-                <IconButton onClick={openDevTools} edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+                {/* <IconButton onClick={openDevTools} edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
                     <MenuIcon />
-                </IconButton>
+                </IconButton> */}
                 <PeopleIcon />
                 <Typography variant="h6" className={classes.title}>
                     CBHI Enrollment Application

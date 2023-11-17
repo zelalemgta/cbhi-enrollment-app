@@ -80,6 +80,8 @@ module.exports = {
     administrativeLevelOptions: ['Kebele', 'Gote'],
     MembershipStatusOptions: ['Expired', 'Active'],
     MembershipTypeOptions: ['Indigent', 'Paying'],
-    memberIDCardStatus: ['Not Issued', 'Issued']
+    memberIDCardStatus: ['Not Issued', 'Issued'],
+    maleGenderValues: ['male', 'Male', 'MALE'],
+    femaleGenderValues: ['female', 'Female', 'FEMALE']
     //EthiopianMonths: ['Meskerem', 'Tikemt', 'Hidar', 'Tahesas', 'Tir', 'Yekatit', 'Megabit', 'Miyazia', 'Ginbot', 'Sene', 'Hamle', 'Nehase'],
 };

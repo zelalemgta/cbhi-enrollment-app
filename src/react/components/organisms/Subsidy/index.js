@@ -65,11 +65,11 @@ const Subsidy = () => {
             field: 'EnrollmentPeriodId',
             lookup: enrollmentPeriods,
         },
-        { title: 'General Subsidy', field: 'generalSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.generalSubsidy.toLocaleString() },
-        { title: 'Targeted Subsidy', field: 'regionTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.regionTargetedSubsidy.toLocaleString() },
-        { title: 'Targeted Subsidy', field: 'zoneTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.zoneTargetedSubsidy.toLocaleString() },
-        { title: 'Targeted Subsidy', field: 'woredaTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.woredaTargetedSubsidy.toLocaleString() },
-        { title: 'Other', field: 'other', type: 'numeric', align: 'center', render: rowData => rowData.other.toLocaleString() },
+        { title: 'General Subsidy', field: 'generalSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.generalSubsidy?.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'regionTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.regionTargetedSubsidy?.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'zoneTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.zoneTargetedSubsidy?.toLocaleString() },
+        { title: 'Targeted Subsidy', field: 'woredaTargetedSubsidy', type: 'numeric', align: 'center', render: rowData => rowData.woredaTargetedSubsidy?.toLocaleString() },
+        { title: 'Other', field: 'other', type: 'numeric', align: 'center', render: rowData => rowData.other?.toLocaleString() },
     ];
 
     useEffect(() => {

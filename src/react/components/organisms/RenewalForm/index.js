@@ -148,7 +148,7 @@ const RenewalForm = React.forwardRef((props, ref) => {
         setDialogState({
             open: true,
             title: "Are you sure you want to renew membership for the selected household?",
-            message: "Attention! Please verify the data against the household payment receipt. This action cannot be reversed!"
+            message: "Attention! Please verify the data against the household payment receipt."
         })
     }
 

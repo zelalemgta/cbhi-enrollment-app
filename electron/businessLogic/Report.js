@@ -1,5 +1,6 @@
 const Sequelize = require("sequelize");
 const models = require("../db/models");
+const { maleGenderValues, femaleGenderValues } = require("../../src/shared/constants");
 const { toGregorian } = require("ethiopian-date");
 
 //Initialize squelize operartor
@@ -78,25 +79,40 @@ class Report {
             renewedIndigents: 0,
         }
         const selectedEnrollmentPeriod = await models.EnrollmentPeriod.findByPk(args.enrollmentPeriodId, { raw: true });
+        const previousEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+            where: {
+                coverageEndDate: { [Op.lt]: selectedEnrollmentPeriod.coverageEndDate }
+            },
+            order: [['coverageEndDate', 'DESC'], ['coverageStartDate', 'DESC']],
+            raw: true
+        });
+
+        let previousYearHouseholdIdList = [];
         const filterStartDate = toGregorian(args.dateFrom.split('-').map(Number)).join('-');
         const filterEndDate = toGregorian(args.dateTo.split('-').map(Number)).join('-');
+        if (previousEnrollmentPeriod) {
+            // *** Get previous enrolled households ID list 
+            const previousYearEnrolledHouseholdsList = await models.EnrollmentRecord.findAll({
+                attributes: ['HouseholdId'],
+                where: {
+                    [Op.and]: [
+                        { EnrollmentPeriodId: previousEnrollmentPeriod.id },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
+                },
+                raw: true
+            })
+            previousYearHouseholdIdList = previousYearEnrolledHouseholdsList.map((enrollmentRecordObj) => enrollmentRecordObj.HouseholdId)
+        }
 
         const newEnrollmentStat = await models.EnrollmentRecord.findAll(
             {
-                include: [
-                    {
-                        model: models.Household,
-                        required: true,
-                        where: {
-                            enrolledDate: { [Op.between]: [selectedEnrollmentPeriod.coverageStartDate, selectedEnrollmentPeriod.coverageEndDate] }
-                        }
-                    },
-                ],
                 attributes: ['isPaying',
                     [Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalNewEnrollments'],
                 ],
                 where: {
                     [Op.and]: [
+                        { HouseholdId: { [Op.notIn]: previousYearHouseholdIdList } },
                         { enrollmentPeriodId: args.enrollmentPeriodId },
                         { contributionAmount: { [Op.not]: null } },
                         { receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
@@ -107,20 +123,12 @@ class Report {
             })
         const renewalStat = await models.EnrollmentRecord.findAll(
             {
-                include: [
-                    {
-                        model: models.Household,
-                        required: true,
-                        where: {
-                            enrolledDate: { [Op.notBetween]: [selectedEnrollmentPeriod.coverageStartDate, selectedEnrollmentPeriod.coverageEndDate] }
-                        }
-                    },
-                ],
                 attributes: ['isPaying',
                     [Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalRenewals'],
                 ],
                 where: {
                     [Op.and]: [
+                        { HouseholdId: { [Op.in]: previousYearHouseholdIdList } },
                         { enrollmentPeriodId: args.enrollmentPeriodId },
                         { contributionAmount: { [Op.not]: null } },
                         { receiptDate: { [Op.between]: [filterStartDate, filterEndDate] } }
@@ -158,22 +166,40 @@ class Report {
             renewedIndigents: 0
         }
         const selectedEnrollmentPeriod = await models.EnrollmentPeriod.findByPk(enrollmentPeriodId, { raw: true });
+
+        const previousEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
+            where: {
+                coverageEndDate: { [Op.lt]: selectedEnrollmentPeriod.coverageEndDate }
+            },
+            order: [['coverageEndDate', 'DESC'], ['coverageStartDate', 'DESC']],
+            raw: true
+        });
+
+        let previousYearHouseholdIdList = [];
+
+        if (previousEnrollmentPeriod) {
+            // *** Get previous enrolled households ID list 
+            const previousYearEnrolledHouseholdsList = await models.EnrollmentRecord.findAll({
+                attributes: ['HouseholdId'],
+                where: {
+                    [Op.and]: [
+                        { EnrollmentPeriodId: previousEnrollmentPeriod.id },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
+                },
+                raw: true
+            })
+            previousYearHouseholdIdList = previousYearEnrolledHouseholdsList.map((enrollmentRecordObj) => enrollmentRecordObj.HouseholdId)
+        }
+
         const newEnrollmentStat = await models.EnrollmentRecord.findAll(
             {
-                include: [
-                    {
-                        model: models.Household,
-                        required: true,
-                        where: {
-                            enrolledDate: { [Op.between]: [selectedEnrollmentPeriod.coverageStartDate, selectedEnrollmentPeriod.coverageEndDate] }
-                        }
-                    },
-                ],
                 attributes: ['isPaying',
                     [Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalNewEnrollments']
                 ],
                 where: {
                     [Op.and]: [
+                        { HouseholdId: { [Op.notIn]: previousYearHouseholdIdList } },
                         { enrollmentPeriodId: enrollmentPeriodId },
                         { contributionAmount: { [Op.not]: null } }
                     ]
@@ -183,20 +209,12 @@ class Report {
             })
         const renewalStat = await models.EnrollmentRecord.findAll(
             {
-                include: [
-                    {
-                        model: models.Household,
-                        required: true,
-                        where: {
-                            enrolledDate: { [Op.notBetween]: [selectedEnrollmentPeriod.coverageStartDate, selectedEnrollmentPeriod.coverageEndDate] }
-                        }
-                    },
-                ],
                 attributes: ['isPaying',
                     [Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalRenewals']
                 ],
                 where: {
                     [Op.and]: [
+                        { HouseholdId: { [Op.in]: previousYearHouseholdIdList } },
                         { enrollmentPeriodId: enrollmentPeriodId },
                         { contributionAmount: { [Op.not]: null } }
                     ]
@@ -316,12 +334,16 @@ class Report {
                 ]
             },
             raw: true,
-            attributes: [[Sequelize.col('Household.Members.gender'), 'gender'], [Sequelize.fn('count', Sequelize.col('Household.Members.Id')), 'count']],
-            group: [Sequelize.col('Household.Members.gender')]
+            attributes: [
+                'Household.Members.gender',
+                [Sequelize.fn('count', Sequelize.col('Household.Members.Id')), 'count']
+            ],
+            group: [['Household.Members.gender']]
         });
-        filteredHouseholds.map(result =>
-            result.gender === "Male" ? householdsByGender.maleHouseholds = result.count : householdsByGender.femaleHouseholds = result.count
-        )
+
+        householdsByGender.maleHouseholds = filteredHouseholds.filter((householdObj) => maleGenderValues.includes(householdObj.gender)).reduce((a, b) => a + b.count, 0)
+        householdsByGender.femaleHouseholds = filteredHouseholds.filter((householdObj) => femaleGenderValues.includes(householdObj.gender)).reduce((a, b) => a + b.count, 0)
+
         return householdsByGender;
     }
 
@@ -607,23 +629,23 @@ class Report {
             order: [['coverageEndDate', 'DESC'], ['coverageStartDate', 'DESC']],
             raw: true
         });
-
+        let previousYearHouseholdIdList = [];
         const filterStartDate = toGregorian(args.dateFrom.split('-').map(Number)).join('-');
         const filterEndDate = toGregorian(args.dateTo.split('-').map(Number)).join('-');
-
-        // *** Get previous enrolled households ID list 
-        const previousYearEnrolledHouseholdsList = await models.EnrollmentRecord.findAll({
-            attributes: ['HouseholdId'],
-            where: {
-                [Op.and]: [
-                    { EnrollmentPeriodId: previousEnrollmentPeriod.id },
-                    { contributionAmount: { [Op.not]: null } }
-                ]
-            },
-            raw: true
-        })
-        const previousYearHouseholdIdList = previousYearEnrolledHouseholdsList.map((enrollmentRecordObj) => enrollmentRecordObj.HouseholdId)
-
+        if (previousEnrollmentPeriod) {
+            // *** Get previous enrolled households ID list 
+            const previousYearEnrolledHouseholdsList = await models.EnrollmentRecord.findAll({
+                attributes: ['HouseholdId'],
+                where: {
+                    [Op.and]: [
+                        { EnrollmentPeriodId: previousEnrollmentPeriod.id },
+                        { contributionAmount: { [Op.not]: null } }
+                    ]
+                },
+                raw: true
+            })
+            previousYearHouseholdIdList = previousYearEnrolledHouseholdsList.map((enrollmentRecordObj) => enrollmentRecordObj.HouseholdId)
+        }
         // *********** Get Newly Enrolled CBHI Members ********************
         const getTotalNewlyEnrolledMembers = await models.EnrollmentRecord.findAll({
             where: {
@@ -783,7 +805,7 @@ class Report {
         return {
             enrollmentYear: currentEnrollmentPeriod.enrollmentYear,
             eligibleHouseholds: currentEnrollmentPeriod.eligibleHouseholds,
-            previousYearEnrolledMembers: previousYearEnrolledHouseholdsList.length,
+            previousYearEnrolledMembers: previousYearHouseholdIdList.length,
             getTotalNewlyEnrolledMembers,
             getTotalNewlyEnrolledMembersByDateRange,
             getTotalRenewingMembers,

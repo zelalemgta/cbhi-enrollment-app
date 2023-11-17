@@ -69,16 +69,16 @@ const Subsidies = (props) => {
       <Grid item xs={3}>
         <ReportCard
           title="General Subsidy (ETB)"
-          value={subsidies?.generalSubsidy.toLocaleString()}
+          value={subsidies?.generalSubsidy?.toLocaleString()}
         />
       </Grid>
 
       <Grid item xs={6}>
         <ReportCard title="Targeted Subsidies (ETB)">
           <TargetedSubsidiesStatsRenderer
-            region={subsidies?.regionTargetedSubsidy.toLocaleString()}
-            zone={subsidies?.zoneTargetedSubsidy.toLocaleString()}
-            woreda={subsidies?.woredaTargetedSubsidy.toLocaleString()}
+            region={subsidies?.regionTargetedSubsidy?.toLocaleString()}
+            zone={subsidies?.zoneTargetedSubsidy?.toLocaleString()}
+            woreda={subsidies?.woredaTargetedSubsidy?.toLocaleString()}
           />
         </ReportCard>
       </Grid>
@@ -86,7 +86,7 @@ const Subsidies = (props) => {
       <Grid item xs={3}>
         <ReportCard
           title="Other (ETB)"
-          value={subsidies?.other.toLocaleString()}
+          value={subsidies?.other?.toLocaleString()}
         />
       </Grid>
     </Grid>

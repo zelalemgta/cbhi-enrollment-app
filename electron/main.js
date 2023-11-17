@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
 const url = require("url");
-const { channels } = require("../src/shared/constants");
+const { channels, maleGenderValues, femaleGenderValues } = require("../src/shared/constants");
 const initDatabase = require("./db/initDatabase");
 const db = require("./db/models");
 const { autoUpdater } = require("electron-updater");
@@ -572,6 +572,7 @@ ipcMain.on(channels.EXPORT_ENROLLMENT, async (event, query) => {
     "Profession": memberObj['Members.profession'],
     "Enrollment Date (YYYY-MM-DD)": convertToEthiopianDate(memberObj['Members.enrolledDate']),
     "is Household Head (1/0)": memberObj['Members.isHouseholdHead'],
+    "Has CBHI Id Card (1/0)": memberObj['Members.isHouseholdHead'] ? memberObj['idCardIssued'] === null ? 0 : memberObj['idCardIssued'] : "",
     "Contribution Amount": memberObj['Members.isHouseholdHead'] ? memberObj['contributionAmount'] : "",
     "Registration Fee": memberObj['Members.isHouseholdHead'] ? memberObj['registrationFee'] : "",
     "Additional Beneficiary Fee": memberObj['Members.isHouseholdHead'] ? memberObj['additionalBeneficiaryFee'] : "",
@@ -773,41 +774,41 @@ ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event, args) => {
       });
 
       // ******** Structuring Report ***********
-      const newlyRegisteredMalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const newlyRegisteredFemalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
-      const newlyRegisteredMaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const newlyRegisteredFemaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredMalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredFemalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredMaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredFemaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredMalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const newlyRegisteredFemalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const newlyRegisteredMaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const newlyRegisteredFemaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredMalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredFemalePayingHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredMaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredFemaleIndigentHouseholds = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
 
-      const renewedMalePayingHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const renewedFemalePayingHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
-      const renewedMaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const renewedFemaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedMalePayingHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedFemalePayingHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedMaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedFemaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && reportObj.isHouseholdHead)[0]?.count
+      const renewedMalePayingHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const renewedFemalePayingHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const renewedMaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const renewedFemaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedMalePayingHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedFemalePayingHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedMaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedFemaleIndigentHouseholds = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
 
-      const newlyRegisteredMalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const newlyRegisteredFemalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
-      const newlyRegisteredMaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const newlyRegisteredFemaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredMalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredFemalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredMaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const totalNewlyRegisteredFemaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const newlyRegisteredMalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const newlyRegisteredFemalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const newlyRegisteredMaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const newlyRegisteredFemaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembersByDateRange.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredMalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredFemalePayingBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredMaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalNewlyRegisteredFemaleIndigentBeneficiaries = enrollmentReportData.getTotalNewlyEnrolledMembers.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
 
-      const renewedMalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const renewedFemalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
-      const renewedMaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const renewedFemaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedMalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedFemalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedMaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Male' && !reportObj.isHouseholdHead)[0]?.count
-      const totalRenewedFemaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && reportObj.gender === 'Female' && !reportObj.isHouseholdHead)[0]?.count
+      const renewedMalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const renewedFemalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const renewedMaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const renewedFemaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembersByDateRange.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedMalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedFemalePayingBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedMaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && maleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
+      const totalRenewedFemaleIndigentBeneficiaries = enrollmentReportData.getTotalRenewingMembers.filter((reportObj) => !reportObj.isPaying && femaleGenderValues.includes(reportObj.gender) && !reportObj.isHouseholdHead).reduce((a, b) => a + b.count, 0)
 
       const totalMaleHouseholds = (totalNewlyRegisteredMalePayingHouseholds ? totalNewlyRegisteredMalePayingHouseholds : 0) +
         (totalNewlyRegisteredMaleIndigentHouseholds ? totalNewlyRegisteredMaleIndigentHouseholds : 0) +
@@ -1123,7 +1124,8 @@ ipcMain.on(channels.DOWNLOAD_ENROLLMENT_TEMPLATE, (event) => {
       "Relationship": "",
       "Profession": "",
       "Enrollment Date (YYYY-MM-DD)": "",
-      "is Household Head (1/0)": ""
+      "is Household Head (1/0)": "",
+      "Has CBHI Id Card (1/0)": "",
     }
   ];
   const ws = XLSX.utils.json_to_sheet(template_data);
@@ -1164,7 +1166,7 @@ ipcMain.on(channels.IMPORT_ENROLLMENT, (event) => {
       const workbook = XLSX.readFile(file.filePaths[0]);
       const firstSheetName = workbook.SheetNames[0];
       const excelData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], {
-        header: ["fullName", "dateOfBirth", "gender", "cbhiId", "beneficiaryCBHIId", "administrativeDivision", "relationship", "profession", "enrolledDate", "isHouseholdHead"],
+        header: ["fullName", "dateOfBirth", "gender", "cbhiId", "beneficiaryCBHIId", "administrativeDivision", "relationship", "profession", "enrolledDate", "isHouseholdHead", "idCardIssued"],
         range: 1,
       });
       setTimeout(() => {
