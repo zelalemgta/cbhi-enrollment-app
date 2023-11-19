@@ -912,7 +912,7 @@ ipcMain.on(channels.EXPORT_ENROLLMENT_REPORT, async (event, args) => {
         totalHouseholds: totalMaleHouseholds + totalFemaleHouseholds,
         totalBeneficiaries: totalMaleBeneficiaries + totalFemaleBeneficiaries,
         totalMembers: totalMaleHouseholds + totalFemaleHouseholds + totalMaleBeneficiaries + totalFemaleBeneficiaries,
-        renewalRate: enrollmentReportData.previousYearEnrolledMembers > 0 ? `${(((totalMaleHouseholds + totalFemaleHouseholds) / enrollmentReportData.previousYearEnrolledMembers) * 100).toFixed(1)} %` : "-",
+        renewalRate: enrollmentReportData.previousYearEnrolledMembers > 0 ? `${(((totalRenewedMalePayingHouseholds + totalRenewedFemalePayingHouseholds + totalRenewedMaleIndigentHouseholds + totalRenewedFemaleIndigentHouseholds) / enrollmentReportData.previousYearEnrolledMembers) * 100).toFixed(1)} %` : "-",
         enrollmentRate: enrollmentReportData.eligibleHouseholds > 0 ? `${(((totalMaleHouseholds + totalFemaleHouseholds) / enrollmentReportData.eligibleHouseholds) * 100).toFixed(1)} %` : "-",
         payingHouseholdsWithIdCard: enrollmentReportData.getTotalMembersWithIdCard.filter((reportObj) => reportObj.isPaying)[0]?.count,
         indigentHouseholdsWithIdCard: enrollmentReportData.getTotalMembersWithIdCard.filter((reportObj) => !reportObj.isPaying)[0]?.count,

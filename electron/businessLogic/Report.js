@@ -259,50 +259,51 @@ class Report {
     };
 
     static getRenewalRate = async (enrollmentPeriodId) => {
-        const enrollmentPeriod = await models.EnrollmentPeriod.findByPk(enrollmentPeriodId, { raw: true });
+        const currentEnrollmentPeriod = await models.EnrollmentPeriod.findByPk(enrollmentPeriodId, { raw: true });
         const previousEnrollmentPeriod = await models.EnrollmentPeriod.findOne({
             where: {
-                coverageEndDate: { [Op.lt]: enrollmentPeriod.coverageEndDate }
+                coverageEndDate: { [Op.lt]: currentEnrollmentPeriod.coverageEndDate }
             },
             order: [['coverageEndDate', 'DESC']],
             raw: true
         });
 
-        const totalHouseholdsEnrolled = await models.EnrollmentRecord.findAll(
-            {
-                include: [
-                    {
-                        model: models.Household,
-                        required: true,
-                        where: {
-                            enrolledDate: { [Op.notBetween]: [enrollmentPeriod.coverageStartDate, enrollmentPeriod.coverageEndDate] }
-                        }
-                    },
-                ],
-                attributes: [[Sequelize.fn('count', Sequelize.col('HouseholdId')), 'totalRenewals']
-                ],
+        let previousYearHouseholdIdList = [];
+        if (previousEnrollmentPeriod) {
+            // *** Get previous enrolled households ID list 
+            const previousYearEnrolledHouseholdsList = await models.EnrollmentRecord.findAll({
+                attributes: ['HouseholdId'],
                 where: {
                     [Op.and]: [
-                        { enrollmentPeriodId: enrollmentPeriodId },
+                        { EnrollmentPeriodId: previousEnrollmentPeriod.id },
                         { contributionAmount: { [Op.not]: null } }
                     ]
                 },
                 raw: true
-            }
-        );
+            })
+            previousYearHouseholdIdList = previousYearEnrolledHouseholdsList.map((enrollmentRecordObj) => enrollmentRecordObj.HouseholdId)
+        }
 
-        const previousTotalHouseholdsEnrolled = previousEnrollmentPeriod ? await models.EnrollmentRecord.count(
-            {
-                where: {
-                    [Op.and]: [
-                        { enrollmentPeriodId: previousEnrollmentPeriod.id },
-                        { contributionAmount: { [Op.not]: null } }
-                    ]
-                },
-                raw: true
-            }
-        ) : 0;
-        const renewalRate = previousTotalHouseholdsEnrolled === 0 ? 0 : +((totalHouseholdsEnrolled[0].totalRenewals / previousTotalHouseholdsEnrolled) * 100).toFixed(2)
+        //  ********** Get Renewing CBHI Members *****************
+        const totalRenewingMembers = await models.EnrollmentRecord.findAll({
+            where: {
+                [Op.and]: [
+                    { HouseholdId: { [Op.in]: previousYearHouseholdIdList } },
+                    { EnrollmentPeriodId: currentEnrollmentPeriod.id },
+                    { contributionAmount: { [Op.not]: null } }
+                ]
+            },
+            include: [
+                {
+                    model: models.Household,
+                    required: true
+                }
+            ],
+
+            raw: true
+        })
+
+        const renewalRate = previousYearHouseholdIdList.length === 0 ? 0 : ((totalRenewingMembers.length / previousYearHouseholdIdList.length) * 100).toFixed(2)
         return renewalRate;
     };
 
@@ -629,9 +630,11 @@ class Report {
             order: [['coverageEndDate', 'DESC'], ['coverageStartDate', 'DESC']],
             raw: true
         });
-        let previousYearHouseholdIdList = [];
+
         const filterStartDate = toGregorian(args.dateFrom.split('-').map(Number)).join('-');
         const filterEndDate = toGregorian(args.dateTo.split('-').map(Number)).join('-');
+
+        let previousYearHouseholdIdList = [];
         if (previousEnrollmentPeriod) {
             // *** Get previous enrolled households ID list 
             const previousYearEnrolledHouseholdsList = await models.EnrollmentRecord.findAll({
