@@ -70,19 +70,11 @@ const GeneralSettings = () => {
     }
 
     const handleSubmit = (e) => {
-        if (profile.id === null)
+        if (profile.id === "")
             ipcRenderer.send(channels.CREATE_PROFILE, profile);
         else
             ipcRenderer.send(channels.UPDATE_PROFILE, profile);
         e.preventDefault();
-    }
-
-    const handleChangePassword = (e) => {
-        e.preventDefault();
-        if (profile.id === null)
-            ipcRenderer.send(channels.CREATE_PROFILE, { ...profile, password: profile.newPassword });
-        else
-            ipcRenderer.send(channels.UPDATE_PROFILE, { ...profile, password: profile.newPassword });
     }
 
     return (
@@ -112,7 +104,7 @@ const GeneralSettings = () => {
                 </form>
             </Grid>
             <Grid item xs={6}>
-                <form className={classes.root} autoComplete="off" onSubmit={handleChangePassword}>
+                <form className={classes.root} autoComplete="off" onSubmit={handleSubmit}>
                     <Typography variant="h6"><LockIcon />  Account Protection</Typography>
                     <TextField
                         id="newPassword"

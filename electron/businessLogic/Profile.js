@@ -7,7 +7,14 @@ const Op = Sequelize.Op;
 class Profile {
 
     static addProfile = profileObj => {
-        const result = models.Profile.create(profileObj).then(() => {
+        const result = models.Profile.create({
+            zoneName: profileObj.zoneName,
+            woredaName: profileObj.woredaName,
+            contributionAmount: profileObj.contributionAmount,
+            registrationFee: profileObj.registrationFee,
+            additionalBeneficiaryFee: profileObj.additionalBeneficiaryFee,
+            password: profileObj.newPassword
+        }).then(() => {
             return {
                 type: "Success",
                 message: "Profile created successfully"
@@ -24,7 +31,14 @@ class Profile {
     };
 
     static editProfile = profileObj => {
-        const result = models.Profile.update(profileObj, {
+        const result = models.Profile.update({
+            zoneName: profileObj.zoneName,
+            woredaName: profileObj.woredaName,
+            contributionAmount: profileObj.contributionAmount,
+            registrationFee: profileObj.registrationFee,
+            additionalBeneficiaryFee: profileObj.additionalBeneficiaryFee,
+            password: profileObj.newPassword
+        }, {
             where: {
                 id: profileObj.id
             }
